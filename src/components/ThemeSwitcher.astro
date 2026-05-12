@@ -16,30 +16,10 @@ import { THEMES } from '../lib/themes';
 				class="theme-swatch"
 				data-theme-id={t.id}
 				data-tone={t.tone}
-				style={`--swatch: var(--swatch-${t.id});`}
 				aria-label={`${t.name} (${t.tone})`}
 				aria-pressed="false"
-				title={`${t.name} · ${t.tone}`}
 			>
-				<svg
-					class="theme-swatch-glyph"
-					viewBox="0 0 12 12"
-					width="8"
-					height="8"
-					aria-hidden="true"
-				>
-					{t.tone === 'light' ? (
-						<g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-							<circle cx="6" cy="6" r="2.2" />
-							<path d="M6 1.4v1.6M6 9v1.6M1.4 6h1.6M9 6h1.6M2.6 2.6l1.1 1.1M8.3 8.3l1.1 1.1M2.6 9.4l1.1-1.1M8.3 3.7l1.1-1.1" />
-						</g>
-					) : (
-						<path
-							d="M9.3 6.6a3.6 3.6 0 1 1-3.9-5 3 3 0 0 0 3.9 5z"
-							fill="currentColor"
-						/>
-					)}
-				</svg>
+				<span class="theme-swatch-name" aria-hidden="true">{t.name}</span>
 			</button>
 		))
 	}
@@ -87,25 +67,104 @@ import { THEMES } from '../lib/themes';
 </script>
 
 <style>
-	.theme-swatch-glyph {
+	/* Hover/focus name pill — magus-styled monospace, anchored to the row */
+	.theme-swatch-name {
 		position: absolute;
-		inset: 0;
-		margin: auto;
-		color: var(--color-bg);
+		top: calc(100% + 10px);
+		left: 50%;
+		transform: translateX(-50%) translateY(-4px);
+		padding: 4px 8px;
+		border-radius: 4px;
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-strong);
+		color: var(--color-text);
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.08em;
+		text-transform: lowercase;
+		white-space: nowrap;
 		opacity: 0;
-		transition: opacity 0.18s ease;
 		pointer-events: none;
+		transition:
+			opacity 0.18s ease,
+			transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+		box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.7);
+		z-index: 60;
 	}
-	.theme-swatch[aria-pressed='true'] .theme-swatch-glyph {
-		opacity: 0.85;
+	.theme-swatch-name::before {
+		content: '';
+		position: absolute;
+		bottom: 100%;
+		left: 50%;
+		transform: translateX(-50%);
+		border: 4px solid transparent;
+		border-bottom-color: var(--color-border-strong);
 	}
 	@media (hover: hover) and (pointer: fine) {
-		.theme-swatch:hover .theme-swatch-glyph {
-			opacity: 0.55;
+		.theme-swatch:hover .theme-swatch-name {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
 		}
 	}
-	.theme-swatch[data-tone='light'] {
+	.theme-swatch:focus-visible .theme-swatch-name {
+		opacity: 1;
+		transform: translateX(-50%) translateY(0);
+	}
+
+	/* Per-theme swatch surfaces — each preview the destination palette */
+	.theme-swatch[data-theme-id='tokyo-night'] {
 		background:
-			radial-gradient(circle at 30% 30%, #fff7e3 0%, var(--swatch) 70%);
+			radial-gradient(
+				circle at 32% 30%,
+				#c0caf5 0%,
+				var(--swatch-tokyo-night) 28%,
+				var(--swatch-tokyo-night-deep) 95%
+			);
+		box-shadow:
+			inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+			inset 0 -3px 6px rgba(0, 0, 0, 0.4);
+	}
+	.theme-swatch[data-theme-id='grimoire'] {
+		background:
+			radial-gradient(
+				circle at 70% 70%,
+				var(--swatch-grimoire) 0%,
+				color-mix(in oklab, var(--swatch-grimoire) 70%, #2a0a0a) 55%,
+				#2a0a0a 100%
+			),
+			radial-gradient(circle at 30% 30%, var(--swatch-grimoire-paper) 0%, transparent 45%);
+		background-blend-mode: normal, screen;
+		box-shadow:
+			inset 0 0 0 1px rgba(244, 236, 220, 0.18),
+			inset 0 -2px 4px rgba(0, 0, 0, 0.35);
+	}
+	.theme-swatch[data-theme-id='konsole'] {
+		background:
+			radial-gradient(
+				circle at 50% 50%,
+				var(--swatch-konsole) 0%,
+				color-mix(in oklab, var(--swatch-konsole) 50%, #000) 38%,
+				var(--swatch-konsole-deep) 80%
+			);
+		box-shadow:
+			inset 0 0 0 1px rgba(57, 255, 20, 0.35),
+			inset 0 0 6px rgba(57, 255, 20, 0.25);
+	}
+
+	/* Pressed-state ring — accent halo + thin gap, theme-tinted */
+	.theme-swatch[aria-pressed='true'] {
+		box-shadow:
+			0 0 0 2px var(--color-bg-elevated),
+			0 0 0 3.5px currentColor,
+			0 0 12px -2px currentColor;
+	}
+	.theme-swatch[data-theme-id='tokyo-night'][aria-pressed='true'] {
+		color: var(--swatch-tokyo-night);
+	}
+	.theme-swatch[data-theme-id='grimoire'][aria-pressed='true'] {
+		color: var(--swatch-grimoire);
+	}
+	.theme-swatch[data-theme-id='konsole'][aria-pressed='true'] {
+		color: var(--swatch-konsole);
 	}
 </style>

@@ -20,11 +20,6 @@
 	--color-bar-bg: rgba(22, 22, 30, 0.9);
 	--color-scheme: dark;
 
-	/* theme swatch colors — exposed so ThemeSwitcher can read them via var() */
-	--swatch-tokyo-night: #7aa2f7;
-	--swatch-grimoire: #7c1d1d;
-	--swatch-konsole: #39ff14;
-
 	--font-sans:
 		"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
 		sans-serif;
@@ -52,6 +47,19 @@
 		--fs-stage-compact: 3.1rem;
 		--fs-stage-title: 2.05rem;
 	}
+}
+
+/* Theme swatch colors live on :root, not in @theme. Tailwind v4 only emits
+   variables that match a recognised namespace prefix (--color-*, --font-*,
+   etc.) — anything else is silently dropped, which used to leave the
+   ThemeSwitcher rendering empty circles. */
+:root {
+	--swatch-tokyo-night: #7aa2f7;
+	--swatch-tokyo-night-deep: #1a1b26;
+	--swatch-grimoire: #7c1d1d;
+	--swatch-grimoire-paper: #f4ecdc;
+	--swatch-konsole: #39ff14;
+	--swatch-konsole-deep: #000000;
 }
 
 /* Grimoire — parchment / ink. Light theme designed for outdoor Deck use. */
@@ -688,14 +696,15 @@ body::after {
 	width: 18px;
 	height: 18px;
 	border-radius: 50%;
-	background: var(--swatch);
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	border: none;
 	cursor: pointer;
 	padding: 0;
 	position: relative;
 	transition:
-		transform 0.15s,
-		box-shadow 0.2s;
+		transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+		box-shadow 0.22s ease,
+		filter 0.22s ease;
+	filter: saturate(0.85);
 }
 /* expanded 36×36 tap area without enlarging visual */
 .theme-swatch::before {
@@ -706,19 +715,18 @@ body::after {
 }
 @media (hover: hover) and (pointer: fine) {
 	.theme-swatch:hover {
-		transform: scale(1.12);
+		transform: scale(1.15);
+		filter: saturate(1.1);
 	}
 }
 .theme-swatch:active {
-	transform: scale(0.88);
+	transform: scale(0.9);
 }
 .theme-swatch[aria-pressed="true"] {
-	box-shadow:
-		0 0 0 2px var(--color-bg),
-		0 0 0 3.5px var(--swatch);
+	filter: saturate(1.05);
 }
 .theme-swatch:focus-visible {
-	outline: 2px solid var(--swatch);
+	outline: 2px solid var(--color-accent);
 	outline-offset: 3px;
 }
 
