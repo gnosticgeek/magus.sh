@@ -6,6 +6,12 @@ import icon from 'astro-icon';
 
 import cloudflare from '@astrojs/cloudflare';
 
+/* `astro dev` under the Cloudflare adapter's vite-plugin runner currently throws
+   "module is not defined" because Miniflare can't load Astro's dynamic page
+   imports as ESM. The site is fully static (all pages prerender), so the
+   adapter is only needed for `build` / `preview` / `deploy`. Skip it for `dev`. */
+const isDev = process.env.npm_lifecycle_event === 'dev';
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://magus.sh',
@@ -19,5 +25,5 @@ export default defineConfig({
       plugins: [tailwindcss()],
 	},
 
-  adapter: cloudflare(),
+  adapter: isDev ? undefined : cloudflare(),
 });

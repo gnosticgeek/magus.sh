@@ -1,7 +1,8 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { Icon } from 'astro-icon/components';
-import type { PeekDetail } from '../lib/types';
+import type { CardData, PeekDetail } from '../lib/types';
+import { serializeCardData } from '../lib/card-data';
 
 interface Props {
 	entry: CollectionEntry<'commands'>;
@@ -44,6 +45,18 @@ const peekData: PeekDetail = {
 	deckOnly: data.deck_only,
 };
 
+const cardData: CardData = {
+	id: entry.id,
+	section: sectionKey,
+	category: data.category,
+	cmd: combinedCommand,
+	title: data.title,
+	danger: data.danger,
+	deckOnly: data.deck_only,
+	requiresDecky,
+};
+const cardAttrs = serializeCardData(cardData);
+
 const initial = data.title.replace(/[^A-Za-z0-9]/, '').charAt(0).toUpperCase() || '·';
 const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 	.join(' ')
@@ -67,14 +80,7 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 		<input
 			type="checkbox"
 			class="dx-check card-checkbox"
-			data-id={entry.id}
-			data-section={sectionKey}
-			data-category={data.category}
-			data-cmd={combinedCommand}
-			data-title={data.title}
-			data-danger={data.danger}
-			data-deck-only={data.deck_only ? 'true' : 'false'}
-			data-requires-decky={requiresDecky ? 'true' : 'false'}
+			{...cardAttrs}
 			aria-label={`Select ${data.title}`}
 		/>
 		<div class="card-copy min-w-0">
@@ -171,131 +177,8 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 </article>
 
 <script>
-	import type { PeekDetail } from '../lib/types';
-
-	const HINT_KEY = 'magus:card-hint-dismissed';
-	const PEEK_EVENT = 'command-peek:open';
-
-	const readPayload = (card: Element): PeekDetail | null => {
-		const node = card.querySelector<HTMLScriptElement>('script[data-payload="peek"]');
-		if (!node?.textContent) return null;
-		try {
-			return JSON.parse(node.textContent) as PeekDetail;
-		} catch {
-			return null;
-		}
-	};
-
-	document.querySelectorAll<HTMLButtonElement>('.undo-toggle').forEach((btn) => {
-		btn.addEventListener('click', (e) => {
-			e.stopPropagation();
-			const article = btn.closest('article');
-			const content = article?.querySelector<HTMLElement>('.undo-content');
-			if (!content) return;
-			const open = !content.classList.contains('hidden');
-			content.classList.toggle('hidden', open);
-			btn.setAttribute('aria-expanded', String(!open));
-		});
-	});
-
-	/* whole-header tap proxy — clicking the header toggles the checkbox */
-	document.querySelectorAll<HTMLElement>('.card .tap-target').forEach((target) => {
-		target.addEventListener('click', (e) => {
-			const el = e.target as HTMLElement;
-			if (el.closest('input, a, button')) return;
-			const checkbox = target.querySelector<HTMLInputElement>('input.card-checkbox');
-			if (!checkbox) return;
-			checkbox.checked = !checkbox.checked;
-			checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-			if ('vibrate' in navigator) navigator.vibrate?.(8);
-			dismissHint();
-		});
-	});
-
-	/* Any "review" trigger → open CommandPeek dialog */
-	document.querySelectorAll<HTMLButtonElement>('.view-cmd-glyph, .view-cmd-preview').forEach((btn) => {
-		btn.addEventListener('click', (e) => {
-			e.stopPropagation();
-			const card = btn.closest('article');
-			if (!card) return;
-			const detail = readPayload(card);
-			if (!detail) return;
-			document.dispatchEvent(new CustomEvent(PEEK_EVENT, { detail }));
-		});
-	});
-
-	/* Long-press a card to peek without ticking the checkbox.
-	   Cancels on movement > 8px or pointerup before threshold. */
-	const LONG_PRESS_MS = 500;
-	document.querySelectorAll<HTMLElement>('.card').forEach((card) => {
-		let timer: number | undefined;
-		let startX = 0;
-		let startY = 0;
-		let armed = false;
-		let fired = false;
-
-		const cancel = () => {
-			if (timer) window.clearTimeout(timer);
-			timer = undefined;
-			armed = false;
-		};
-
-		card.addEventListener('pointerdown', (e) => {
-			if (e.pointerType !== 'touch') return;
-			const target = e.target as HTMLElement;
-			if (target.closest('input, a, button, .view-cmd-preview, .view-cmd-glyph')) return;
-			armed = true;
-			fired = false;
-			startX = e.clientX;
-			startY = e.clientY;
-			timer = window.setTimeout(() => {
-				if (!armed) return;
-				const detail = readPayload(card);
-				if (!detail) return;
-				document.dispatchEvent(new CustomEvent(PEEK_EVENT, { detail }));
-				if ('vibrate' in navigator) navigator.vibrate?.(16);
-				fired = true;
-			}, LONG_PRESS_MS);
-		});
-
-		card.addEventListener('pointermove', (e) => {
-			if (!armed) return;
-			if (Math.hypot(e.clientX - startX, e.clientY - startY) > 8) cancel();
-		});
-
-		const swallow = (e: Event) => {
-			if (fired) {
-				e.preventDefault();
-				e.stopPropagation();
-				fired = false;
-			}
-			cancel();
-		};
-
-		card.addEventListener('pointerup', swallow);
-		card.addEventListener('pointercancel', cancel);
-		card.addEventListener('click', (e) => {
-			if (fired) {
-				e.preventDefault();
-				e.stopPropagation();
-				fired = false;
-			}
-		}, true);
-	});
-
-	/* first-visit "tap to pick" hint — shown only on the first card */
-	function dismissHint() {
-		document.documentElement.classList.remove('show-card-hint');
-		try {
-			localStorage.setItem(HINT_KEY, '1');
-		} catch {}
-	}
-
-	try {
-		if (!localStorage.getItem(HINT_KEY)) {
-			document.documentElement.classList.add('show-card-hint');
-		}
-	} catch {}
+	import { initCommandCards } from '../lib/client/command-cards';
+	initCommandCards();
 </script>
 
 <style>

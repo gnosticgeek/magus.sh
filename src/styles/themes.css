@@ -1,0 +1,54 @@
+/* Theme swatch colors live on :root, not in @theme. Tailwind v4 only emits
+   variables that match a recognised namespace prefix (--color-*, --font-*,
+   etc.) — anything else is silently dropped, which used to leave the
+   ThemeSwitcher rendering empty circles. */
+:root {
+	--swatch-tokyo-night: #7aa2f7;
+	--swatch-tokyo-night-deep: #1a1b26;
+	--swatch-grimoire: #7c1d1d;
+	--swatch-grimoire-paper: #f4ecdc;
+	--swatch-konsole: #39ff14;
+	--swatch-konsole-deep: #000000;
+}
+
+/* Grimoire — parchment / ink. Light theme designed for outdoor Deck use. */
+:root[data-theme="grimoire"] {
+	--color-bg: #f4ecdc;
+	--color-bg-elevated: #ece1c8;
+	--color-surface: #e3d6b8;
+	--color-border: #c8b591;
+	--color-border-strong: #a8916a;
+	--color-text: #231a14;
+	--color-text-muted: #5b4a36;
+	--color-text-dim: #8a7559;
+	--color-accent: #7c1d1d;
+	--color-accent-dim: #5c1313;
+	--color-accent-soft: rgba(124, 29, 29, 0.14);
+	--color-warn: #a98b3e;
+	--color-danger: #8b2c1f;
+	--color-glow-primary: rgba(124, 29, 29, 0.06);
+	--color-glow-secondary: rgba(169, 139, 62, 0.05);
+	--color-bar-bg: rgba(236, 225, 200, 0.9);
+	--color-scheme: light;
+}
+
+/* Konsole — high-contrast pure terminal. Sunlight + a11y mode. */
+:root[data-theme="konsole"] {
+	--color-bg: #000000;
+	--color-bg-elevated: #0a0a0a;
+	--color-surface: #141414;
+	--color-border: #2a2a2a;
+	--color-border-strong: #4a4a4a;
+	--color-text: #ffffff;
+	--color-text-muted: #d4d4d4;
+	--color-text-dim: #8a8a8a;
+	--color-accent: #39ff14;
+	--color-accent-dim: #2bd00f;
+	--color-accent-soft: rgba(57, 255, 20, 0.14);
+	--color-warn: #ffeb3b;
+	--color-danger: #ff5252;
+	--color-glow-primary: rgba(57, 255, 20, 0.1);
+	--color-glow-secondary: rgba(255, 235, 59, 0.06);
+	--color-bar-bg: rgba(10, 10, 10, 0.94);
+	--color-scheme: dark;
+}

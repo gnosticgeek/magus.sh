@@ -133,7 +133,7 @@
 <script>
 	import type { PeekDetail } from '../lib/types';
 	import { copyWithFeedback } from '../lib/clipboard';
-	import { lockBodyScroll } from '../lib/body-scroll-lock';
+	import { createSheetDialog } from '../lib/client/sheet-dialog';
 
 	const dialog = document.getElementById('command-peek') as HTMLDialogElement | null;
 	if (dialog) {
@@ -144,12 +144,11 @@
 		const undoWrap = dialog.querySelector<HTMLElement>('.peek-undo');
 		const dangerBadge = dialog.querySelector<HTMLElement>('.peek-badge-danger');
 		const deckBadge = dialog.querySelector<HTMLElement>('.peek-badge-deck');
-		const closeBtn = dialog.querySelector<HTMLButtonElement>('[data-action="close"]');
 		const copyBtn = dialog.querySelector<HTMLButtonElement>('[data-action="copy"]');
 		const copyLabel = dialog.querySelector<HTMLElement>('.sheet-action-label');
-		if (title && summary && code && undoCode && undoWrap && dangerBadge && deckBadge && closeBtn && copyBtn && copyLabel) {
+		if (title && summary && code && undoCode && undoWrap && dangerBadge && deckBadge && copyBtn && copyLabel) {
 			let currentCmd = '';
-			let unlockScroll: (() => void) | undefined;
+			const sheet = createSheetDialog(dialog);
 
 			const open = (detail: PeekDetail) => {
 				currentCmd = detail.cmd;
@@ -173,35 +172,9 @@
 				deckBadge.textContent = 'Deck only';
 				deckBadge.hidden = !detail.deckOnly;
 
-				unlockScroll = lockBodyScroll();
+				sheet.open();
 				dialog.showModal();
 			};
-
-			const close = () => {
-				dialog.classList.add('closing');
-				const onEnd = () => {
-					dialog.classList.remove('closing');
-					dialog.close();
-					dialog.removeEventListener('animationend', onEnd);
-					unlockScroll?.();
-					unlockScroll = undefined;
-				};
-				dialog.addEventListener('animationend', onEnd);
-				setTimeout(() => {
-					if (dialog.classList.contains('closing')) onEnd();
-				}, 320);
-			};
-
-			closeBtn.addEventListener('click', close);
-
-			dialog.addEventListener('click', (e) => {
-				if (e.target === dialog) close();
-			});
-
-			dialog.addEventListener('cancel', (e) => {
-				e.preventDefault();
-				close();
-			});
 
 			copyBtn.addEventListener('click', () => {
 				copyWithFeedback(currentCmd, copyBtn, copyLabel, 10);

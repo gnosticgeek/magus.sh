@@ -1,5 +1,6 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { STAGE_IDS, type Stage } from './lib/stages';
 
 const command = z.object({
 	run: z.string(),
@@ -20,7 +21,7 @@ const commands = defineCollection({
 	}),
 	schema: z.object({
 		title: z.string(),
-		category: z.enum(['setup', 'install', 'optimise', 'customise', 'retro']),
+		category: z.enum(STAGE_IDS as unknown as readonly [Stage, ...Stage[]]),
 		order: z.number().default(100),
 		summary: z.string(),
 		commands: z.array(command).min(1),
