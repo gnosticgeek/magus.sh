@@ -9,7 +9,6 @@ import ScriptSheet from '../components/ScriptSheet.astro';
 import CommandPeek from '../components/CommandPeek.astro';
 import CommandSearch from '../components/CommandSearch.astro';
 import ControllerHints from '../components/ControllerHints.astro';
-import InstallCard from '../components/InstallCard.astro';
 import { STAGES } from '../lib/stages';
 
 const all = await getCollection('commands');
@@ -70,8 +69,6 @@ spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 		</aside>
 
 		<div class="page-content">
-			<InstallCard command="curl -fsSL https://magus.sh/run | bash" />
-
 		{
 			STAGES.map((stage) => (
 				<SectionBlock
