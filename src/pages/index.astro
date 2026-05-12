@@ -1,392 +1,631 @@
 ---
-import { getCollection } from 'astro:content';
 import { Icon } from 'astro-icon/components';
 import Base from '../layouts/Base.astro';
-import UpdateBanner from '../components/UpdateBanner.astro';
-import SectionBlock from '../components/SectionBlock.astro';
-import SelectionBar from '../components/SelectionBar.astro';
-import ScriptSheet from '../components/ScriptSheet.astro';
-import CommandPeek from '../components/CommandPeek.astro';
-import CommandSearch from '../components/CommandSearch.astro';
-import ControllerHints from '../components/ControllerHints.astro';
-import InstallCard from '../components/InstallCard.astro';
 import { STAGES } from '../lib/stages';
 
-const all = await getCollection('commands');
-all.sort((a, b) => a.data.order - b.data.order);
+const INSTALL_CMD = 'curl -fsSL https://magus.sh/run | bash';
 
-const entriesByStage = new Map(
-	STAGES.map((s) => [s.id, all.filter((e) => e.data.category === s.id)]),
-);
-
-const spellbookEntries = await getCollection('spellbook');
-spellbookEntries.sort((a, b) => a.data.order - b.data.order);
+const STAGE_SIGILS: Record<string, { char: string; name: string }> = {
+	setup: { char: '\u{1F703}', name: 'Earth' },
+	install: { char: '\u{1F701}', name: 'Air' },
+	optimise: { char: '\u{1F702}', name: 'Fire' },
+	customise: { char: '\u{1F704}', name: 'Water' },
+	retro: { char: '☉', name: 'Sun' },
+};
 ---
 
-<Base>
-	<div class="page-shell relative mx-auto max-w-7xl px-5 pt-5 sm:pt-6">
-		<aside class="page-rail rise rise-2" aria-label="Magus controls">
-			<header class="rail-brand">
-				<h1 class="rail-title" style="font-family: var(--font-serif);">
-					SteamOS, <em class="rail-title-em">tuned fast.</em>
+<Base
+	title="magus.sh — a cantrip for SteamOS"
+	description="A curated, copy-paste setup for Steam Deck and SteamOS. Wraps CryoUtilities, Decky Loader, ProtonUp-Qt, Heroic and friends into a single idempotent script."
+>
+	<div class="hp">
+		<main class="hp-hero">
+			<section class="hp-main">
+				<p class="hp-eyebrow rise rise-1">
+					<span class="hp-eyebrow-dot" aria-hidden="true"></span>
+					<span>A cantrip for SteamOS</span>
+					<span class="hp-eyebrow-ver">/ v0.1 alpha</span>
+				</p>
+
+				<h1 class="hp-headline rise rise-2">
+					A fresh install.<br />
+					<em>Transmuted</em> in ten minutes.
 				</h1>
-				<p class="rail-sub">Pick. Copy. Paste.</p>
-			</header>
 
-			<div class="rail-tools">
-				<CommandSearch />
-			</div>
+				<p class="hp-lede rise rise-3">
+					One paste, opinionated defaults. <strong>magus.sh</strong> wraps the
+					tools the community already trusts — CryoUtilities, Decky,
+					ProtonUp&#8209;Qt, Heroic — into a single idempotent script.
+				</p>
 
-			<nav
-				class="stage-tabs items-center text-sm"
-				aria-label="Stages"
-				role="tablist"
-			>
-				{
-					STAGES.map((c) => (
-						<a
-							href={`#${c.id}`}
-							role="tab"
-							data-stage={c.id}
-							data-stage-tab-id={c.id}
-							aria-controls={c.id}
-							aria-selected="false"
-							class="stage-tab group relative inline-flex items-center gap-3 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface)] py-1.5 pl-3 pr-4 text-[color:var(--color-text)] hover:border-[color:var(--color-accent)] aria-selected:border-[color:var(--color-accent)] aria-selected:bg-[color:var(--color-accent)]/5"
+				<p class="hp-kicker rise rise-3">
+					No installer to babysit. No telemetry. Pure paste.
+				</p>
+
+				<div class="hp-term rise rise-4">
+					<div class="hp-term-head">
+						<div class="hp-term-tag">
+							Linux &amp; SteamOS
+							<span class="sep">·</span>
+							<span class="muted">paste in Konsole</span>
+						</div>
+						<span class="hp-term-pill">~ 10 min</span>
+					</div>
+					<div class="hp-term-body">
+						<div class="hp-term-cmd">
+							<span class="prompt">$</span><code data-hp-install-cmd>{INSTALL_CMD}</code>
+						</div>
+						<button
+							class="hp-copy-btn"
+							type="button"
+							data-hp-install-copy
+							aria-label="Copy install command"
 						>
-							<span class="stage-tab-progress" aria-hidden="true"></span>
-							<span class="font-mono text-[10px] tracking-wider text-[color:var(--color-text-dim)] transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
-								{c.num}
-							</span>
-							<span class="stage-tab-label font-medium transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
-								{c.short}
-							</span>
-							<span class="stage-tab-count font-mono text-[10px] text-[color:var(--color-text-dim)] tabular-nums" data-stage-count={c.id}></span>
-						</a>
-					))
-				}
-			</nav>
+							<svg
+								class="hp-copy-icon"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"
+							>
+								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+								<path
+									d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+								></path>
+							</svg>
+							<span data-hp-install-copy-label>Copy</span>
+						</button>
+					</div>
+				</div>
 
-			<UpdateBanner />
-		</aside>
+				<nav class="hp-secondary rise rise-5" aria-label="Secondary actions">
+					<a class="hp-link" href="/setup">
+						<span class="glyph">/</span>
+						<span>Pick &amp; copy by hand</span>
+						<span class="arrow" aria-hidden="true">→</span>
+					</a>
+					<a class="hp-link" href="/run">
+						<span class="glyph">›_</span>
+						<span>Read the script</span>
+					</a>
+					<a
+						class="hp-link"
+						href="https://github.com/gnosticgeek/magus.sh"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<Icon name="simple-icons:github" class="hp-link-icon" />
+						<span>Source</span>
+					</a>
+				</nav>
+			</section>
 
-		<div class="page-content">
-			<InstallCard command="curl -fsSL https://magus.sh/run | bash" />
+			<aside class="hp-ladder rise rise-3" id="ladder" aria-label="The five stages">
+				<div class="hp-ladder-head">
+					<span class="label">The five stages</span>
+					<span class="count">
+						{STAGES[0].num} — {STAGES[STAGES.length - 1].num}
+					</span>
+				</div>
 
-		{
-			STAGES.map((stage) => (
-				<SectionBlock
-					id={stage.id}
-					number={stage.num}
-					stageLabel={stage.stageLabel}
-					title={stage.title}
-					tagline={stage.tagline}
-					entries={entriesByStage.get(stage.id) ?? []}
-					rise={stage.rise}
-					variant={'variant' in stage ? stage.variant : undefined}
-				/>
-			))
-		}
+				<ol class="hp-ladder-list">
+					{
+						STAGES.map((stage) => {
+							const sigil = STAGE_SIGILS[stage.id];
+							return (
+								<li class="hp-ladder-item">
+									<a class="hp-ladder-row" href={`/setup#${stage.id}`}>
+										<span class="hp-ladder-num">{stage.num}</span>
+										<span
+											class="hp-ladder-sigil"
+											aria-label={sigil ? `${sigil.name} sigil` : undefined}
+										>
+											{sigil?.char}
+										</span>
+										<span class="hp-ladder-body">
+											<h3 class="hp-ladder-title">{stage.title}</h3>
+											<p class="hp-ladder-sub">{stage.tagline}</p>
+										</span>
+										<span class="hp-ladder-arrow" aria-hidden="true">→</span>
+									</a>
+								</li>
+							);
+						})
+					}
+				</ol>
 
-		<details class="rise rise-5 spellbook mt-16" aria-labelledby="spellbook-heading">
-			<summary class="spellbook-summary">
-				<span
-					class="spellbook-kicker font-mono text-[10px] uppercase tracking-[0.28em] text-[color:var(--color-accent-dim)]"
-				>
-					/ future spells
-				</span>
-				<span class="spellbook-rule h-px flex-1"></span>
-				<h2
-					id="spellbook-heading"
-					class="spellbook-heading"
-				>
-					Still being conjured.
-				</h2>
-				<span class="spellbook-meta font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-text-dim)]">
-					{spellbookEntries.length} drafts
-				</span>
-				<span class="spellbook-marker" aria-hidden="true">+</span>
-			</summary>
-
-			<ul class="spellbook-grid mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-				{
-					spellbookEntries.map((spell) => (
-						<li class="spell-card" data-status={spell.data.status}>
-							<div class="spell-card-head">
-								<Icon name={spell.data.icon} class="spell-card-icon" />
-								<span class="spell-status">
-									<span class="spell-status-dot" aria-hidden="true" />
-									{spell.data.status}
-								</span>
-							</div>
-							<h3 class="spell-card-title">{spell.data.title}</h3>
-							<p class="spell-card-teaser">{spell.data.teaser}</p>
-						</li>
-					))
-				}
-			</ul>
-		</details>
-		</div>
+				<div class="hp-ladder-foot">
+					<span class="all">All five · 28 commands</span>
+					<a class="alacarte" href="/setup">pick à la carte →</a>
+				</div>
+			</aside>
+		</main>
 	</div>
-
-	<SelectionBar />
-	<ScriptSheet />
-	<CommandPeek />
-	<ControllerHints />
 </Base>
 
 <script>
-	import { isStage, type Stage } from '../lib/stages';
+	const card = document.querySelector<HTMLElement>('.hp-term');
+	const btn = card?.querySelector<HTMLButtonElement>('[data-hp-install-copy]');
+	const target = card?.querySelector<HTMLElement>('[data-hp-install-cmd]');
+	const btnLabel = card?.querySelector<HTMLElement>('[data-hp-install-copy-label]');
 
-	const reduced = () =>
-		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-	const runActivate = (stage: Stage, opts: { scroll?: boolean }) => {
-		document
-			.querySelectorAll<HTMLElement>('section.stage')
-			.forEach((sec) => {
-				sec.hidden = sec.id !== stage;
-			});
-		document
-			.querySelectorAll<HTMLAnchorElement>('a[role="tab"][data-stage]')
-			.forEach((tab) => {
-				tab.setAttribute(
-					'aria-selected',
-					tab.dataset.stage === stage ? 'true' : 'false',
-				);
-			});
-		if (opts.scroll) {
-			requestAnimationFrame(() => {
-				document.getElementById(stage)?.scrollIntoView({
-					behavior: reduced() ? 'auto' : 'smooth',
-					block: 'start',
-				});
-			});
-		}
-	};
-
-	const activate = (stage: Stage, opts: { scroll?: boolean } = {}) => {
-		/* Don't switch stages while a search is active — search shows all stages. */
-		if (document.documentElement.classList.contains('searching')) {
-			runActivate(stage, opts);
-			return;
-		}
-		/* Use View Transitions when available for a soft cross-fade between stages. */
-		const startVT = (
-			document as Document & {
-				startViewTransition?: (cb: () => void) => unknown;
+	if (btn && target && btnLabel) {
+		btn.addEventListener('click', async () => {
+			const text = target.textContent?.trim() ?? '';
+			if (!text) return;
+			try {
+				await navigator.clipboard.writeText(text);
+				btn.dataset.copied = 'true';
+				btnLabel.textContent = 'Copied';
+				setTimeout(() => {
+					delete btn.dataset.copied;
+					btnLabel.textContent = 'Copy';
+				}, 1400);
+			} catch {
+				btnLabel.textContent = 'Press ⌘C';
+				setTimeout(() => {
+					btnLabel.textContent = 'Copy';
+				}, 1400);
 			}
-		).startViewTransition;
-		if (startVT && !reduced()) {
-			startVT.call(document, () => runActivate(stage, opts));
-		} else {
-			runActivate(stage, opts);
-		}
-	};
-
-	const fromHash = (): Stage => {
-		const h = location.hash.slice(1);
-		return isStage(h) ? h : 'setup';
-	};
-
-	document
-		.querySelectorAll<HTMLAnchorElement>('a[role="tab"][data-stage]')
-		.forEach((tab) => {
-			tab.addEventListener('click', (e) => {
-				e.preventDefault();
-				const stage = tab.dataset.stage;
-				if (!stage || !isStage(stage)) return;
-				const newHash = `#${stage}`;
-				if (location.hash !== newHash) {
-					history.pushState(null, '', newHash);
-				}
-				activate(stage, { scroll: true });
-			});
 		});
-
-	window.addEventListener('hashchange', () => {
-		activate(fromHash(), { scroll: true });
-	});
-
-	activate(fromHash());
+	}
 </script>
 
 <style>
-	/* view transition: dissolve stages on tab switch */
-	::view-transition-old(stages),
-	::view-transition-new(stages) {
-		animation-duration: 0.28s;
-	}
-	section.stage:not([hidden]) {
-		view-transition-name: stages;
-	}
-
-	.spellbook {
+	/* ----- shell --------------------------------------------------- */
+	.hp {
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 22px clamp(20px, 4vw, 40px) 64px;
 		position: relative;
-	}
-	.spellbook[open] .spellbook-marker {
-		transform: rotate(45deg);
-	}
-	.spellbook-summary {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		list-style: none;
-		cursor: pointer;
-		padding: 6px 2px;
-		border-radius: 8px;
-		transition: background-color 0.2s ease;
-	}
-	.spellbook-summary::-webkit-details-marker {
-		display: none;
-	}
-	.spellbook-summary:hover {
-		background: color-mix(in oklab, var(--color-surface) 35%, transparent);
-	}
-	.spellbook-heading {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-weight: 400;
-		font-size: 1rem;
-		line-height: 1.1;
-		letter-spacing: -0.005em;
-		color: var(--color-text);
-		margin: 0;
-	}
-	.spellbook-rule {
-		flex: 1;
-		min-width: 24px;
-		background: linear-gradient(
-			to right,
-			var(--color-border),
-			color-mix(in oklab, var(--color-accent) 25%, transparent),
-			transparent
-		);
-	}
-	.spellbook-marker {
-		font-family: var(--font-mono);
-		font-size: 14px;
-		line-height: 1;
-		color: var(--color-accent);
-		transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-		flex-shrink: 0;
-	}
-
-	.spellbook-grid {
-		--card-pad: 1rem;
-	}
-
-	.spell-card {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-		gap: 0.55rem;
-		padding: 0.95rem 1rem 1rem;
-		border-radius: 10px;
-		border: 1px dashed var(--color-border);
-		background: color-mix(in oklab, var(--color-bg-elevated) 55%, transparent);
-		transition:
-			border-color 0.22s ease,
-			transform 0.22s ease,
-			background 0.22s ease;
-		overflow: hidden;
 		isolation: isolate;
-	}
-	.spell-card::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background: radial-gradient(
-			circle at 100% 0%,
-			color-mix(in oklab, var(--color-accent) 12%, transparent) 0%,
-			transparent 55%
-		);
-		opacity: 0;
-		transition: opacity 0.22s ease;
-		pointer-events: none;
-		z-index: -1;
-	}
-	.spell-card:hover {
-		border-color: color-mix(in oklab, var(--color-accent) 70%, var(--color-border));
-		transform: translateY(-2px);
-		background: color-mix(in oklab, var(--color-bg-elevated) 75%, transparent);
-	}
-	.spell-card:hover::before {
-		opacity: 1;
+		background-image:
+			radial-gradient(60rem 40rem at 18% 22%, var(--color-glow-primary), transparent 70%),
+			radial-gradient(50rem 36rem at 82% 10%, var(--color-glow-secondary), transparent 75%);
 	}
 
-	.spell-card-head {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem;
+	/* ----- hero ---------------------------------------------------- */
+	.hp-hero {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 320px;
+		gap: 80px;
+		margin-top: clamp(48px, 8vw, 96px);
+		align-items: start;
 	}
-	.spell-card-icon {
-		width: 18px;
-		height: 18px;
-		color: var(--color-accent);
-		opacity: 0.78;
-		transition: opacity 0.22s ease, transform 0.22s ease;
-	}
-	.spell-card:hover .spell-card-icon {
-		opacity: 1;
-		transform: scale(1.08);
+	@media (max-width: 1024px) {
+		.hp-hero {
+			grid-template-columns: 1fr;
+			gap: 56px;
+		}
 	}
 
-	.spell-status {
+	.hp-main {
+		min-width: 0;
+	}
+
+	/* ----- eyebrow ------------------------------------------------- */
+	.hp-eyebrow {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.4rem;
+		gap: 14px;
+		margin: 0 0 28px;
 		font-family: var(--font-mono);
-		font-size: 9px;
+		font-size: 11px;
 		text-transform: uppercase;
-		letter-spacing: 0.2em;
+		letter-spacing: 0.18em;
 		color: var(--color-text-dim);
 	}
-	.spell-status-dot {
-		width: 6px;
-		height: 6px;
-		border-radius: 999px;
-		background: var(--color-text-dim);
-	}
-	[data-status='planned'] .spell-status-dot {
+	.hp-eyebrow-dot {
+		width: 4px;
+		height: 4px;
+		border-radius: 50%;
 		background: var(--color-accent);
-		box-shadow: 0 0 6px color-mix(in oklab, var(--color-accent) 55%, transparent);
+		opacity: 0.7;
 	}
-	[data-status='planned'] .spell-status {
-		color: color-mix(in oklab, var(--color-accent) 70%, var(--color-text-dim));
-	}
-	[data-status='research'] .spell-status-dot {
-		background: var(--color-warn);
-		box-shadow: 0 0 6px color-mix(in oklab, var(--color-warn) 55%, transparent);
-	}
-	[data-status='research'] .spell-status {
-		color: color-mix(in oklab, var(--color-warn) 60%, var(--color-text-dim));
-	}
-	[data-status='draft'] .spell-status-dot {
-		background: var(--color-text-dim);
-	}
-
-	.spell-card-title {
-		font-family: var(--font-sans);
-		font-size: 0.98rem;
-		font-weight: 500;
-		line-height: 1.2;
-		color: var(--color-text);
-		letter-spacing: -0.005em;
-	}
-	.spell-card-teaser {
-		font-size: 0.8rem;
-		line-height: 1.5;
+	.hp-eyebrow-ver {
 		color: var(--color-text-muted);
 	}
 
+	/* ----- headline — Geist Mono w/ Fraunces italic accent --------- */
+	.hp-headline {
+		margin: 0;
+		font-family: 'Geist Mono', var(--font-mono);
+		font-weight: 500;
+		font-size: clamp(2.6rem, 5.2vw, 4.4rem);
+		line-height: 1.02;
+		letter-spacing: -0.045em;
+		color: var(--color-text);
+		text-wrap: balance;
+		max-width: 18ch;
+		font-feature-settings: 'ss01', 'ss02', 'cv11', 'zero';
+	}
+	.hp-headline em {
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-weight: 400;
+		font-size: 1.18em;
+		font-variation-settings: 'opsz' 144, 'SOFT' 50, 'WONK' 1;
+		letter-spacing: -0.02em;
+		padding: 0 0.06em 0 0.04em;
+		line-height: 0.85;
+		/* alchemical sweep: accent → warn → danger — same triad the
+		   footer wordmark uses, so it adapts per theme automatically. */
+		color: var(--color-accent);
+		background: linear-gradient(
+			100deg,
+			var(--color-accent) 0%,
+			var(--color-warn) 55%,
+			var(--color-danger) 100%
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		filter: drop-shadow(
+			0 0 24px color-mix(in oklab, var(--color-accent) 22%, transparent)
+		);
+	}
+
+	/* ----- lede + kicker ------------------------------------------ */
+	.hp-lede {
+		font-family: var(--font-sans);
+		font-size: 1.0625rem;
+		line-height: 1.55;
+		color: var(--color-text-muted);
+		max-width: 48ch;
+		margin: 34px 0 0;
+		text-wrap: pretty;
+	}
+	.hp-lede strong {
+		color: var(--color-text);
+		font-weight: 500;
+	}
+	.hp-kicker {
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-size: 1rem;
+		color: var(--color-text-dim);
+		margin: 18px 0 0;
+		letter-spacing: -0.005em;
+	}
+
+	/* ----- terminal card ------------------------------------------ */
+	.hp-term {
+		margin-top: 46px;
+		max-width: 720px;
+		border: 1px solid var(--color-border);
+		background: color-mix(in oklab, var(--color-bg-elevated) 75%, transparent);
+		border-radius: 12px;
+		padding: 18px 20px 16px;
+		position: relative;
+	}
+	.hp-term::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 16px;
+		right: 16px;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			var(--color-accent),
+			transparent
+		);
+		opacity: 0.3;
+	}
+	.hp-term-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 14px;
+		gap: 12px;
+	}
+	.hp-term-tag {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--color-text-dim);
+		text-transform: uppercase;
+		letter-spacing: 0.14em;
+	}
+	.hp-term-tag .sep {
+		opacity: 0.45;
+		margin: 0 8px;
+	}
+	.hp-term-tag .muted {
+		color: var(--color-text-dim);
+		text-transform: none;
+		letter-spacing: 0;
+		font-style: italic;
+	}
+	.hp-term-pill {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--color-text-muted);
+		letter-spacing: 0.08em;
+		padding: 4px 9px;
+		border-radius: 999px;
+		border: 1px solid var(--color-border);
+		background: color-mix(in oklab, var(--color-bg) 50%, transparent);
+		white-space: nowrap;
+	}
+	.hp-term-body {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 14px 16px;
+		border-radius: 10px;
+		background: color-mix(in oklab, var(--color-bg) 75%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
+	}
+	.hp-term-cmd {
+		font-family: var(--font-mono);
+		font-size: 18px;
+		font-weight: 500;
+		color: var(--color-text);
+		letter-spacing: -0.005em;
+		overflow-x: auto;
+		white-space: nowrap;
+		min-width: 0;
+		scrollbar-width: none;
+	}
+	.hp-term-cmd::-webkit-scrollbar {
+		display: none;
+	}
+	.hp-term-cmd .prompt {
+		color: var(--color-accent);
+		margin-right: 12px;
+	}
+	.hp-term-cmd code {
+		font-family: inherit;
+		font-size: inherit;
+		color: inherit;
+		background: none;
+		padding: 0;
+		border-radius: 0;
+	}
+
+	.hp-copy-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-text);
+		background: transparent;
+		border: 1px solid var(--color-border);
+		padding: 8px 12px;
+		border-radius: 8px;
+		cursor: pointer;
+		flex-shrink: 0;
+		transition:
+			border-color 0.2s ease,
+			color 0.2s ease,
+			background-color 0.2s ease;
+	}
+	.hp-copy-btn:hover {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+		background: var(--color-accent-soft);
+	}
+	.hp-copy-btn:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 3px;
+	}
+	.hp-copy-btn[data-copied='true'] {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+		background: var(--color-accent-soft);
+	}
+	.hp-copy-icon {
+		width: 13px;
+		height: 13px;
+	}
+
+	/* ----- secondary actions -------------------------------------- */
+	.hp-secondary {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 28px;
+		margin-top: 28px;
+	}
+	.hp-link {
+		font-family: var(--font-sans);
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		transition: color 0.2s ease;
+	}
+	.hp-link:hover {
+		color: var(--color-text);
+	}
+	.hp-link .glyph {
+		font-family: var(--font-mono);
+		color: var(--color-text-dim);
+		font-size: 12px;
+	}
+	.hp-link .arrow {
+		display: inline-block;
+		transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.hp-link:hover .arrow {
+		transform: translateX(3px);
+	}
+	.hp-link-icon {
+		width: 14px;
+		height: 14px;
+		color: var(--color-text-dim);
+	}
+	.hp-link:hover .hp-link-icon {
+		color: var(--color-text);
+	}
+
+	/* ----- right rail: stage ladder ------------------------------- */
+	.hp-ladder {
+		border-top: 1px solid var(--color-border);
+		padding-top: 22px;
+	}
+	.hp-ladder-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		margin-bottom: 18px;
+	}
+	.hp-ladder-head .label {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.18em;
+		color: var(--color-text-dim);
+	}
+	.hp-ladder-head .count {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		color: var(--color-text-dim);
+	}
+	.hp-ladder-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.hp-ladder-item {
+		border-top: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
+	}
+	.hp-ladder-item:first-child {
+		border-top: 0;
+	}
+	.hp-ladder-row {
+		display: grid;
+		grid-template-columns: 24px 18px 1fr auto;
+		column-gap: 12px;
+		padding: 16px 0;
+		align-items: baseline;
+		text-decoration: none;
+		color: inherit;
+		transition: padding-left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.hp-ladder-item:first-child .hp-ladder-row {
+		padding-top: 6px;
+	}
+	.hp-ladder-row:hover {
+		padding-left: 6px;
+	}
+	.hp-ladder-row:hover .hp-ladder-arrow {
+		color: var(--color-accent);
+		transform: translateX(4px);
+	}
+	.hp-ladder-num {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--color-text-dim);
+		letter-spacing: 0.04em;
+	}
+	.hp-ladder-sigil {
+		/* alchemical block (U+1F70x) renders best in the system serif/symbol
+		   fallback — JetBrains Mono doesn't carry these glyphs. */
+		font-family:
+			"Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols 2",
+			"DejaVu Sans", var(--font-serif);
+		font-size: 17px;
+		line-height: 1;
+		color: color-mix(in oklab, var(--color-text-muted) 70%, transparent);
+		text-align: center;
+		transform: translateY(0.06em);
+		transition: color 0.2s ease, opacity 0.2s ease;
+	}
+	.hp-ladder-row:hover .hp-ladder-sigil {
+		color: var(--color-accent);
+	}
+	.hp-ladder-body {
+		min-width: 0;
+	}
+	.hp-ladder-title {
+		font-family: var(--font-sans);
+		font-weight: 500;
+		font-size: 0.9375rem;
+		color: var(--color-text);
+		margin: 0;
+		line-height: 1.2;
+	}
+	.hp-ladder-sub {
+		font-family: var(--font-sans);
+		font-size: 0.8125rem;
+		color: var(--color-text-dim);
+		margin: 3px 0 0;
+		line-height: 1.4;
+	}
+	.hp-ladder-arrow {
+		font-family: var(--font-mono);
+		font-size: 14px;
+		color: var(--color-text-dim);
+		align-self: center;
+		transition:
+			color 0.2s ease,
+			transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	.hp-ladder-foot {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		border-top: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
+		padding-top: 14px;
+		margin-top: 4px;
+	}
+	.hp-ladder-foot .all {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+	}
+	.hp-ladder-foot .alacarte {
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-size: 13px;
+		color: var(--color-accent);
+		text-decoration: none;
+		letter-spacing: -0.005em;
+	}
+	.hp-ladder-foot .alacarte:hover {
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+
+	/* ----- gentle entry ------------------------------------------- */
+	@keyframes hp-rise {
+		from {
+			opacity: 0;
+			transform: translateY(14px);
+			filter: blur(5px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+			filter: blur(0);
+		}
+	}
+	.rise {
+		animation: hp-rise 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+	}
+	.rise-1 { animation-delay: 0.05s; }
+	.rise-2 { animation-delay: 0.15s; }
+	.rise-3 { animation-delay: 0.25s; }
+	.rise-4 { animation-delay: 0.35s; }
+	.rise-5 { animation-delay: 0.45s; }
 	@media (prefers-reduced-motion: reduce) {
-		.spellbook-sparkle,
-		.spell-card,
-		.spell-card-icon,
-		.spell-card::before {
+		.rise {
 			animation: none;
-			transition: none;
 		}
 	}
 </style>
