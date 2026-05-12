@@ -1,0 +1,2024 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { STAGES } from '../lib/stages';
+
+const all = await getCollection('commands');
+all.sort((a, b) => a.data.order - b.data.order);
+
+const stages = STAGES.map((s) => ({
+	id: s.id,
+	num: s.num,
+	short: s.short,
+	items: all
+		.filter((e) => e.data.category === s.id)
+		.map((e) => ({
+			id: e.id,
+			title: e.data.title,
+			summary: e.data.summary ?? '',
+			commands: (e.data.commands ?? []).map((c) => ({
+				run: c.run,
+				description: c.description ?? '',
+			})),
+		})),
+})).filter((s) => s.items.length > 0);
+
+const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
+---
+
+<Base
+	title="lab/tui — magus.sh"
+	description="Interactive prototype of the magus.sh TUI flow."
+>
+	<div class="lab">
+		<header class="lab-head">
+			<p class="lab-kicker">
+				<span class="kicker-dot" aria-hidden="true"></span>
+				<span>lab</span>
+				<span class="sep">·</span>
+				<span class="muted">not linked from anywhere — yet</span>
+			</p>
+			<h1 class="lab-title">
+				What does the <em>TUI</em> feel like?
+			</h1>
+			<p class="lab-lede">
+				A click-through prototype of the magus.sh terminal app. Use the
+				keyboard (or the rail under the window) — same hotkeys we'd ship.
+				Picks carry through to review, write, and run.
+			</p>
+		</header>
+
+		<div class="lab-layout">
+			<section class="lab-main">
+				<div class="term" data-term>
+					<div class="term-chrome">
+						<span class="lights" aria-hidden="true">
+							<i class="dot red"></i>
+							<i class="dot yel"></i>
+							<i class="dot grn"></i>
+						</span>
+						<span class="term-title" data-term-title>magus@deck — bash</span>
+						<span class="term-dims">80 × 24</span>
+					</div>
+
+					<div class="term-body" data-term-body>
+						<div class="screen" data-screen="splash"></div>
+						<div class="screen" data-screen="pick" hidden></div>
+						<div class="screen" data-screen="review" hidden></div>
+						<div class="screen" data-screen="write" hidden></div>
+						<div class="screen" data-screen="run" hidden></div>
+					</div>
+
+					<div class="term-status" data-term-status>
+						<kbd>←</kbd> <kbd>→</kbd> <span>step</span>
+						<span class="sep">·</span>
+						<kbd>↑</kbd> <kbd>↓</kbd> <span>move</span>
+						<span class="sep">·</span>
+						<kbd>enter</kbd> <span>open</span>
+						<span class="sep">·</span>
+						<kbd>r</kbd> <span>reset</span>
+					</div>
+				</div>
+
+				<ol class="flow" role="tablist" aria-label="TUI flow steps">
+					<li class="flow-item" data-jump="splash" role="tab" tabindex="0">
+						<span class="flow-num">01</span>
+						<span class="flow-name">splash</span>
+					</li>
+					<li class="flow-item" data-jump="pick" role="tab" tabindex="0">
+						<span class="flow-num">02</span>
+						<span class="flow-name">pick</span>
+					</li>
+					<li class="flow-item" data-jump="review" role="tab" tabindex="0">
+						<span class="flow-num">03</span>
+						<span class="flow-name">review</span>
+					</li>
+					<li class="flow-item" data-jump="write" role="tab" tabindex="0">
+						<span class="flow-num">04</span>
+						<span class="flow-name">write</span>
+					</li>
+					<li class="flow-item" data-jump="run" role="tab" tabindex="0">
+						<span class="flow-num">05</span>
+						<span class="flow-name">run</span>
+					</li>
+				</ol>
+			</section>
+
+			<aside class="lab-notes" aria-label="Design notes">
+				<h2 class="notes-title">Open questions</h2>
+				<ul class="notes-list">
+					<li>Should <kbd>/</kbd> open a fuzzy search across all stages from the menu?</li>
+					<li>
+						"Done — write the script" — go straight to write, or always pass
+						through review first?
+					</li>
+					<li>Visible "← back" row, or just <kbd>esc</kbd>/<kbd>b</kbd>?</li>
+					<li>
+						Write to <code>/tmp</code>, <code>$HOME</code>, or pipe straight
+						to <code>bash</code>?
+					</li>
+					<li>Let users name the output file, or always <code>magus.sh</code>?</li>
+					<li>Hide Retro behind a <code>--retro</code> flag by default?</li>
+					<li>
+						Pre-flight: detect a real Steam Deck before offering Deck-only
+						commands?
+					</li>
+					<li>What's the equivalent of "press <kbd>?</kbd> for help"?</li>
+				</ul>
+
+				<h2 class="notes-title">Already decided</h2>
+				<ul class="notes-list muted">
+					<li>Menu-driven by stage, not one long checkbox list.</li>
+					<li>Each stage screen has a visible <code>← back</code> row.</li>
+					<li><kbd>space</kbd> toggles · <kbd>enter</kbd> activates the focused row.</li>
+					<li>Built on <code>@inquirer/prompts</code> · scaffold in <code>tui/</code>.</li>
+					<li>Outputs an idempotent bash script.</li>
+					<li>{totalCount} commands across {stages.length} stages today.</li>
+				</ul>
+			</aside>
+		</div>
+	</div>
+
+	<script
+		type="application/json"
+		id="lab-tui-data"
+		set:html={JSON.stringify({ stages })}
+	></script>
+</Base>
+
+<script>
+	type Cmd = {
+		id: string;
+		title: string;
+		summary: string;
+		commands: Array<{ run: string; description: string }>;
+	};
+	type Stage = { id: string; num: string; short: string; items: Cmd[] };
+	type Step = 'splash' | 'pick' | 'review' | 'write' | 'run';
+
+	const STEPS: Step[] = ['splash', 'pick', 'review', 'write', 'run'];
+
+	const TITLE_BY_STEP: Record<Step, string> = {
+		splash: 'magus@deck — bash',
+		pick: 'magus@deck — pick',
+		review: 'magus@deck — review',
+		write: 'magus@deck — write',
+		run: 'magus@deck — done',
+	};
+
+	const dataEl = document.getElementById('lab-tui-data');
+	if (!dataEl?.textContent) throw new Error('lab-tui-data missing');
+	const { stages } = JSON.parse(dataEl.textContent) as { stages: Stage[] };
+
+	const flat: Array<{ stage: Stage; cmd: Cmd }> = [];
+	for (const stage of stages) {
+		for (const cmd of stage.items) flat.push({ stage, cmd });
+	}
+
+	type PickView = 'menu' | 'stage' | 'search' | 'installing';
+	type InstallPhase = 'prompt' | 'running' | 'failed' | 'done';
+
+	type AppGroup = { id: string; name: string; patterns: RegExp[] };
+
+	const STAGE_GROUPS: Record<string, AppGroup[]> = {
+		install: [
+			{
+				id: 'gaming',
+				name: 'Gaming',
+				patterns: [/protonup/, /wine-cellar/, /bottles/, /cartridges/, /heroic/, /lutris/],
+			},
+			{
+				id: 'streaming',
+				name: 'Streaming & Remote',
+				patterns: [/geforce-now/, /chiaki/, /moonlight/, /sunshine/, /\-obs/],
+			},
+			{
+				id: 'system',
+				name: 'System Tools',
+				patterns: [/flatseal/, /warehouse/, /mission-center/, /goverlay/, /discover-overlay/],
+			},
+			{
+				id: 'comms',
+				name: 'Browsers & Comms',
+				patterns: [/brave/, /firefox/, /vesktop/, /bitwarden/],
+			},
+			{
+				id: 'media',
+				name: 'Media',
+				patterns: [/\-vlc/, /spotify/, /ludusavi/],
+			},
+		],
+	};
+
+	const state = {
+		step: 'splash' as Step,
+		cursor: 0,
+		picked: new Set<string>(),
+		pickView: 'menu' as PickView,
+		currentStageId: null as string | null,
+		currentGroupId: null as string | null,
+		menuCursor: 0,
+		searchQuery: '',
+		searchResults: [] as Array<{ stage: Stage; cmd: Cmd }>,
+		priorView: 'menu' as PickView,
+		installedStageIds: new Set<string>(),
+		installPhase: 'prompt' as InstallPhase,
+		installIndex: 0,
+		installLog: [] as Array<{ title: string; result: 'done' | 'skipped' }>,
+	};
+
+	const screens = Object.fromEntries(
+		STEPS.map((s) => [
+			s,
+			document.querySelector<HTMLElement>(`[data-screen="${s}"]`)!,
+		]),
+	) as Record<Step, HTMLElement>;
+
+	const termBody = document.querySelector<HTMLElement>('[data-term-body]')!;
+	const termStatus = document.querySelector<HTMLElement>('[data-term-status]')!;
+
+	type Hint = { keys: string[]; label: string };
+
+	function setStatusHints(hints: Hint[]): void {
+		const html = hints
+			.map(
+				(h) =>
+					`${h.keys.map((k) => `<kbd>${k}</kbd>`).join(' ')} <span>${h.label}</span>`,
+			)
+			.join(`<span class="sep">·</span>`);
+		termStatus.innerHTML = html;
+	}
+
+	function refreshHints(): void {
+		const stepHints: Hint[] = [{ keys: ['←', '→'], label: 'step' }];
+		const resetHint: Hint = { keys: ['r'], label: 'reset' };
+		if (state.step === 'splash') {
+			setStatusHints([
+				...stepHints,
+				{ keys: ['↵'], label: 'begin' },
+				resetHint,
+			]);
+		} else if (state.step === 'pick' && state.pickView === 'menu') {
+			setStatusHints([
+				...stepHints,
+				{ keys: ['↑', '↓'], label: 'move' },
+				{ keys: ['↵'], label: 'open' },
+				{ keys: ['/'], label: 'search' },
+				resetHint,
+			]);
+		} else if (state.step === 'pick' && state.pickView === 'installing') {
+			if (state.installPhase === 'running') {
+				setStatusHints([{ keys: ['…'], label: 'installing' }, resetHint]);
+			} else if (state.installPhase === 'failed') {
+				setStatusHints([
+					{ keys: ['y'], label: 'retry' },
+					{ keys: ['s'], label: 'skip' },
+					{ keys: ['q'], label: 'abort' },
+				]);
+			} else {
+				setStatusHints([{ keys: ['esc'], label: 'next stage' }, resetHint]);
+			}
+		} else if (state.step === 'pick' && state.pickView === 'stage') {
+			setStatusHints([
+				...stepHints,
+				{ keys: ['↑', '↓'], label: 'move' },
+				{ keys: ['␣'], label: 'toggle' },
+				{ keys: ['↵'], label: 'select' },
+				{ keys: ['esc'], label: 'back' },
+				resetHint,
+			]);
+		} else if (state.step === 'pick' && state.pickView === 'search') {
+			setStatusHints([
+				{ keys: ['↑', '↓'], label: 'move' },
+				{ keys: ['␣'], label: 'toggle' },
+				{ keys: ['↵'], label: 'select' },
+				{ keys: ['esc'], label: 'back' },
+				resetHint,
+			]);
+		} else if (state.step === 'review') {
+			setStatusHints([
+				...stepHints,
+				{ keys: ['y'], label: 'write' },
+				{ keys: ['e'], label: 'edit' },
+				{ keys: ['q'], label: 'quit' },
+				resetHint,
+			]);
+		} else if (state.step === 'write') {
+			setStatusHints([
+				...stepHints,
+				{ keys: ['↵'], label: 'continue' },
+				resetHint,
+			]);
+		} else if (state.step === 'run') {
+			if (state.installPhase === 'prompt') {
+				setStatusHints([
+					...stepHints,
+					{ keys: ['y'], label: 'run now' },
+					{ keys: ['n'], label: 'paste later' },
+					resetHint,
+				]);
+			} else if (state.installPhase === 'running') {
+				setStatusHints([{ keys: ['…'], label: 'installing' }, resetHint]);
+			} else if (state.installPhase === 'failed') {
+				setStatusHints([
+					{ keys: ['y'], label: 'retry' },
+					{ keys: ['s'], label: 'skip' },
+					{ keys: ['q'], label: 'abort' },
+				]);
+			} else {
+				setStatusHints([
+					...stepHints,
+					{ keys: ['↵'], label: 'back to start' },
+					resetHint,
+				]);
+			}
+		}
+	}
+
+	const renderLines = (lines: string[]): string =>
+		lines
+			.map((html) => `<div class="line">${html || '&nbsp;'}</div>`)
+			.join('');
+
+	const flowItems = Array.from(
+		document.querySelectorAll<HTMLElement>('.flow-item'),
+	);
+	const termTitle = document.querySelector<HTMLElement>('[data-term-title]')!;
+
+	const esc = (s: string) =>
+		s
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;');
+
+	function setStep(next: Step): void {
+		state.step = next;
+		if (next === 'pick') {
+			// Always land in the stage menu, with cursor restored.
+			state.pickView = 'menu';
+			state.currentStageId = null;
+			state.cursor = state.menuCursor;
+		} else {
+			state.cursor = 0;
+		}
+		for (const s of STEPS) {
+			screens[s].hidden = s !== next;
+		}
+		updateTitle();
+		refreshHints();
+		for (const el of flowItems) {
+			const is = el.dataset.jump === next;
+			el.classList.toggle('active', is);
+			el.setAttribute('aria-selected', is ? 'true' : 'false');
+		}
+		if (next === 'run') {
+			++installRunId; // cancel any in-flight animation
+			state.installPhase = 'prompt';
+			state.installLog = [];
+			state.installIndex = 0;
+		}
+		render();
+		if (next === 'write') void runWriteAnimation();
+	}
+
+	function updateTitle(): void {
+		let title = TITLE_BY_STEP[state.step];
+		if (state.step === 'pick' && state.pickView === 'stage') {
+			const stage = stages.find((s) => s.id === state.currentStageId);
+			if (stage) title = `magus@deck — pick · ${stage.short.toLowerCase()}`;
+		}
+		termTitle.textContent = title;
+	}
+
+	function render(): void {
+		if (state.step === 'splash') renderSplash();
+		if (state.step === 'pick') renderPick();
+		if (state.step === 'review') renderReview();
+		if (state.step === 'run') renderRun();
+	}
+
+	function renderSplash(): void {
+		screens.splash.innerHTML = renderLines([
+			``,
+			`          <span class="t-accent">     ╱╲ ╱╲ ╱╲</span>`,
+			`          <span class="t-accent">    ╱  ╲╱  ╲╱  ╲</span>`,
+			`          <span class="t-accent">   │    m a g u s    │</span>`,
+			`          <span class="t-accent">    ╲  ╱╲  ╱╲  ╱</span>`,
+			`          <span class="t-accent">     ╲╱ ╲╱ ╲╱</span>`,
+			``,
+			`           <span class="t-muted">transmute your deck</span>`,
+			``,
+			`           <span class="t-dim">earth    air    fire    water    sun</span>`,
+			`           <span class="t-dim"> 🜃     🜁     🜂     🜄      ☉</span>`,
+			``,
+			`  <span class="t-muted">welcome to the ritual.</span>`,
+			`  <span class="t-muted">pick commands from five stages,</span>`,
+			`  <span class="t-muted">and we'll conjure a script.</span>`,
+			``,
+			`  <span class="t-dim">the magic is idempotent · run it many times safely</span>`,
+			`  <span class="t-dim">${flat.length} spells · ${stages.length} stages · ~10 min incantation</span>`,
+			``,
+			`  <span class="t-accent">›</span> <span class="t-muted">press</span> <span class="t-accent">[enter]</span> <span class="t-muted">to begin the ceremony</span> <span class="cursor-blink">▌</span>`,
+		]);
+	}
+
+	type Preset = { id: string; name: string; tagline: string; patterns: RegExp[] };
+
+	const PRESETS: Preset[] = [
+		{
+			id: 'magnum-opus',
+			name: 'Magnum Opus',
+			tagline: 'the full proven kit',
+			patterns: [
+				/set-sudo-password/,
+				/install-dependencies/,
+				/protonup-qt/,
+				/heroic/,
+				/install-cryoutilities/,
+				/wifi-powersave/,
+				/tablet-mode/,
+				/decky-install/,
+				/decky-cssloader/,
+				/decky-steamgriddb/,
+				/flatseal/,
+				/brave/,
+			],
+		},
+	];
+
+	type MenuRow =
+		| { kind: 'stage'; stage: Stage }
+		| { kind: 'preset'; preset: Preset }
+		| { kind: 'action'; id: 'review' | 'write' | 'quit'; label: string };
+
+	type StageRow =
+		| { kind: 'item'; cmd: Cmd }
+		| { kind: 'group'; group: AppGroup }
+		| { kind: 'select-all' }
+		| { kind: 'install' }
+		| { kind: 'back-group' }
+		| { kind: 'back' };
+
+	function menuRows(): MenuRow[] {
+		const rows: MenuRow[] = stages.map((s) => ({ kind: 'stage', stage: s }));
+		for (const p of PRESETS) rows.push({ kind: 'preset', preset: p });
+		rows.push({ kind: 'action', id: 'review', label: 'Review my picks' });
+		rows.push({ kind: 'action', id: 'quit', label: 'Quit' });
+		return rows;
+	}
+
+	function stageRowsFor(stage: Stage): StageRow[] {
+		const groups = STAGE_GROUPS[stage.id];
+
+		if (groups && !state.currentGroupId) {
+			// Show group list
+			const rows: StageRow[] = groups.map((g) => ({ kind: 'group', group: g }));
+			rows.push({ kind: 'install' });
+			rows.push({ kind: 'back' });
+			return rows;
+		}
+
+		// Show items — filtered to current group if one is open
+		let items = stage.items;
+		if (state.currentGroupId && groups) {
+			const group = groups.find((g) => g.id === state.currentGroupId);
+			if (group) {
+				items = stage.items.filter((cmd) =>
+					group.patterns.some((rx) => rx.test(cmd.id)),
+				);
+			}
+		}
+		const rows: StageRow[] = items.map((cmd) => ({ kind: 'item', cmd }));
+		rows.push({ kind: 'select-all' });
+		if (state.currentGroupId) {
+			rows.push({ kind: 'back-group' });
+		} else {
+			rows.push({ kind: 'install' });
+			rows.push({ kind: 'back' });
+		}
+		return rows;
+	}
+
+	function rowCount(): number {
+		if (state.step !== 'pick') return 0;
+		if (state.pickView === 'menu') return menuRows().length;
+		const stage = stages.find((s) => s.id === state.currentStageId);
+		return stage ? stageRowsFor(stage).length : 0;
+	}
+
+	function paintLines(
+		target: HTMLElement,
+		lines: Array<{ html: string; focused?: boolean }>,
+	): void {
+		target.innerHTML = lines
+			.map(
+				(l) =>
+					`<div class="line${l.focused ? ' is-focused' : ''}">${l.html || '&nbsp;'}</div>`,
+			)
+			.join('');
+		const focusedEl = target.querySelector<HTMLElement>('.is-focused');
+		if (focusedEl) {
+			focusedEl.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+		}
+	}
+
+	function renderPick(): void {
+		if (state.pickView === 'search') renderSearch();
+		else if (state.pickView === 'menu') renderMenu();
+		else if (state.pickView === 'installing') renderStageInstall();
+		else renderStage();
+	}
+
+	function renderStageInstall(): void {
+		const stage = stages.find((s) => s.id === state.currentStageId);
+		const stagePicks = stage
+			? flat.filter((f) => f.stage.id === stage.id && state.picked.has(f.cmd.id))
+			: [];
+		const total = stagePicks.length;
+		const done = state.installLog.length;
+		const lines: string[] = [];
+
+		if (state.installPhase === 'done') {
+			const succeeded = state.installLog.filter((e) => e.result === 'done').length;
+			const skipped = state.installLog.filter((e) => e.result === 'skipped').length;
+			lines.push(`<span class="t-accent">${esc(stage?.short ?? 'stage')} done ✓</span>`);
+			lines.push('');
+			lines.push(`  <span class="t-accent">${succeeded}</span> <span class="t-text">installed</span>${skipped > 0 ? `   <span class="t-dim">${skipped} skipped</span>` : ''}`);
+			lines.push('');
+			for (const entry of state.installLog) {
+				const icon = entry.result === 'done'
+					? `<span class="t-accent">✓</span>`
+					: `<span class="t-dim">—</span>`;
+				const title = entry.result === 'skipped'
+					? `<span class="t-dim">${esc(entry.title)}</span>`
+					: `<span class="t-muted">${esc(entry.title)}</span>`;
+				lines.push(`  ${icon} ${title}`);
+			}
+			lines.push('');
+			lines.push(`<span class="t-dim">press [esc] to continue to next stage</span>`);
+			screens.pick.innerHTML = renderLines(lines);
+			return;
+		}
+
+		const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+		const barLen = 22;
+		const filled = Math.round((pct / 100) * barLen);
+		const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled);
+		lines.push(
+			`<span class="t-accent">installing</span> <span class="t-dim">${done}/${total}</span>  <span class="t-dim">[</span><span class="t-accent">${bar}</span><span class="t-dim">]</span> <span class="t-dim">${pct}%</span>`,
+		);
+		lines.push('');
+
+		for (const entry of state.installLog) {
+			const icon = entry.result === 'done'
+				? `<span class="t-accent">✓</span>`
+				: `<span class="t-dim">—</span>`;
+			const title = entry.result === 'skipped'
+				? `<span class="t-dim">${esc(entry.title)}</span>`
+				: `<span class="t-muted">${esc(entry.title)}</span>`;
+			lines.push(`  ${icon} ${title}`);
+		}
+
+		const current = stagePicks[state.installLog.length];
+		if (current) {
+			if (state.installPhase === 'failed') {
+				lines.push(`  <span class="t-warn">✗</span> <span class="t-text">${esc(current.cmd.title)}</span>`);
+				lines.push('');
+				lines.push(`  <span class="t-warn">error</span> <span class="t-dim">·</span> <span class="t-muted">connection timed out — could not reach download server</span>`);
+				lines.push(`  <span class="t-dim">exit code 1</span>`);
+				lines.push('');
+				lines.push(`  <span class="t-accent">[y]</span> <span class="t-text">retry</span>   <span class="t-accent">[s]</span> <span class="t-muted">skip</span>   <span class="t-accent">[q]</span> <span class="t-muted">abort</span>`);
+			} else {
+				lines.push(`  <span class="t-accent">›</span> <span class="t-text">${esc(current.cmd.title)}</span> <span class="cursor-blink">▌</span>`);
+				const remaining = total - done - 1;
+				if (remaining > 0) {
+					lines.push('');
+					lines.push(`  <span class="t-dim">${remaining} more queued</span>`);
+				}
+			}
+		}
+
+		screens.pick.innerHTML = renderLines(lines);
+	}
+
+	function updateSearch(query: string): void {
+		state.searchQuery = query;
+		const q = query.toLowerCase();
+		state.searchResults = flat.filter(
+			(f) =>
+				f.cmd.title.toLowerCase().includes(q) ||
+				f.cmd.summary.toLowerCase().includes(q),
+		);
+		state.cursor = 0;
+		renderSearch();
+	}
+
+	function renderSearch(): void {
+		const out: Array<{ html: string; focused?: boolean }> = [];
+		const query = state.searchQuery;
+
+		out.push({
+			html: `<span class="t-accent">/</span> <span class="t-bright">Search all spells</span>`,
+		});
+		out.push({
+			html: `<span class="t-dim">  ▌</span><span class="t-muted">${esc(query)}</span>`,
+		});
+		out.push({ html: '' });
+
+		if (state.searchResults.length === 0) {
+			out.push({
+				html: `<span class="t-muted">  no spells match "${esc(query)}"</span>`,
+			});
+		} else {
+			// Show up to 12 results
+			const shown = state.searchResults.slice(0, 12);
+			shown.forEach((f, i) => {
+				const focused = i === state.cursor;
+				const cur = focused ? `<span class="t-accent">❯</span>` : ` `;
+				const picked = state.picked.has(f.cmd.id);
+				const box = picked
+					? `<span class="t-accent">◉</span>`
+					: `<span class="t-dim">◯</span>`;
+				const name = focused
+					? `<span class="t-bright">${esc(f.cmd.title).padEnd(30)}</span>`
+					: picked
+						? `<span class="t-text">${esc(f.cmd.title).padEnd(30)}</span>`
+						: `<span class="t-muted">${esc(f.cmd.title).padEnd(30)}</span>`;
+				const stage = `<span class="t-dim">${f.stage.num}</span>`;
+				out.push({ html: `${cur} ${box} ${name}${stage}`, focused });
+			});
+			if (state.searchResults.length > shown.length) {
+				out.push({
+					html: `<span class="t-dim">  … +${state.searchResults.length - shown.length} more</span>`,
+				});
+			}
+		}
+
+		out.push({ html: '' });
+		out.push({
+			html: `<span class="t-dim">↑↓ move · space toggle · esc back</span>`,
+		});
+
+		paintLines(screens.pick, out);
+	}
+
+	function renderMenu(): void {
+		const rows = menuRows();
+		const out: Array<{ html: string; focused?: boolean }> = [];
+
+		out.push({
+			html: `<span class="t-accent">?</span> <span class="t-bright">Where to next?</span> <span class="t-muted">(↑ ↓ move · enter open)</span>`,
+		});
+		out.push({ html: '' });
+
+		rows.forEach((row, i) => {
+			const focused = i === state.cursor;
+			const cur = focused ? `<span class="t-accent">❯</span>` : ` `;
+			// separator before preset block
+			if (row.kind === 'preset' && rows[i - 1]?.kind !== 'preset') {
+				out.push({ html: `<span class="t-dim">  ────</span>` });
+			}
+			// separator before action block
+			if (row.kind === 'action' && rows[i - 1]?.kind !== 'action') {
+				out.push({ html: `<span class="t-dim">  ────</span>` });
+			}
+			if (row.kind === 'stage') {
+				const total = row.stage.items.length;
+				const picked = row.stage.items.filter((c) =>
+					state.picked.has(c.id),
+				).length;
+				const labelText = `${row.stage.num}  ${row.stage.short}`;
+				const labelPadded =
+					labelText + ' '.repeat(Math.max(2, 22 - labelText.length));
+				const labelHtml = focused
+					? `<span class="t-bright">${labelPadded}</span>`
+					: `<span class="t-text">${labelPadded}</span>`;
+				const countText = `${picked}/${total}`;
+				const countHtml =
+					picked > 0
+						? `<span class="t-accent">${countText}</span>`
+						: `<span class="t-dim">${countText}</span>`;
+				const installed = state.installedStageIds.has(row.stage.id);
+				const tick = installed
+					? ` <span class="t-accent">⚡</span>`
+					: picked === total && total > 0
+						? ` <span class="t-accent">✓</span>`
+						: ``;
+				out.push({ html: `${cur}  ${labelHtml}${countHtml}${tick}`, focused });
+			} else if (row.kind === 'preset') {
+				const matchCount = PRESETS[0]
+					? row.preset.patterns.reduce(
+							(n, rx) => n + flat.filter((f) => rx.test(f.cmd.id)).length,
+							0,
+						)
+					: 0;
+				const nameHtml = focused
+					? `<span class="t-accent">✦</span> <span class="t-bright">${esc(row.preset.name)}</span>`
+					: `<span class="t-dim">✦</span> <span class="t-muted">${esc(row.preset.name)}</span>`;
+				const tagHtml = focused
+					? `<span class="t-muted"> · ${esc(row.preset.tagline)}</span>`
+					: `<span class="t-dim"> · ${esc(row.preset.tagline)}</span>`;
+				const countHtml = `<span class="t-dim">  ${matchCount} commands</span>`;
+				out.push({ html: `${cur}  ${nameHtml}${tagHtml}${countHtml}`, focused });
+			} else {
+				const reviewN = state.picked.size;
+				const label =
+					row.id === 'review' ? `Review my picks (${reviewN})` : row.label;
+				const labelHtml = focused
+					? `<span class="t-bright">${label}</span>`
+					: `<span class="t-muted">${label}</span>`;
+				out.push({ html: `${cur}  ${labelHtml}`, focused });
+			}
+		});
+
+		out.push({ html: '' });
+		out.push({
+			html: `<span class="t-dim">${state.picked.size} of ${flat.length} commands selected total</span>`,
+		});
+
+		paintLines(screens.pick, out);
+	}
+
+	function renderStage(): void {
+		const stage = stages.find((s) => s.id === state.currentStageId);
+		if (!stage) {
+			state.pickView = 'menu';
+			renderMenu();
+			return;
+		}
+
+		const rows = stageRowsFor(stage);
+		const out: Array<{ html: string; focused?: boolean }> = [];
+
+		const groupLabel = state.currentGroupId
+			? STAGE_GROUPS[stage.id]?.find((g) => g.id === state.currentGroupId)?.name ?? ''
+			: '';
+		const heading = groupLabel
+			? `${stage.num} · ${esc(stage.short)} <span class="t-dim">›</span> ${esc(groupLabel)}`
+			: `${stage.num} · ${esc(stage.short)}`;
+		out.push({
+			html: `<span class="t-accent">?</span> <span class="t-bright">${heading}</span> <span class="t-muted">(space toggle · enter open)</span>`,
+		});
+		out.push({ html: '' });
+
+		rows.forEach((row, i) => {
+			const focused = i === state.cursor;
+			const cur = focused ? `<span class="t-accent">❯</span>` : ` `;
+			if (row.kind === 'item') {
+				const picked = state.picked.has(row.cmd.id);
+				const box = picked
+					? `<span class="t-accent">◉</span>`
+					: `<span class="t-dim">◯</span>`;
+				const name = focused
+					? `<span class="t-bright">${esc(row.cmd.title)}</span>`
+					: picked
+						? `<span class="t-text">${esc(row.cmd.title)}</span>`
+						: `<span class="t-muted">${esc(row.cmd.title)}</span>`;
+				out.push({ html: `${cur} ${box} ${name}`, focused });
+			} else if (row.kind === 'select-all') {
+				out.push({ html: `<span class="t-dim">  ────</span>` });
+				const selectText = focused
+					? `<span class="t-bright">select all in this stage</span>`
+					: `<span class="t-muted">select all in this stage</span>`;
+				out.push({ html: `${cur}   ${selectText}`, focused });
+			} else if (row.kind === 'group') {
+				const groupItems = stage.items.filter((cmd) =>
+					row.group.patterns.some((rx) => rx.test(cmd.id)),
+				);
+				const groupPicked = groupItems.filter((c) => state.picked.has(c.id)).length;
+				const labelText = esc(row.group.name);
+				const padding = ' '.repeat(Math.max(2, 24 - row.group.name.length));
+				const labelHtml = focused
+					? `<span class="t-bright">${labelText}</span>${padding}`
+					: `<span class="t-text">${labelText}</span>${padding}`;
+				const countHtml = groupPicked > 0
+					? `<span class="t-accent">${groupPicked}/${groupItems.length}</span>`
+					: `<span class="t-dim">${groupPicked}/${groupItems.length}</span>`;
+				const arrow = focused
+					? ` <span class="t-accent">›</span>`
+					: ` <span class="t-dim">›</span>`;
+				out.push({ html: `${cur}  ${labelHtml}${countHtml}${arrow}`, focused });
+			} else if (row.kind === 'install') {
+				out.push({ html: `<span class="t-dim">  ────</span>` });
+				const stagePicked = stage.items.filter((c) => state.picked.has(c.id)).length;
+				const hasItems = stagePicked > 0;
+				const installHtml = focused && hasItems
+					? `<span class="t-accent">⚡</span> <span class="t-bright">Install ${stagePicked} command${stagePicked !== 1 ? 's' : ''}</span>`
+					: hasItems
+						? `<span class="t-dim">⚡</span> <span class="t-muted">Install ${stagePicked} command${stagePicked !== 1 ? 's' : ''}</span>`
+						: `<span class="t-dim">⚡ nothing selected to install</span>`;
+				out.push({ html: `${cur}   ${installHtml}`, focused: focused && hasItems });
+			} else if (row.kind === 'back-group') {
+				out.push({ html: `<span class="t-dim">  ────</span>` });
+				const back = focused
+					? `<span class="t-bright">← back to ${esc(stage.short)}</span>`
+					: `<span class="t-muted">← back to ${esc(stage.short)}</span>`;
+				out.push({ html: `${cur}   ${back}`, focused });
+			} else {
+				out.push({ html: `<span class="t-dim">  ────</span>` });
+				const back = focused
+					? `<span class="t-bright">← back to stages</span>`
+					: `<span class="t-muted">← back to stages</span>`;
+				out.push({ html: `${cur}   ${back}`, focused });
+			}
+		});
+
+		const focusedRow = rows[state.cursor];
+		out.push({ html: '' });
+		if (focusedRow?.kind === 'item' && focusedRow.cmd.summary) {
+			out.push({
+				html: `<span class="t-dim">›</span> <span class="t-muted">${esc(focusedRow.cmd.summary)}</span>`,
+			});
+		} else {
+			out.push({ html: '' });
+		}
+
+		const stagePicked = stage.items.filter((c) => state.picked.has(c.id)).length;
+		out.push({ html: '' });
+		out.push({
+			html: `<span class="t-dim">${stagePicked} of ${stage.items.length} selected in this stage</span>`,
+		});
+
+		paintLines(screens.pick, out);
+	}
+
+	function renderReview(): void {
+		const lines: string[] = [];
+		const picked = flat.filter((f) => state.picked.has(f.cmd.id));
+
+		if (picked.length === 0) {
+			lines.push(`<span class="t-warn">nothing picked.</span>`);
+			lines.push('');
+			lines.push(
+				`<span class="t-muted">press</span> <span class="t-accent">[←]</span> <span class="t-muted">to go back, or</span> <span class="t-accent">[r]</span> <span class="t-muted">to restart.</span>`,
+			);
+			screens.review.innerHTML = renderLines(lines);
+			return;
+		}
+
+		const mins = Math.max(2, Math.round(picked.length * 1.4));
+		lines.push(
+			`<span class="t-bright">${picked.length} commands ready</span> <span class="t-muted">· est. ~${mins} min</span>`,
+		);
+		lines.push('');
+
+		const byStage = new Map<string, Array<{ stage: Stage; cmd: Cmd }>>();
+		for (const f of picked) {
+			const arr = byStage.get(f.stage.id) ?? [];
+			arr.push(f);
+			byStage.set(f.stage.id, arr);
+		}
+		for (const stage of stages) {
+			const items = byStage.get(stage.id);
+			if (!items?.length) continue;
+			lines.push(
+				`  <span class="t-dim">${stage.num}</span> <span class="t-text">${esc(stage.short)}</span>`,
+			);
+			for (const f of items) {
+				lines.push(
+					`     <span class="t-accent">✓</span> <span class="t-text">${esc(f.cmd.title)}</span>`,
+				);
+			}
+			lines.push('');
+		}
+
+		lines.push(`<span class="t-dim">―</span>`);
+		lines.push('');
+		lines.push(
+			`  <span class="t-accent">[y]</span> <span class="t-text">write to disk</span>     <span class="t-accent">[e]</span> <span class="t-muted">edit picks</span>     <span class="t-accent">[q]</span> <span class="t-muted">quit</span>`,
+		);
+
+		screens.review.innerHTML = renderLines(lines);
+	}
+
+	let writeRunId = 0;
+	async function runWriteAnimation(): Promise<void> {
+		const myRun = ++writeRunId;
+		const target = screens.write;
+
+		const picked = flat.filter((f) => state.picked.has(f.cmd.id));
+		const sizeKb = Math.max(0.4, picked.length * 0.18).toFixed(1);
+
+		type Line = { kind: 'step' | 'blank' | 'done'; left?: string; right?: string; delay: number };
+		const sequence: Line[] = [
+			{ kind: 'step', left: 'rendering magus.sh', right: `done (${sizeKb} KB)`, delay: 480 },
+			{ kind: 'step', left: 'writing /tmp/magus.sh', right: 'done', delay: 480 },
+			{ kind: 'step', left: 'chmod +x', right: 'done', delay: 380 },
+			{ kind: 'blank', delay: 220 },
+			{ kind: 'done', delay: 0 },
+		];
+
+		const COL = 36;
+		const buf: string[] = [];
+		target.innerHTML = '';
+		for (const ln of sequence) {
+			if (myRun !== writeRunId) return;
+			if (ln.kind === 'blank') {
+				buf.push('');
+			} else if (ln.kind === 'done') {
+				buf.push(
+					`  <span class="t-muted">saved to:</span> <span class="t-accent">/tmp/magus.sh</span>`,
+				);
+				buf.push('');
+				buf.push(
+					`  <span class="t-dim">${picked.length} commands · ${sizeKb} KB · idempotent</span>`,
+				);
+				buf.push('');
+				buf.push(
+					`  <span class="t-accent">›</span> <span class="t-muted">press</span> <span class="t-accent">[enter]</span> <span class="t-muted">to continue</span> <span class="cursor-blink">▌</span>`,
+				);
+			} else {
+				const left = ln.left ?? '';
+				const right = ln.right ?? '';
+				const dotCount = Math.max(3, COL - left.length);
+				const dots = ' ' + '.'.repeat(dotCount) + ' ';
+				buf.push(
+					`<span class="t-dim">→</span> <span class="t-text">${esc(left)}</span><span class="t-dim">${dots}</span><span class="t-accent">${esc(right)}</span>`,
+				);
+			}
+			target.innerHTML = renderLines(buf);
+			await new Promise((r) => setTimeout(r, ln.delay));
+		}
+	}
+
+	function renderRun(): void {
+		if (state.installPhase === 'running' || state.installPhase === 'failed') {
+			renderInstalling();
+		} else if (state.installPhase === 'done') {
+			renderInstallDone();
+		} else {
+			renderRunPrompt();
+		}
+	}
+
+	function renderRunPrompt(): void {
+		const lines: string[] = [];
+		const picked = flat.filter((f) => state.picked.has(f.cmd.id));
+
+		lines.push(`<span class="t-accent">script ready.</span>`);
+		lines.push('');
+		lines.push(
+			`<span class="t-muted">run now?</span>  <span class="t-accent">[y]</span> <span class="t-text">yes, install</span>     <span class="t-accent">[n]</span> <span class="t-muted">save & paste later</span>`,
+		);
+		lines.push('');
+		lines.push(`<span class="t-dim">or later in Konsole:</span>`);
+		lines.push(
+			`  <span class="t-accent">$</span> <span class="t-text">bash /tmp/magus.sh</span>`,
+		);
+		lines.push('');
+		lines.push(
+			`<span class="t-dim">── preview ────────────────────────────────────</span>`,
+		);
+		lines.push(`<span class="t-muted">#!/usr/bin/env bash</span>`);
+		lines.push(`<span class="t-muted"># magus.sh — ${picked.length} commands</span>`);
+		lines.push('');
+		const showPicks = picked.slice(0, 4);
+		for (const f of showPicks) {
+			lines.push(`<span class="t-dim"># ${esc(f.cmd.title)}</span>`);
+			const firstCmd = f.cmd.commands[0];
+			if (firstCmd) lines.push(`<span class="t-text">${esc(firstCmd.run)}</span>`);
+			lines.push('');
+		}
+		if (picked.length > showPicks.length) {
+			lines.push(`<span class="t-dim">… +${picked.length - showPicks.length} more</span>`);
+		}
+		if (picked.length === 0) {
+			lines.push(`<span class="t-warn"># (nothing picked — go back and choose some commands)</span>`);
+		}
+		screens.run.innerHTML = renderLines(lines);
+	}
+
+	function renderInstalling(): void {
+		const lines: string[] = [];
+		const picked = flat.filter((f) => state.picked.has(f.cmd.id));
+		const done = state.installLog.length;
+		const total = picked.length;
+		const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+		const barLen = 28;
+		const filled = Math.round((pct / 100) * barLen);
+		const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled);
+
+		lines.push(
+			`<span class="t-accent">installing</span> <span class="t-dim">${done}/${total}</span>  <span class="t-dim">[</span><span class="t-accent">${bar}</span><span class="t-dim">]</span> <span class="t-dim">${pct}%</span>`,
+		);
+		lines.push('');
+
+		// Log of completed commands
+		const showLog = state.installLog.slice(-8); // last 8 to stay visible
+		for (const entry of showLog) {
+			const icon =
+				entry.result === 'done'
+					? `<span class="t-accent">✓</span>`
+					: `<span class="t-dim">—</span>`;
+			const title =
+				entry.result === 'skipped'
+					? `<span class="t-dim">${esc(entry.title)}</span>`
+					: `<span class="t-muted">${esc(entry.title)}</span>`;
+			lines.push(`  ${icon} ${title}`);
+		}
+
+		const current = picked[state.installLog.length];
+		if (!current) {
+			screens.run.innerHTML = renderLines(lines);
+			return;
+		}
+
+		if (state.installPhase === 'failed') {
+			lines.push(
+				`  <span class="t-warn">✗</span> <span class="t-text">${esc(current.cmd.title)}</span>`,
+			);
+			lines.push('');
+			lines.push(
+				`  <span class="t-warn">error</span> <span class="t-dim">·</span> <span class="t-muted">connection timed out — could not reach download server</span>`,
+			);
+			lines.push(`  <span class="t-dim">exit code 1</span>`);
+			lines.push('');
+			lines.push(
+				`  <span class="t-accent">[y]</span> <span class="t-text">retry</span>   <span class="t-accent">[s]</span> <span class="t-muted">skip this command</span>   <span class="t-accent">[q]</span> <span class="t-muted">abort</span>`,
+			);
+		} else {
+			lines.push(
+				`  <span class="t-accent">›</span> <span class="t-text">${esc(current.cmd.title)}</span> <span class="cursor-blink">▌</span>`,
+			);
+			const remaining = total - done - 1;
+			if (remaining > 0) {
+				lines.push('');
+				lines.push(`  <span class="t-dim">${remaining} more queued</span>`);
+			}
+		}
+
+		screens.run.innerHTML = renderLines(lines);
+	}
+
+	function renderInstallDone(): void {
+		const lines: string[] = [];
+		const done = state.installLog.filter((e) => e.result === 'done').length;
+		const skipped = state.installLog.filter((e) => e.result === 'skipped').length;
+
+		lines.push(`<span class="t-accent">ceremony complete ✓</span>`);
+		lines.push('');
+		lines.push(
+			`  <span class="t-accent">${done}</span> <span class="t-text">installed</span>   <span class="t-dim">${skipped > 0 ? `${skipped} skipped` : ''}</span>`,
+		);
+		lines.push('');
+
+		for (const entry of state.installLog) {
+			const icon =
+				entry.result === 'done'
+					? `<span class="t-accent">✓</span>`
+					: `<span class="t-dim">—</span>`;
+			const title =
+				entry.result === 'skipped'
+					? `<span class="t-dim">${esc(entry.title)}</span>`
+					: `<span class="t-muted">${esc(entry.title)}</span>`;
+			lines.push(`  ${icon} ${title}`);
+		}
+
+		lines.push('');
+		lines.push(`<span class="t-dim">──</span>`);
+		lines.push(`<span class="t-dim">restart Steam for all changes to take effect</span>`);
+		lines.push('');
+		lines.push(
+			`  <span class="t-accent">$</span> <span class="t-text">steam -shutdown && nohup steam &</span>`,
+		);
+
+		screens.run.innerHTML = renderLines(lines);
+	}
+
+	let installRunId = 0;
+	const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+	async function startStageInstall(stageId: string): Promise<void> {
+		const myId = ++installRunId;
+		const stage = stages.find((s) => s.id === stageId);
+		if (!stage) return;
+		const stagePicks = flat.filter(
+			(f) => f.stage.id === stageId && state.picked.has(f.cmd.id),
+		);
+		if (stagePicks.length === 0) return;
+
+		state.installPhase = 'running';
+		state.installIndex = 0;
+		state.installLog = [];
+		refreshHints();
+
+		const failAt = stagePicks.length >= 4 ? 2 : -1;
+
+		for (let i = 0; i < stagePicks.length; i++) {
+			if (myId !== installRunId) return;
+			state.installIndex = i;
+			renderPick();
+			await sleep(250 + Math.floor(Math.random() * 450));
+			if (myId !== installRunId) return;
+			if (i === failAt) {
+				state.installPhase = 'failed';
+				refreshHints();
+				renderPick();
+				return;
+			}
+			state.installLog.push({ title: stagePicks[i]!.cmd.title, result: 'done' });
+		}
+
+		if (myId !== installRunId) return;
+		state.installPhase = 'done';
+		state.installedStageIds.add(stageId);
+		refreshHints();
+		renderPick();
+	}
+
+	async function continueStageInstall(action: 'retry' | 'skip'): Promise<void> {
+		const myId = ++installRunId;
+		const stageId = state.currentStageId ?? '';
+		const stagePicks = flat.filter(
+			(f) => f.stage.id === stageId && state.picked.has(f.cmd.id),
+		);
+		state.installPhase = 'running';
+		refreshHints();
+
+		let i = state.installIndex;
+		if (action === 'skip') {
+			state.installLog.push({
+				title: stagePicks[i]?.cmd.title ?? '?',
+				result: 'skipped',
+			});
+			i++;
+		} else {
+			renderPick();
+			await sleep(450 + Math.floor(Math.random() * 300));
+			if (myId !== installRunId) return;
+			state.installLog.push({ title: stagePicks[i]!.cmd.title, result: 'done' });
+			i++;
+		}
+
+		for (; i < stagePicks.length; i++) {
+			if (myId !== installRunId) return;
+			state.installIndex = i;
+			renderPick();
+			await sleep(250 + Math.floor(Math.random() * 400));
+			if (myId !== installRunId) return;
+			state.installLog.push({ title: stagePicks[i]!.cmd.title, result: 'done' });
+		}
+
+		if (myId !== installRunId) return;
+		state.installPhase = 'done';
+		state.installedStageIds.add(stageId);
+		refreshHints();
+		renderPick();
+	}
+
+	async function startInstall(): Promise<void> {
+		const myId = ++installRunId;
+		const picked = flat.filter((f) => state.picked.has(f.cmd.id));
+		state.installPhase = 'running';
+		state.installIndex = 0;
+		state.installLog = [];
+		refreshHints();
+
+		// Fail at index 3 if enough commands picked — realistic network failure demo
+		const failAt = picked.length >= 4 ? 3 : -1;
+
+		for (let i = 0; i < picked.length; i++) {
+			if (myId !== installRunId) return;
+			state.installIndex = i;
+			renderRun();
+			await sleep(250 + Math.floor(Math.random() * 450));
+			if (myId !== installRunId) return;
+			if (i === failAt) {
+				state.installPhase = 'failed';
+				refreshHints();
+				renderRun();
+				return; // keyboard handler takes over
+			}
+			state.installLog.push({ title: picked[i]!.cmd.title, result: 'done' });
+		}
+
+		if (myId !== installRunId) return;
+		state.installPhase = 'done';
+		refreshHints();
+		renderRun();
+	}
+
+	async function continueInstall(action: 'retry' | 'skip'): Promise<void> {
+		const myId = ++installRunId;
+		const picked = flat.filter((f) => state.picked.has(f.cmd.id));
+		state.installPhase = 'running';
+		refreshHints();
+
+		let i = state.installIndex;
+
+		if (action === 'skip') {
+			state.installLog.push({ title: picked[i]?.cmd.title ?? '?', result: 'skipped' });
+			i++;
+		} else {
+			// Retry — show it running, then succeed
+			renderRun();
+			await sleep(500 + Math.floor(Math.random() * 300));
+			if (myId !== installRunId) return;
+			state.installLog.push({ title: picked[i]!.cmd.title, result: 'done' });
+			i++;
+		}
+
+		for (; i < picked.length; i++) {
+			if (myId !== installRunId) return;
+			state.installIndex = i;
+			renderRun();
+			await sleep(250 + Math.floor(Math.random() * 400));
+			if (myId !== installRunId) return;
+			state.installLog.push({ title: picked[i]!.cmd.title, result: 'done' });
+		}
+
+		if (myId !== installRunId) return;
+		state.installPhase = 'done';
+		refreshHints();
+		renderRun();
+	}
+
+	function moveCursor(delta: number): void {
+		const n = rowCount();
+		if (n === 0) return;
+		state.cursor = Math.max(0, Math.min(n - 1, state.cursor + delta));
+		if (state.pickView === 'menu') state.menuCursor = state.cursor;
+		renderPick();
+	}
+
+	function spaceToggle(): void {
+		if (state.step !== 'pick' || state.pickView !== 'stage') return;
+		const stage = stages.find((s) => s.id === state.currentStageId);
+		if (!stage) return;
+		const row = stageRowsFor(stage)[state.cursor];
+		if (row?.kind !== 'item') return;
+		toggleId(row.cmd.id);
+	}
+
+	function toggleId(id: string): void {
+		if (state.picked.has(id)) state.picked.delete(id);
+		else state.picked.add(id);
+		renderPick();
+	}
+
+	function activate(): void {
+		if (state.step !== 'pick') return;
+		if (state.pickView === 'menu') {
+			const row = menuRows()[state.cursor];
+			if (!row) return;
+			if (row.kind === 'stage') {
+				state.menuCursor = state.cursor;
+				state.pickView = 'stage';
+				state.currentStageId = row.stage.id;
+				state.currentGroupId = null;
+				state.cursor = 0;
+				updateTitle();
+				refreshHints();
+				renderPick();
+			} else if (row.kind === 'preset') {
+				for (const rx of row.preset.patterns) {
+					for (const f of flat) {
+						if (rx.test(f.cmd.id)) state.picked.add(f.cmd.id);
+					}
+				}
+				renderPick();
+			} else if (row.id === 'review') {
+				setStep('review');
+			} else if (row.id === 'write') {
+				setStep('write');
+			} else if (row.id === 'quit') {
+				resetAll();
+			}
+		} else {
+			const stage = stages.find((s) => s.id === state.currentStageId);
+			if (!stage) return;
+			const row = stageRowsFor(stage)[state.cursor];
+			if (!row) return;
+			if (row.kind === 'group') {
+				state.currentGroupId = row.group.id;
+				state.cursor = 0;
+				updateTitle();
+				renderPick();
+			} else if (row.kind === 'back-group') {
+				state.currentGroupId = null;
+				state.cursor = 0;
+				renderPick();
+			} else if (row.kind === 'item') {
+				toggleId(row.cmd.id);
+			} else if (row.kind === 'select-all') {
+				const allSelected = stage.items.every((c) => state.picked.has(c.id));
+				if (allSelected) {
+					stage.items.forEach((c) => state.picked.delete(c.id));
+				} else {
+					stage.items.forEach((c) => state.picked.add(c.id));
+				}
+				renderPick();
+			} else if (row.kind === 'install') {
+				const stagePicked = stage.items.filter((c) => state.picked.has(c.id)).length;
+				if (stagePicked === 0) return;
+				state.pickView = 'installing';
+				updateTitle();
+				refreshHints();
+				void startStageInstall(stage.id);
+			} else {
+				goBackToMenu();
+			}
+		}
+	}
+
+	function goBackToMenu(): void {
+		state.pickView = 'menu';
+		state.currentStageId = null;
+		state.currentGroupId = null;
+		state.cursor = state.menuCursor;
+		updateTitle();
+		refreshHints();
+		renderPick();
+	}
+
+	function nextStep(): void {
+		const idx = STEPS.indexOf(state.step);
+		if (idx < STEPS.length - 1) setStep(STEPS[idx + 1]);
+	}
+	function prevStep(): void {
+		const idx = STEPS.indexOf(state.step);
+		if (idx > 0) setStep(STEPS[idx - 1]);
+	}
+	function resetAll(): void {
+		++installRunId;
+		state.cursor = 0;
+		state.menuCursor = 0;
+		state.pickView = 'menu';
+		state.currentStageId = null;
+		state.currentGroupId = null;
+		state.picked.clear();
+		state.installedStageIds.clear();
+		state.installPhase = 'prompt';
+		state.installLog = [];
+		state.installIndex = 0;
+		seedDefaults();
+		setStep('splash');
+	}
+
+	function seedDefaults(): void {
+		const want = [/set-sudo-password/, /install-dependencies/, /protonup-qt/, /heroic/];
+		for (const f of flat) {
+			if (want.some((rx) => rx.test(f.cmd.id))) state.picked.add(f.cmd.id);
+		}
+	}
+
+	window.addEventListener('keydown', (e) => {
+		const target = e.target as HTMLElement | null;
+		if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+
+		const k = e.key;
+
+		if (k === 'r' || k === 'R') {
+			resetAll();
+			e.preventDefault();
+			return;
+		}
+		if (k === 'ArrowLeft') {
+			prevStep();
+			e.preventDefault();
+			return;
+		}
+		if (k === 'ArrowRight') {
+			nextStep();
+			e.preventDefault();
+			return;
+		}
+
+		if (state.step === 'splash' && k === 'Enter') {
+			nextStep();
+			e.preventDefault();
+			return;
+		}
+
+		if (state.step === 'pick' && state.pickView === 'installing') {
+			if (state.installPhase === 'failed') {
+				if (k === 'y' || k === 'Y' || k === 'Enter') {
+					void continueStageInstall('retry');
+					e.preventDefault();
+					return;
+				}
+				if (k === 's' || k === 'S') {
+					void continueStageInstall('skip');
+					e.preventDefault();
+					return;
+				}
+				if (k === 'q' || k === 'Q') {
+					state.installPhase = 'done';
+					if (state.currentStageId) state.installedStageIds.add(state.currentStageId);
+					refreshHints();
+					renderPick();
+					e.preventDefault();
+					return;
+				}
+			} else if (state.installPhase === 'done' && (k === 'Escape' || k === 'Enter')) {
+				goBackToMenu();
+				e.preventDefault();
+				return;
+			}
+			e.preventDefault(); // block all other keys while installing
+			return;
+		}
+
+		if (state.step === 'pick') {
+			// Search mode input
+			if (state.pickView === 'search') {
+				if (k === 'Escape') {
+					state.pickView = state.priorView;
+					state.cursor = state.pickView === 'menu' ? state.menuCursor : 0;
+					state.searchQuery = '';
+					updateTitle();
+					refreshHints();
+					renderPick();
+					e.preventDefault();
+					return;
+				}
+				if (k === 'Backspace') {
+					state.searchQuery = state.searchQuery.slice(0, -1);
+					updateSearch(state.searchQuery);
+					refreshHints();
+					e.preventDefault();
+					return;
+				}
+				if (k === 'Enter') {
+					// Toggle focused result
+					const result = state.searchResults[state.cursor];
+					if (result) toggleId(result.cmd.id);
+					e.preventDefault();
+					return;
+				}
+				if (k === ' ') {
+					// Toggle focused result
+					const result = state.searchResults[state.cursor];
+					if (result) toggleId(result.cmd.id);
+					e.preventDefault();
+					return;
+				}
+				if (k.length === 1 && /[a-z0-9 \-]/i.test(k)) {
+					state.searchQuery += k;
+					updateSearch(state.searchQuery);
+					e.preventDefault();
+					return;
+				}
+				if (k === 'ArrowUp' || k === 'ArrowDown') {
+					moveCursor(k === 'ArrowUp' ? -1 : 1);
+					e.preventDefault();
+					return;
+				}
+				return;
+			}
+
+			// Normal pick mode
+			if (k === 'ArrowUp' || k === 'k') {
+				moveCursor(-1);
+				e.preventDefault();
+				return;
+			}
+			if (k === 'ArrowDown' || k === 'j') {
+				moveCursor(1);
+				e.preventDefault();
+				return;
+			}
+			if (k === ' ') {
+				spaceToggle();
+				e.preventDefault();
+				return;
+			}
+			if (k === 'Enter') {
+				activate();
+				e.preventDefault();
+				return;
+			}
+			if (k === '/' && state.pickView === 'menu') {
+				state.priorView = 'menu';
+				state.pickView = 'search';
+				state.searchQuery = '';
+				state.searchResults = flat;
+				state.cursor = 0;
+				refreshHints();
+				renderPick();
+				e.preventDefault();
+				return;
+			}
+			if (k === '/' && state.pickView === 'stage') {
+				state.priorView = 'stage';
+				state.pickView = 'search';
+				state.searchQuery = '';
+				const stage = stages.find((s) => s.id === state.currentStageId);
+				state.searchResults = stage
+					? flat.filter((f) => f.stage.id === stage.id)
+					: [];
+				state.cursor = 0;
+				refreshHints();
+				renderPick();
+				e.preventDefault();
+				return;
+			}
+			if (k === 'Escape' && state.pickView === 'stage') {
+				if (state.currentGroupId) {
+					state.currentGroupId = null;
+					state.cursor = 0;
+					renderPick();
+				} else {
+					goBackToMenu();
+				}
+				e.preventDefault();
+				return;
+			}
+		}
+
+		if (state.step === 'review') {
+			if (k === 'y' || k === 'Y') {
+				nextStep();
+				e.preventDefault();
+				return;
+			}
+			if (k === 'e' || k === 'E') {
+				setStep('pick');
+				e.preventDefault();
+				return;
+			}
+			if (k === 'q' || k === 'Q') {
+				resetAll();
+				e.preventDefault();
+				return;
+			}
+			if (k === 'Enter') {
+				nextStep();
+				e.preventDefault();
+				return;
+			}
+		}
+
+		if (state.step === 'write' && k === 'Enter') {
+			nextStep();
+			e.preventDefault();
+			return;
+		}
+
+		if (state.step === 'run') {
+			if (state.installPhase === 'prompt') {
+				if (k === 'y' || k === 'Y' || k === 'Enter') {
+					void startInstall();
+					e.preventDefault();
+					return;
+				}
+				if (k === 'n' || k === 'N') {
+					// nothing — script is already saved, just leave the screen
+					e.preventDefault();
+					return;
+				}
+			} else if (state.installPhase === 'failed') {
+				if (k === 'y' || k === 'Y' || k === 'Enter') {
+					void continueInstall('retry');
+					e.preventDefault();
+					return;
+				}
+				if (k === 's' || k === 'S') {
+					void continueInstall('skip');
+					e.preventDefault();
+					return;
+				}
+				if (k === 'q' || k === 'Q') {
+					state.installPhase = 'done';
+					refreshHints();
+					renderRun();
+					e.preventDefault();
+					return;
+				}
+			} else if (state.installPhase === 'done' && k === 'Enter') {
+				setStep('splash');
+				e.preventDefault();
+				return;
+			}
+		}
+	});
+
+	for (const el of flowItems) {
+		el.addEventListener('click', () => {
+			const step = el.dataset.jump;
+			if (step && (STEPS as readonly string[]).includes(step)) {
+				setStep(step as Step);
+			}
+		});
+		el.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				el.click();
+				e.preventDefault();
+			}
+		});
+	}
+
+	seedDefaults();
+	setStep('splash');
+</script>
+
+<style>
+	/* ------ shell -------------------------------------------------- */
+	.lab {
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 28px clamp(20px, 4vw, 40px) 80px;
+		position: relative;
+	}
+
+	.lab-head {
+		margin-bottom: 30px;
+	}
+
+	.lab-kicker {
+		display: inline-flex;
+		align-items: center;
+		gap: 12px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.18em;
+		color: var(--color-text-dim);
+		margin: 0 0 18px;
+	}
+	.lab-kicker .kicker-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--color-warn);
+		box-shadow: 0 0 10px color-mix(in oklab, var(--color-warn) 55%, transparent);
+	}
+	.lab-kicker .sep {
+		opacity: 0.45;
+	}
+	.lab-kicker .muted {
+		color: var(--color-text-muted);
+		text-transform: none;
+		letter-spacing: 0;
+		font-style: italic;
+	}
+
+	.lab-title {
+		margin: 0;
+		font-family: 'Geist Mono', var(--font-mono);
+		font-weight: 500;
+		font-size: clamp(2rem, 4.2vw, 3.4rem);
+		line-height: 1.05;
+		letter-spacing: -0.04em;
+		color: var(--color-text);
+		max-width: 22ch;
+	}
+	.lab-title em {
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-weight: 400;
+		font-size: 1.18em;
+		color: var(--color-accent);
+		background: linear-gradient(
+			100deg,
+			var(--color-accent) 0%,
+			var(--color-warn) 60%,
+			var(--color-danger) 100%
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		filter: drop-shadow(
+			0 0 18px color-mix(in oklab, var(--color-accent) 22%, transparent)
+		);
+	}
+	.lab-lede {
+		font-family: var(--font-sans);
+		font-size: 1rem;
+		line-height: 1.55;
+		color: var(--color-text-muted);
+		max-width: 60ch;
+		margin: 16px 0 0;
+		text-wrap: pretty;
+	}
+
+	.lab-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 280px;
+		gap: 44px;
+		align-items: start;
+	}
+	@media (max-width: 1024px) {
+		.lab-layout {
+			grid-template-columns: 1fr;
+			gap: 32px;
+		}
+	}
+
+	.lab-main {
+		min-width: 0;
+	}
+
+	/* ------ terminal ----------------------------------------------- */
+	.term {
+		border: 1px solid var(--color-border);
+		border-radius: 12px;
+		background: var(--color-bg-elevated);
+		overflow: hidden;
+		box-shadow:
+			0 24px 60px -30px color-mix(in oklab, black 60%, transparent),
+			0 1px 0 color-mix(in oklab, white 6%, transparent) inset;
+		position: relative;
+	}
+	.term::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 16px;
+		right: 16px;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			var(--color-accent),
+			transparent
+		);
+		opacity: 0.25;
+	}
+	.term-chrome {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 11px 14px;
+		border-bottom: 1px solid var(--color-border);
+		background: color-mix(in oklab, var(--color-bg) 55%, var(--color-bg-elevated));
+	}
+	.lights {
+		display: inline-flex;
+		gap: 6px;
+	}
+	.lights .dot {
+		width: 11px;
+		height: 11px;
+		border-radius: 50%;
+		display: block;
+	}
+	.lights .red {
+		background: #ff5f56;
+	}
+	.lights .yel {
+		background: #ffbd2e;
+	}
+	.lights .grn {
+		background: #27c93f;
+	}
+	.term-title {
+		flex: 1;
+		text-align: center;
+		font-family: var(--font-mono);
+		font-size: 11.5px;
+		color: var(--color-text-muted);
+		letter-spacing: 0.06em;
+	}
+	.term-dims {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--color-text-dim);
+		letter-spacing: 0.04em;
+	}
+
+	.term-body {
+		position: relative;
+		height: 32rem;
+		overflow-y: auto;
+		padding: 22px 24px 18px;
+		font-family: 'Geist Mono', var(--font-mono);
+		font-size: clamp(12px, 1.05vw, 14px);
+		line-height: 1.6;
+		color: var(--color-text);
+		background:
+			radial-gradient(
+				140% 60% at 50% 0%,
+				color-mix(in oklab, var(--color-accent) 4%, transparent),
+				transparent 60%
+			),
+			var(--color-bg-elevated);
+		scrollbar-width: thin;
+		scrollbar-color: var(--color-border-strong) transparent;
+	}
+	.term-body::-webkit-scrollbar {
+		width: 6px;
+	}
+	.term-body::-webkit-scrollbar-thumb {
+		background: var(--color-border-strong);
+		border-radius: 3px;
+	}
+	.screen {
+		margin: 0;
+		font-family: inherit;
+		font-size: inherit;
+		line-height: inherit;
+	}
+	.screen[hidden] {
+		display: none;
+	}
+	.screen .line {
+		display: block;
+		white-space: pre;
+		min-height: 1.6em;
+		padding: 0 6px;
+		margin: 0 -6px;
+		border-radius: 4px;
+	}
+	.screen .line.is-focused {
+		background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+	}
+
+	.term-status {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 9px 14px;
+		border-top: 1px solid var(--color-border);
+		background: color-mix(in oklab, var(--color-bg) 55%, var(--color-bg-elevated));
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--color-text-muted);
+		letter-spacing: 0.04em;
+		flex-wrap: wrap;
+	}
+	.term-status kbd {
+		display: inline-block;
+		padding: 1px 6px;
+		border-radius: 4px;
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		color: var(--color-text);
+		font-family: var(--font-mono);
+		font-size: 10.5px;
+		line-height: 1.4;
+		margin: 0 1px;
+	}
+	.term-status .sep {
+		color: var(--color-text-dim);
+		opacity: 0.6;
+		margin: 0 4px;
+	}
+
+	/* ------ in-terminal colour palette ----------------------------- */
+	.t-bright {
+		color: var(--color-text);
+		font-weight: 500;
+	}
+	.t-text {
+		color: var(--color-text);
+	}
+	.t-muted {
+		color: var(--color-text-muted);
+	}
+	.t-dim {
+		color: var(--color-text-dim);
+	}
+	.t-accent {
+		color: var(--color-accent);
+	}
+	.t-warn {
+		color: var(--color-warn);
+	}
+	.cursor-blink {
+		display: inline-block;
+		color: var(--color-accent);
+		animation: lab-blink 1.05s steps(2) infinite;
+	}
+	@keyframes lab-blink {
+		50% {
+			opacity: 0;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cursor-blink {
+			animation: none;
+		}
+	}
+
+	/* ------ flow rail ---------------------------------------------- */
+	.flow {
+		list-style: none;
+		margin: 18px 0 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 8px;
+	}
+	.flow-item {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 10px 14px;
+		border: 1px solid var(--color-border);
+		border-radius: 8px;
+		background: color-mix(in oklab, var(--color-bg-elevated) 60%, transparent);
+		cursor: pointer;
+		font-family: var(--font-mono);
+		transition:
+			border-color 0.18s ease,
+			background 0.18s ease,
+			transform 0.18s ease;
+		user-select: none;
+	}
+	.flow-item:hover {
+		border-color: color-mix(in oklab, var(--color-accent) 55%, var(--color-border));
+		background: color-mix(in oklab, var(--color-accent-soft) 60%, transparent);
+	}
+	.flow-item.active {
+		border-color: var(--color-accent);
+		background: var(--color-accent-soft);
+	}
+	.flow-item:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+	.flow-num {
+		font-size: 10px;
+		color: var(--color-text-dim);
+		letter-spacing: 0.06em;
+	}
+	.flow-item.active .flow-num {
+		color: var(--color-accent);
+	}
+	.flow-name {
+		font-size: 12px;
+		color: var(--color-text-muted);
+		letter-spacing: 0.04em;
+	}
+	.flow-item.active .flow-name {
+		color: var(--color-text);
+	}
+	@media (max-width: 640px) {
+		.flow {
+			gap: 3px;
+		}
+		.flow-item {
+			padding: 8px 6px;
+			flex-direction: column;
+			gap: 2px;
+		}
+	}
+
+	/* ------ notes rail --------------------------------------------- */
+	.lab-notes {
+		position: sticky;
+		top: 24px;
+		border-left: 1px dashed var(--color-border);
+		padding-left: 22px;
+	}
+	@media (max-width: 1024px) {
+		.lab-notes {
+			border-left: 0;
+			border-top: 1px dashed var(--color-border);
+			padding-left: 0;
+			padding-top: 24px;
+			position: static;
+		}
+	}
+	.notes-title {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 0.22em;
+		color: var(--color-text-dim);
+		margin: 0 0 10px;
+		font-weight: 500;
+	}
+	.notes-title + .notes-list {
+		margin-top: 0;
+	}
+	.notes-list {
+		list-style: none;
+		margin: 0 0 28px;
+		padding: 0;
+	}
+	.notes-list li {
+		font-family: var(--font-sans);
+		font-size: 0.875rem;
+		line-height: 1.5;
+		color: var(--color-text-muted);
+		padding: 9px 0;
+		border-top: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
+		text-wrap: pretty;
+	}
+	.notes-list li:first-child {
+		border-top: 0;
+	}
+	.notes-list.muted li {
+		color: var(--color-text-dim);
+	}
+	.notes-list code {
+		font-family: var(--font-mono);
+		font-size: 0.78rem;
+		padding: 1px 5px;
+		border-radius: 3px;
+		background: var(--color-surface);
+		color: var(--color-text);
+	}
+	.notes-list kbd {
+		display: inline-block;
+		padding: 0 5px;
+		border-radius: 3px;
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		font-family: var(--font-mono);
+		font-size: 10.5px;
+		color: var(--color-text);
+	}
+</style>
