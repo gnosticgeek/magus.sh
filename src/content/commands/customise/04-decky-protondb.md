@@ -7,9 +7,10 @@ summary: Shows the ProtonDB rating next to every game in the library.
 icon: lucide:badge-check
 commands:
   - run: |
-      sudo systemctl stop plugin_loader.service
       mkdir -p ~/homebrew/plugins
-      curl -L https://github.com/sersorrel/decky-protondb-badges/releases/latest/download/protondb-badges.tar.gz -o /tmp/protondb.tar.gz
+      ASSET=$(curl -fsSL https://api.github.com/repos/sersorrel/decky-protondb-badges/releases/latest | grep -oE '"browser_download_url": *"[^"]+\.tar\.gz"' | head -1 | cut -d'"' -f4)
+      curl -fL "$ASSET" -o /tmp/protondb.tar.gz
+      sudo systemctl stop plugin_loader.service
       tar -xzf /tmp/protondb.tar.gz -C ~/homebrew/plugins/
       sudo chown -R deck:deck ~/homebrew/plugins/
       sudo systemctl start plugin_loader.service

@@ -7,9 +7,10 @@ summary: Per-session tracker that covers non-Steam games Steam ignores.
 icon: lucide:hourglass
 commands:
   - run: |
-      sudo systemctl stop plugin_loader.service
       mkdir -p ~/homebrew/plugins
-      curl -L https://github.com/FrogTheFrog/decky-playtime/releases/latest/download/Playtime.tar.gz -o /tmp/playtime.tar.gz
+      ASSET=$(curl -fsSL https://api.github.com/repos/FrogTheFrog/decky-playtime/releases/latest | grep -oE '"browser_download_url": *"[^"]+\.tar\.gz"' | head -1 | cut -d'"' -f4)
+      curl -fL "$ASSET" -o /tmp/playtime.tar.gz
+      sudo systemctl stop plugin_loader.service
       tar -xzf /tmp/playtime.tar.gz -C ~/homebrew/plugins/
       sudo chown -R deck:deck ~/homebrew/plugins/
       sudo systemctl start plugin_loader.service

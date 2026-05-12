@@ -7,9 +7,10 @@ summary: Manage Proton-GE and Wine-GE from Game Mode. Decky alternative to Proto
 icon: lucide:wine
 commands:
   - run: |
-      sudo systemctl stop plugin_loader.service
       mkdir -p ~/homebrew/plugins
-      curl -L https://github.com/FlashyReese/decky-wine-cellar/releases/latest/download/decky-wine-cellar.tar.gz -o /tmp/wine-cellar.tar.gz
+      ASSET=$(curl -fsSL https://api.github.com/repos/FlashyReese/decky-wine-cellar/releases/latest | grep -oE '"browser_download_url": *"[^"]+\.tar\.gz"' | head -1 | cut -d'"' -f4)
+      curl -fL "$ASSET" -o /tmp/wine-cellar.tar.gz
+      sudo systemctl stop plugin_loader.service
       tar -xzf /tmp/wine-cellar.tar.gz -C ~/homebrew/plugins/
       sudo chown -R deck:deck ~/homebrew/plugins/
       sudo systemctl start plugin_loader.service
