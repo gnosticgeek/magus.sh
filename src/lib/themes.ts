@@ -1,5 +1,5 @@
 export const THEMES = [
-	{ id: 'tokyo-night', name: 'Tokyo Night', tone: 'dark' },
+	{ id: 'tokyo-night', name: 'Nightshade', tone: 'dark' },
 	{ id: 'grimoire', name: 'Grimoire', tone: 'light' },
 	{ id: 'konsole', name: 'Konsole', tone: 'dark' },
 ] as const;
