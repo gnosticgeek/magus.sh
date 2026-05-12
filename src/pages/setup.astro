@@ -1,0 +1,392 @@
+---
+import { getCollection } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import Base from '../layouts/Base.astro';
+import UpdateBanner from '../components/UpdateBanner.astro';
+import SectionBlock from '../components/SectionBlock.astro';
+import SelectionBar from '../components/SelectionBar.astro';
+import ScriptSheet from '../components/ScriptSheet.astro';
+import CommandPeek from '../components/CommandPeek.astro';
+import CommandSearch from '../components/CommandSearch.astro';
+import ControllerHints from '../components/ControllerHints.astro';
+import InstallCard from '../components/InstallCard.astro';
+import { STAGES } from '../lib/stages';
+
+const all = await getCollection('commands');
+all.sort((a, b) => a.data.order - b.data.order);
+
+const entriesByStage = new Map(
+	STAGES.map((s) => [s.id, all.filter((e) => e.data.category === s.id)]),
+);
+
+const spellbookEntries = await getCollection('spellbook');
+spellbookEntries.sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base>
+	<div class="page-shell relative mx-auto max-w-7xl px-5 pt-5 sm:pt-6">
+		<aside class="page-rail rise rise-2" aria-label="Magus controls">
+			<header class="rail-brand">
+				<h1 class="rail-title" style="font-family: var(--font-serif);">
+					SteamOS, <em class="rail-title-em">tuned fast.</em>
+				</h1>
+				<p class="rail-sub">Pick. Copy. Paste.</p>
+			</header>
+
+			<div class="rail-tools">
+				<CommandSearch />
+			</div>
+
+			<nav
+				class="stage-tabs items-center text-sm"
+				aria-label="Stages"
+				role="tablist"
+			>
+				{
+					STAGES.map((c) => (
+						<a
+							href={`#${c.id}`}
+							role="tab"
+							data-stage={c.id}
+							data-stage-tab-id={c.id}
+							aria-controls={c.id}
+							aria-selected="false"
+							class="stage-tab group relative inline-flex items-center gap-3 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface)] py-1.5 pl-3 pr-4 text-[color:var(--color-text)] hover:border-[color:var(--color-accent)] aria-selected:border-[color:var(--color-accent)] aria-selected:bg-[color:var(--color-accent)]/5"
+						>
+							<span class="stage-tab-progress" aria-hidden="true"></span>
+							<span class="font-mono text-[10px] tracking-wider text-[color:var(--color-text-dim)] transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
+								{c.num}
+							</span>
+							<span class="stage-tab-label font-medium transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
+								{c.short}
+							</span>
+							<span class="stage-tab-count font-mono text-[10px] text-[color:var(--color-text-dim)] tabular-nums" data-stage-count={c.id}></span>
+						</a>
+					))
+				}
+			</nav>
+
+			<UpdateBanner />
+		</aside>
+
+		<div class="page-content">
+			<InstallCard command="curl -fsSL https://magus.sh/run | bash" />
+
+		{
+			STAGES.map((stage) => (
+				<SectionBlock
+					id={stage.id}
+					number={stage.num}
+					stageLabel={stage.stageLabel}
+					title={stage.title}
+					tagline={stage.tagline}
+					entries={entriesByStage.get(stage.id) ?? []}
+					rise={stage.rise}
+					variant={'variant' in stage ? stage.variant : undefined}
+				/>
+			))
+		}
+
+		<details class="rise rise-5 spellbook mt-16" aria-labelledby="spellbook-heading">
+			<summary class="spellbook-summary">
+				<span
+					class="spellbook-kicker font-mono text-[10px] uppercase tracking-[0.28em] text-[color:var(--color-accent-dim)]"
+				>
+					/ future spells
+				</span>
+				<span class="spellbook-rule h-px flex-1"></span>
+				<h2
+					id="spellbook-heading"
+					class="spellbook-heading"
+				>
+					Still being conjured.
+				</h2>
+				<span class="spellbook-meta font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-text-dim)]">
+					{spellbookEntries.length} drafts
+				</span>
+				<span class="spellbook-marker" aria-hidden="true">+</span>
+			</summary>
+
+			<ul class="spellbook-grid mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+				{
+					spellbookEntries.map((spell) => (
+						<li class="spell-card" data-status={spell.data.status}>
+							<div class="spell-card-head">
+								<Icon name={spell.data.icon} class="spell-card-icon" />
+								<span class="spell-status">
+									<span class="spell-status-dot" aria-hidden="true" />
+									{spell.data.status}
+								</span>
+							</div>
+							<h3 class="spell-card-title">{spell.data.title}</h3>
+							<p class="spell-card-teaser">{spell.data.teaser}</p>
+						</li>
+					))
+				}
+			</ul>
+		</details>
+		</div>
+	</div>
+
+	<SelectionBar />
+	<ScriptSheet />
+	<CommandPeek />
+	<ControllerHints />
+</Base>
+
+<script>
+	import { isStage, type Stage } from '../lib/stages';
+
+	const reduced = () =>
+		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	const runActivate = (stage: Stage, opts: { scroll?: boolean }) => {
+		document
+			.querySelectorAll<HTMLElement>('section.stage')
+			.forEach((sec) => {
+				sec.hidden = sec.id !== stage;
+			});
+		document
+			.querySelectorAll<HTMLAnchorElement>('a[role="tab"][data-stage]')
+			.forEach((tab) => {
+				tab.setAttribute(
+					'aria-selected',
+					tab.dataset.stage === stage ? 'true' : 'false',
+				);
+			});
+		if (opts.scroll) {
+			requestAnimationFrame(() => {
+				document.getElementById(stage)?.scrollIntoView({
+					behavior: reduced() ? 'auto' : 'smooth',
+					block: 'start',
+				});
+			});
+		}
+	};
+
+	const activate = (stage: Stage, opts: { scroll?: boolean } = {}) => {
+		/* Don't switch stages while a search is active — search shows all stages. */
+		if (document.documentElement.classList.contains('searching')) {
+			runActivate(stage, opts);
+			return;
+		}
+		/* Use View Transitions when available for a soft cross-fade between stages. */
+		const startVT = (
+			document as Document & {
+				startViewTransition?: (cb: () => void) => unknown;
+			}
+		).startViewTransition;
+		if (startVT && !reduced()) {
+			startVT.call(document, () => runActivate(stage, opts));
+		} else {
+			runActivate(stage, opts);
+		}
+	};
+
+	const fromHash = (): Stage => {
+		const h = location.hash.slice(1);
+		return isStage(h) ? h : 'setup';
+	};
+
+	document
+		.querySelectorAll<HTMLAnchorElement>('a[role="tab"][data-stage]')
+		.forEach((tab) => {
+			tab.addEventListener('click', (e) => {
+				e.preventDefault();
+				const stage = tab.dataset.stage;
+				if (!stage || !isStage(stage)) return;
+				const newHash = `#${stage}`;
+				if (location.hash !== newHash) {
+					history.pushState(null, '', newHash);
+				}
+				activate(stage, { scroll: true });
+			});
+		});
+
+	window.addEventListener('hashchange', () => {
+		activate(fromHash(), { scroll: true });
+	});
+
+	activate(fromHash());
+</script>
+
+<style>
+	/* view transition: dissolve stages on tab switch */
+	::view-transition-old(stages),
+	::view-transition-new(stages) {
+		animation-duration: 0.28s;
+	}
+	section.stage:not([hidden]) {
+		view-transition-name: stages;
+	}
+
+	.spellbook {
+		position: relative;
+	}
+	.spellbook[open] .spellbook-marker {
+		transform: rotate(45deg);
+	}
+	.spellbook-summary {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		list-style: none;
+		cursor: pointer;
+		padding: 6px 2px;
+		border-radius: 8px;
+		transition: background-color 0.2s ease;
+	}
+	.spellbook-summary::-webkit-details-marker {
+		display: none;
+	}
+	.spellbook-summary:hover {
+		background: color-mix(in oklab, var(--color-surface) 35%, transparent);
+	}
+	.spellbook-heading {
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-weight: 400;
+		font-size: 1rem;
+		line-height: 1.1;
+		letter-spacing: -0.005em;
+		color: var(--color-text);
+		margin: 0;
+	}
+	.spellbook-rule {
+		flex: 1;
+		min-width: 24px;
+		background: linear-gradient(
+			to right,
+			var(--color-border),
+			color-mix(in oklab, var(--color-accent) 25%, transparent),
+			transparent
+		);
+	}
+	.spellbook-marker {
+		font-family: var(--font-mono);
+		font-size: 14px;
+		line-height: 1;
+		color: var(--color-accent);
+		transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+		flex-shrink: 0;
+	}
+
+	.spellbook-grid {
+		--card-pad: 1rem;
+	}
+
+	.spell-card {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.55rem;
+		padding: 0.95rem 1rem 1rem;
+		border-radius: 10px;
+		border: 1px dashed var(--color-border);
+		background: color-mix(in oklab, var(--color-bg-elevated) 55%, transparent);
+		transition:
+			border-color 0.22s ease,
+			transform 0.22s ease,
+			background 0.22s ease;
+		overflow: hidden;
+		isolation: isolate;
+	}
+	.spell-card::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: radial-gradient(
+			circle at 100% 0%,
+			color-mix(in oklab, var(--color-accent) 12%, transparent) 0%,
+			transparent 55%
+		);
+		opacity: 0;
+		transition: opacity 0.22s ease;
+		pointer-events: none;
+		z-index: -1;
+	}
+	.spell-card:hover {
+		border-color: color-mix(in oklab, var(--color-accent) 70%, var(--color-border));
+		transform: translateY(-2px);
+		background: color-mix(in oklab, var(--color-bg-elevated) 75%, transparent);
+	}
+	.spell-card:hover::before {
+		opacity: 1;
+	}
+
+	.spell-card-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.spell-card-icon {
+		width: 18px;
+		height: 18px;
+		color: var(--color-accent);
+		opacity: 0.78;
+		transition: opacity 0.22s ease, transform 0.22s ease;
+	}
+	.spell-card:hover .spell-card-icon {
+		opacity: 1;
+		transform: scale(1.08);
+	}
+
+	.spell-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-family: var(--font-mono);
+		font-size: 9px;
+		text-transform: uppercase;
+		letter-spacing: 0.2em;
+		color: var(--color-text-dim);
+	}
+	.spell-status-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: var(--color-text-dim);
+	}
+	[data-status='planned'] .spell-status-dot {
+		background: var(--color-accent);
+		box-shadow: 0 0 6px color-mix(in oklab, var(--color-accent) 55%, transparent);
+	}
+	[data-status='planned'] .spell-status {
+		color: color-mix(in oklab, var(--color-accent) 70%, var(--color-text-dim));
+	}
+	[data-status='research'] .spell-status-dot {
+		background: var(--color-warn);
+		box-shadow: 0 0 6px color-mix(in oklab, var(--color-warn) 55%, transparent);
+	}
+	[data-status='research'] .spell-status {
+		color: color-mix(in oklab, var(--color-warn) 60%, var(--color-text-dim));
+	}
+	[data-status='draft'] .spell-status-dot {
+		background: var(--color-text-dim);
+	}
+
+	.spell-card-title {
+		font-family: var(--font-sans);
+		font-size: 0.98rem;
+		font-weight: 500;
+		line-height: 1.2;
+		color: var(--color-text);
+		letter-spacing: -0.005em;
+	}
+	.spell-card-teaser {
+		font-size: 0.8rem;
+		line-height: 1.5;
+		color: var(--color-text-muted);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.spellbook-sparkle,
+		.spell-card,
+		.spell-card-icon,
+		.spell-card::before {
+			animation: none;
+			transition: none;
+		}
+	}
+</style>
