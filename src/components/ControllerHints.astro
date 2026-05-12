@@ -1,0 +1,157 @@
+---
+const HINTS = [
+	{ key: 'A', label: 'pick', tone: 'accent' },
+	{ key: 'Y', label: 'review', tone: 'warn' },
+	{ key: 'X', label: 'clear', tone: 'danger' },
+	{ key: 'R1', label: 'copy', tone: 'accent' },
+] as const;
+---
+
+<aside
+	id="controller-hints"
+	class="controller-hints"
+	role="note"
+	aria-label="Steam Deck shortcuts"
+	hidden
+>
+	<span class="controller-hints-rail" aria-hidden="true"></span>
+	<ul class="controller-hints-list">
+		{HINTS.map((h) => (
+			<li class="controller-hint">
+				<span class={`controller-key controller-key-${h.tone}`} aria-hidden="true">{h.key}</span>
+				<span class="controller-hint-label">{h.label}</span>
+			</li>
+		))}
+	</ul>
+	<button
+		type="button"
+		class="controller-hints-dismiss"
+		aria-label="Dismiss Steam Deck hints"
+		data-action="dismiss"
+	>×</button>
+</aside>
+
+<script>
+	const STORAGE_KEY = 'magus:controller-hints-dismissed';
+	const node = document.getElementById('controller-hints');
+	if (node) {
+		try {
+			if (!localStorage.getItem(STORAGE_KEY)) {
+				node.hidden = false;
+			}
+		} catch {}
+
+		node.querySelector<HTMLButtonElement>('[data-action="dismiss"]')?.addEventListener('click', () => {
+			node.hidden = true;
+			try {
+				localStorage.setItem(STORAGE_KEY, '1');
+			} catch {}
+		});
+	}
+</script>
+
+<style>
+	.controller-hints {
+		position: fixed;
+		left: 16px;
+		bottom: calc(var(--space-safe-bottom) + 96px);
+		z-index: 55;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 8px 6px 10px;
+		border: 1px solid var(--color-border-strong);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-bg-elevated) 88%, transparent);
+		backdrop-filter: blur(18px) saturate(140%);
+		-webkit-backdrop-filter: blur(18px) saturate(140%);
+		box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.5);
+		font-family: var(--font-mono);
+		max-width: calc(100vw - 32px);
+	}
+
+	@media (min-width: 640px) {
+		.controller-hints {
+			bottom: 24px;
+		}
+	}
+
+	.controller-hints-rail {
+		display: none;
+	}
+
+	.controller-hints-list {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		list-style: none;
+		margin: 0;
+		padding: 0 4px 0 0;
+	}
+
+	.controller-hint {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 11px;
+		color: var(--color-text-muted);
+		letter-spacing: 0.02em;
+	}
+
+	.controller-key {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 22px;
+		height: 22px;
+		padding: 0 6px;
+		border-radius: 999px;
+		border: 1px solid currentColor;
+		font-family: var(--font-mono);
+		font-size: 10.5px;
+		font-weight: 600;
+		line-height: 1;
+		background: color-mix(in srgb, currentColor 8%, transparent);
+	}
+	.controller-key-accent {
+		color: var(--color-accent);
+	}
+	.controller-key-warn {
+		color: var(--color-warn);
+	}
+	.controller-key-danger {
+		color: var(--color-danger);
+	}
+
+	.controller-hint-label {
+		color: var(--color-text);
+	}
+
+	.controller-hints-dismiss {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		border: 0;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--color-text-dim);
+		font-size: 16px;
+		line-height: 1;
+		cursor: pointer;
+		flex-shrink: 0;
+		transition: color 0.15s, background 0.15s;
+	}
+	.controller-hints-dismiss:hover {
+		color: var(--color-danger);
+		background: color-mix(in oklab, var(--color-danger) 12%, transparent);
+	}
+
+	/* hide on very narrow phones where the chip would crowd the selection bar */
+	@media (max-width: 420px) {
+		.controller-hints {
+			display: none;
+		}
+	}
+</style>

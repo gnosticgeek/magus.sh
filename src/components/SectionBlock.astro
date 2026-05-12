@@ -1,0 +1,227 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import CommandCard from './CommandCard.astro';
+import DeckyArea from './DeckyArea.astro';
+import GroupBlock from './GroupBlock.astro';
+
+interface Props {
+	id: string;
+	number: string;
+	stageLabel: string;
+	title: string;
+	tagline: string;
+	entries: CollectionEntry<'commands'>[];
+	rise?: number;
+	variant?: 'retro';
+}
+
+const { id, number, stageLabel, title, tagline, entries, rise = 2, variant } = Astro.props;
+
+const ungrouped = entries.filter((e) => !e.data.group);
+const grouped = entries.filter((e) => e.data.group);
+
+const groupMap = new Map<string, CollectionEntry<'commands'>[]>();
+for (const e of grouped) {
+	const g = e.data.group!;
+	if (!groupMap.has(g)) groupMap.set(g, []);
+	groupMap.get(g)!.push(e);
+}
+
+interface GroupMeta {
+	label: string;
+	tagline: string;
+	icon: string;
+}
+
+const groupMetaByKey: Record<string, GroupMeta> = {
+	launchers: {
+		label: 'Launchers & Compat',
+		tagline: 'Non-Steam games, Wine, Proton-GE.',
+		icon: 'lucide:gamepad-2',
+	},
+	emulation: {
+		label: 'Emulation',
+		tagline: 'Standalone emulators and RetroArch.',
+		icon: 'lucide:joystick',
+	},
+	streaming: {
+		label: 'Stream & Capture',
+		tagline: 'Remote play, recording, chat.',
+		icon: 'lucide:radio-tower',
+	},
+	system: {
+		label: 'System & Hygiene',
+		tagline: 'Permissions, overlays, cleanup.',
+		icon: 'lucide:sliders-horizontal',
+	},
+	daily: {
+		label: 'Daily Drivers',
+		tagline: 'Browser, vault, music, chat.',
+		icon: 'lucide:sun-medium',
+	},
+};
+
+const fallbackMeta = (key: string): GroupMeta => ({
+	label: key.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+	tagline: '',
+	icon: 'lucide:layers',
+});
+
+const groupEntries = Array.from(groupMap.entries()).filter(
+	([key]) => key !== 'decky',
+);
+const deckyEntries = groupMap.get('decky') ?? [];
+
+const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+---
+
+<section
+	id={id}
+	data-variant={variant}
+	class:list={[
+		'stage relative mt-10 scroll-mt-28 first:mt-0 first-of-type:mt-5 sm:mt-14 sm:first-of-type:mt-6 rise',
+		`rise-${rise}`,
+	]}
+>
+	<div class="stage-rule" aria-hidden="true"></div>
+
+	<header class="stage-header mt-4 mb-4 grid grid-cols-[4rem_1fr] gap-x-4 gap-y-3 sm:mt-5 sm:mb-5 sm:grid-cols-[4.8rem_1fr] sm:gap-x-5 lg:grid-cols-[5rem_1fr]">
+		<div class="stage-number-wrap relative">
+			<span
+				class="stage-number block font-mono leading-[0.9] text-[color:var(--color-accent)]"
+				style="font-size: var(--fs-stage-compact);"
+			>
+				<span class="stage-number-sigil" aria-hidden="true">▌</span>{number}
+			</span>
+		</div>
+		<div class="min-w-0">
+			<div class="stage-eyebrow flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-mono text-[12px] text-[color:var(--color-text-dim)]">
+				<span class="stage-eyebrow-mark" aria-hidden="true">//</span>
+				<span class="stage-eyebrow-label">{stageLabel}</span>
+				<span class="stage-eyebrow-dot" aria-hidden="true">·</span>
+				<span class="stage-eyebrow-count">{entries.length} cmds</span>
+			</div>
+			<h2
+				class="mt-2 font-medium leading-[0.98] tracking-normal text-[color:var(--color-text)]"
+				style="font-size: var(--fs-stage-title);"
+			>
+				{title}
+			</h2>
+			<p class="mt-0.5 max-w-[55ch] text-sm leading-snug text-[color:var(--color-text-muted)] sm:text-[0.92rem]">
+				{tagline}
+			</p>
+			{ungrouped.length > 0 && (
+				<button
+					type="button"
+					class="section-select mt-2.5"
+					data-section-id={id}
+					data-state="none"
+					aria-label={`Select all in ${title}`}
+				>
+					<span class="icon" aria-hidden="true"></span>
+					<span class="label">select all</span>
+				</button>
+			)}
+		</div>
+	</header>
+
+	{deckyEntries.length > 0 && <DeckyArea entries={deckyEntries} />}
+
+	{
+		groupEntries.length > 0 && (
+			<div class="group-stack">
+				{groupEntries.map(([key, items], idx) => (
+					<GroupBlock
+						groupKey={key}
+						parentNumber={number}
+						letter={letters[idx] ?? String(idx + 1)}
+						meta={groupMetaByKey[key] ?? fallbackMeta(key)}
+						entries={items}
+					/>
+				))}
+			</div>
+		)
+	}
+
+	{
+		ungrouped.length > 0 ? (
+			<div class:list={[
+				'command-grid grid auto-rows-fr grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3',
+				(deckyEntries.length > 0 || groupEntries.length > 0) && 'mt-10',
+			]}>
+				{ungrouped.map((entry) => (
+					<CommandCard entry={entry} />
+				))}
+			</div>
+		) : deckyEntries.length === 0 && groupEntries.length === 0 ? (
+			<div class="rounded-lg border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-surface)]/20 px-6 py-10 text-center">
+				<p class="font-mono text-[11px] uppercase tracking-[0.2em] text-[color:var(--color-text-dim)]">
+					Nothing here yet
+				</p>
+				<p class="mt-2 text-sm text-[color:var(--color-text-muted)]">
+					Drop a markdown file in <code class="font-mono text-[color:var(--color-text)]">{`src/content/commands/${id}/`}</code> to add a card.
+				</p>
+			</div>
+		) : null
+	}
+</section>
+
+<style>
+	.stage-rule {
+		height: 1px;
+		width: 100%;
+		background: linear-gradient(
+			90deg,
+			transparent 0%,
+			var(--color-border-strong) 12%,
+			var(--color-border-strong) 88%,
+			transparent 100%
+		);
+	}
+	.stage-number-wrap {
+		overflow: clip;
+	}
+	@media (max-width: 640px) {
+		.stage-number {
+			margin-left: -0.05em;
+		}
+	}
+	.stage-number {
+		font-feature-settings: "ss01", "lnum", "tnum", "zero";
+		font-weight: 500;
+		letter-spacing: -0.04em;
+	}
+	.stage-number-sigil {
+		display: inline-block;
+		font-size: 0.58em;
+		line-height: 1;
+		vertical-align: 0.22em;
+		margin-right: 0.12em;
+		color: color-mix(in oklab, var(--color-accent) 65%, transparent);
+		text-shadow: 0 0 8px color-mix(in oklab, var(--color-accent) 45%, transparent);
+	}
+	.stage-eyebrow-mark {
+		color: color-mix(in oklab, var(--color-text-dim) 80%, transparent);
+		letter-spacing: -0.02em;
+	}
+	.stage-eyebrow-label {
+		color: var(--color-accent-dim);
+		font-feature-settings: "tnum";
+	}
+	.stage-eyebrow-dot {
+		color: color-mix(in oklab, var(--color-text-dim) 60%, transparent);
+	}
+	.stage-eyebrow-count {
+		color: var(--color-text-muted);
+	}
+	.group-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+	@media (min-width: 640px) {
+		.group-stack {
+			gap: 2rem;
+		}
+	}
+</style>

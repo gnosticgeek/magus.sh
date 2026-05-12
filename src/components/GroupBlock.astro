@@ -1,0 +1,163 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import CommandCard from './CommandCard.astro';
+
+interface GroupMeta {
+	label: string;
+	tagline: string;
+	icon: string;
+}
+
+interface Props {
+	groupKey: string;
+	parentNumber: string;
+	letter: string;
+	meta: GroupMeta;
+	entries: CollectionEntry<'commands'>[];
+}
+
+const { groupKey, parentNumber, letter, meta, entries } = Astro.props;
+const count = entries.length;
+---
+
+<section class="group-block" data-group={groupKey} aria-labelledby={`group-${groupKey}-title`}>
+	<header class="group-header">
+		<div class="group-eyebrow">
+			<span class="group-eyebrow-num">{parentNumber}·{letter.toUpperCase()}</span>
+			<span class="group-eyebrow-dot" aria-hidden="true">·</span>
+			<span class="group-eyebrow-count">{count} apps</span>
+		</div>
+
+		<h3 class="group-title" id={`group-${groupKey}-title`}>
+			<Icon name={meta.icon} class="group-title-icon" aria-hidden="true" />
+			<span class="group-title-text">{meta.label}</span>
+		</h3>
+
+		<p class="group-tagline">{meta.tagline}</p>
+
+		<button
+			type="button"
+			class="section-select group-select"
+			data-section-id={groupKey}
+			data-state="none"
+			aria-label={`Select all in ${meta.label}`}
+		>
+			<span class="icon" aria-hidden="true"></span>
+			<span class="label">select all</span>
+		</button>
+	</header>
+
+	<div class="group-grid">
+		{entries.map((entry) => <CommandCard entry={entry} />)}
+	</div>
+</section>
+
+<style>
+	.group-block {
+		position: relative;
+		margin-top: 2.75rem;
+		padding-top: 1.5rem;
+	}
+	.group-block:first-child {
+		margin-top: 0.75rem;
+		padding-top: 0;
+	}
+	.group-block:not(:first-child)::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			color-mix(in oklab, var(--color-border) 80%, transparent),
+			transparent 60%
+		);
+	}
+
+	.group-header {
+		margin-bottom: 1.25rem;
+	}
+	@media (min-width: 640px) {
+		.group-header {
+			margin-bottom: 1.5rem;
+		}
+	}
+
+	.group-eyebrow {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		font-family: var(--font-mono);
+		font-size: 10.5px;
+		text-transform: uppercase;
+		letter-spacing: 0.22em;
+		color: var(--color-text-dim);
+	}
+	.group-eyebrow-num {
+		color: var(--color-accent-dim);
+		font-weight: 500;
+	}
+	.group-eyebrow-dot {
+		color: var(--color-text-dim);
+		opacity: 0.6;
+	}
+	.group-eyebrow-count {
+		color: var(--color-text-muted);
+	}
+
+	.group-title {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		margin: 0.45rem 0 0;
+		font-family: var(--font-sans);
+		font-size: clamp(1.25rem, 1rem + 0.8vw, 1.55rem);
+		font-weight: 500;
+		line-height: 1.1;
+		letter-spacing: -0.02em;
+		color: var(--color-text);
+	}
+	.group-title-icon {
+		width: 1em;
+		height: 1em;
+		color: var(--color-accent);
+		opacity: 0.8;
+		flex-shrink: 0;
+	}
+	.group-title-text {
+		min-width: 0;
+	}
+
+	.group-tagline {
+		margin: 0.3rem 0 0;
+		max-width: 60ch;
+		font-size: 0.92rem;
+		line-height: 1.55;
+		color: var(--color-text-muted);
+	}
+
+	.group-select {
+		margin-top: 0.85rem;
+		font-size: 11px;
+	}
+
+	.group-grid {
+		display: grid;
+		grid-template-columns: repeat(1, minmax(0, 1fr));
+		gap: 0.75rem;
+		align-items: start;
+	}
+	@media (min-width: 640px) {
+		.group-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (min-width: 1024px) {
+		.group-grid {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+	}
+</style>

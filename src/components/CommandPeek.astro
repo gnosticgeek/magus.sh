@@ -1,0 +1,216 @@
+---
+---
+
+<dialog
+	id="command-peek"
+	class="sheet command-peek"
+	aria-labelledby="command-peek-title"
+>
+	<div class="sheet-inner">
+		<div class="sheet-handle" aria-hidden="true"></div>
+		<header class="sheet-header peek-header">
+			<div class="sheet-titles">
+				<div class="peek-badges">
+					<span class="peek-badge peek-badge-deck" hidden>Deck only</span>
+					<span class="peek-badge peek-badge-danger" hidden></span>
+				</div>
+				<h2 id="command-peek-title" class="peek-title"></h2>
+				<p class="peek-summary"></p>
+			</div>
+			<button
+				type="button"
+				class="sheet-close"
+				aria-label="Close"
+				data-action="close"
+			>
+				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+					<path
+						d="M3 3 L13 13 M13 3 L3 13"
+						stroke="currentColor"
+						stroke-width="1.5"
+						fill="none"
+						stroke-linecap="round"
+					></path>
+				</svg>
+			</button>
+		</header>
+		<div class="sheet-scroll">
+			<pre class="sheet-script"><code id="command-peek-code"></code></pre>
+			<details class="peek-undo" hidden>
+				<summary>
+					<span>Show undo</span>
+				</summary>
+				<pre class="sheet-script peek-undo-pre"><code id="command-peek-undo"></code></pre>
+			</details>
+		</div>
+		<footer class="sheet-footer">
+			<button
+				type="button"
+				class="sheet-action sheet-action-primary"
+				data-action="copy"
+			>
+				<span class="sheet-action-label">Copy this command</span>
+			</button>
+		</footer>
+	</div>
+</dialog>
+
+<style>
+	.peek-header {
+		align-items: flex-start;
+	}
+	.peek-badges {
+		display: flex;
+		gap: 6px;
+		margin-bottom: 8px;
+	}
+	.peek-badge {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		padding: 3px 8px;
+		border-radius: 4px;
+		border: 1px solid var(--color-border);
+		color: var(--color-text-muted);
+	}
+	.peek-badge-danger[data-level="medium"] {
+		color: var(--color-warn);
+		border-color: rgba(240, 170, 61, 0.4);
+	}
+	.peek-badge-danger[data-level="high"] {
+		color: var(--color-danger);
+		border-color: rgba(236, 107, 90, 0.4);
+	}
+	.peek-title {
+		font-size: 1.35rem;
+		line-height: 1.15;
+		font-weight: 500;
+		letter-spacing: -0.015em;
+		color: var(--color-text);
+	}
+	.peek-summary {
+		margin-top: 6px;
+		font-size: 0.875rem;
+		line-height: 1.5;
+		color: var(--color-text-muted);
+	}
+	.peek-undo {
+		margin-top: 14px;
+		font-family: var(--font-mono);
+	}
+	.peek-undo > summary {
+		cursor: pointer;
+		list-style: none;
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.16em;
+		color: var(--color-text-dim);
+		padding: 8px 0;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.peek-undo > summary::before {
+		content: "+";
+		display: inline-block;
+		width: 14px;
+		text-align: center;
+		color: var(--color-accent);
+	}
+	.peek-undo[open] > summary::before {
+		content: "−";
+	}
+	.peek-undo > summary::-webkit-details-marker {
+		display: none;
+	}
+	.peek-undo-pre {
+		font-size: 13px;
+		opacity: 0.9;
+	}
+</style>
+
+<script>
+	import type { PeekDetail } from '../lib/types';
+	import { copyWithFeedback } from '../lib/clipboard';
+	import { lockBodyScroll } from '../lib/body-scroll-lock';
+
+	const dialog = document.getElementById('command-peek') as HTMLDialogElement | null;
+	if (dialog) {
+		const title = dialog.querySelector<HTMLElement>('.peek-title');
+		const summary = dialog.querySelector<HTMLElement>('.peek-summary');
+		const code = dialog.querySelector<HTMLElement>('#command-peek-code');
+		const undoCode = dialog.querySelector<HTMLElement>('#command-peek-undo');
+		const undoWrap = dialog.querySelector<HTMLElement>('.peek-undo');
+		const dangerBadge = dialog.querySelector<HTMLElement>('.peek-badge-danger');
+		const deckBadge = dialog.querySelector<HTMLElement>('.peek-badge-deck');
+		const closeBtn = dialog.querySelector<HTMLButtonElement>('[data-action="close"]');
+		const copyBtn = dialog.querySelector<HTMLButtonElement>('[data-action="copy"]');
+		const copyLabel = dialog.querySelector<HTMLElement>('.sheet-action-label');
+		if (title && summary && code && undoCode && undoWrap && dangerBadge && deckBadge && closeBtn && copyBtn && copyLabel) {
+			let currentCmd = '';
+			let unlockScroll: (() => void) | undefined;
+
+			const open = (detail: PeekDetail) => {
+				currentCmd = detail.cmd;
+				title.textContent = detail.title;
+				summary.textContent = detail.summary;
+				code.textContent = detail.cmd;
+				if (detail.undo) {
+					undoCode.textContent = detail.undo;
+					undoWrap.hidden = false;
+					(undoWrap as HTMLDetailsElement).open = false;
+				} else {
+					undoWrap.hidden = true;
+				}
+				if (detail.danger) {
+					dangerBadge.textContent = `${detail.danger} risk`;
+					dangerBadge.dataset.level = detail.danger;
+					dangerBadge.hidden = false;
+				} else {
+					dangerBadge.hidden = true;
+				}
+				deckBadge.textContent = 'Deck only';
+				deckBadge.hidden = !detail.deckOnly;
+
+				unlockScroll = lockBodyScroll();
+				dialog.showModal();
+			};
+
+			const close = () => {
+				dialog.classList.add('closing');
+				const onEnd = () => {
+					dialog.classList.remove('closing');
+					dialog.close();
+					dialog.removeEventListener('animationend', onEnd);
+					unlockScroll?.();
+					unlockScroll = undefined;
+				};
+				dialog.addEventListener('animationend', onEnd);
+				setTimeout(() => {
+					if (dialog.classList.contains('closing')) onEnd();
+				}, 320);
+			};
+
+			closeBtn.addEventListener('click', close);
+
+			dialog.addEventListener('click', (e) => {
+				if (e.target === dialog) close();
+			});
+
+			dialog.addEventListener('cancel', (e) => {
+				e.preventDefault();
+				close();
+			});
+
+			copyBtn.addEventListener('click', () => {
+				copyWithFeedback(currentCmd, copyBtn, copyLabel, 10);
+			});
+
+			document.addEventListener('command-peek:open', ((e: CustomEvent<PeekDetail>) => {
+				if (!e.detail) return;
+				open(e.detail);
+			}) as EventListener);
+		}
+	}
+</script>

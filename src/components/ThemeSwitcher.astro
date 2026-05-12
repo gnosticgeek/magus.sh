@@ -1,0 +1,111 @@
+---
+import { THEMES } from '../lib/themes';
+---
+
+<div
+	id="theme-switcher"
+	class="theme-switcher"
+	role="group"
+	aria-label="Colour theme"
+>
+	<span class="label" aria-hidden="true">theme</span>
+	{
+		THEMES.map((t) => (
+			<button
+				type="button"
+				class="theme-swatch"
+				data-theme-id={t.id}
+				data-tone={t.tone}
+				style={`--swatch: var(--swatch-${t.id});`}
+				aria-label={`${t.name} (${t.tone})`}
+				aria-pressed="false"
+				title={`${t.name} · ${t.tone}`}
+			>
+				<svg
+					class="theme-swatch-glyph"
+					viewBox="0 0 12 12"
+					width="8"
+					height="8"
+					aria-hidden="true"
+				>
+					{t.tone === 'light' ? (
+						<g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+							<circle cx="6" cy="6" r="2.2" />
+							<path d="M6 1.4v1.6M6 9v1.6M1.4 6h1.6M9 6h1.6M2.6 2.6l1.1 1.1M8.3 8.3l1.1 1.1M2.6 9.4l1.1-1.1M8.3 3.7l1.1-1.1" />
+						</g>
+					) : (
+						<path
+							d="M9.3 6.6a3.6 3.6 0 1 1-3.9-5 3 3 0 0 0 3.9 5z"
+							fill="currentColor"
+						/>
+					)}
+				</svg>
+			</button>
+		))
+	}
+</div>
+
+<script>
+	import { DEFAULT_THEME, STORAGE_KEY_THEME, isTheme, type Theme } from '../lib/themes';
+
+	const apply = (theme: Theme) => {
+		const root = document.documentElement;
+		if (theme === DEFAULT_THEME) {
+			root.removeAttribute('data-theme');
+		} else {
+			root.setAttribute('data-theme', theme);
+		}
+		document
+			.querySelectorAll<HTMLButtonElement>('.theme-switcher [data-theme-id]')
+			.forEach((btn) => {
+				btn.setAttribute(
+					'aria-pressed',
+					btn.dataset.themeId === theme ? 'true' : 'false',
+				);
+			});
+	};
+
+	const current = (): Theme => {
+		const stored = localStorage.getItem(STORAGE_KEY_THEME);
+		return isTheme(stored) ? stored : DEFAULT_THEME;
+	};
+
+	apply(current());
+
+	document
+		.querySelectorAll<HTMLButtonElement>('.theme-switcher [data-theme-id]')
+		.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const id = btn.dataset.themeId;
+				if (!id || !isTheme(id)) return;
+				try {
+					localStorage.setItem(STORAGE_KEY_THEME, id);
+				} catch {}
+				apply(id);
+			});
+		});
+</script>
+
+<style>
+	.theme-swatch-glyph {
+		position: absolute;
+		inset: 0;
+		margin: auto;
+		color: var(--color-bg);
+		opacity: 0;
+		transition: opacity 0.18s ease;
+		pointer-events: none;
+	}
+	.theme-swatch[aria-pressed='true'] .theme-swatch-glyph {
+		opacity: 0.85;
+	}
+	@media (hover: hover) and (pointer: fine) {
+		.theme-swatch:hover .theme-swatch-glyph {
+			opacity: 0.55;
+		}
+	}
+	.theme-swatch[data-tone='light'] {
+		background:
+			radial-gradient(circle at 30% 30%, #fff7e3 0%, var(--swatch) 70%);
+	}
+</style>

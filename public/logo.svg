@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" color="#7aa2f7" role="img" aria-label="Steam Deck">
+	<path d="M10 4 H86 Q92 4 92 10 V18 Q92 26 88 31 Q82 38 70 38 Q60 38 56 30 H40 Q36 38 26 38 Q14 38 8 31 Q4 26 4 18 V10 Q4 4 10 4 Z" />
+	<rect x="28" y="9" width="40" height="14" rx="1.5" />
+	<circle cx="18" cy="28" r="2" fill="currentColor" />
+	<circle cx="78" cy="28" r="2" fill="currentColor" />
+</svg>

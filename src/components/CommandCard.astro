@@ -1,0 +1,411 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import type { PeekDetail } from '../lib/types';
+
+interface Props {
+	entry: CollectionEntry<'commands'>;
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+
+const combinedCommand = data.commands.map((c) => c.run.trim()).join('\n');
+
+const dangerStyles = {
+	low: 'text-[color:var(--color-text-muted)] border-[color:var(--color-border)]',
+	medium: 'text-[color:var(--color-warn)] border-[color:var(--color-warn)]/40',
+	high: 'text-[color:var(--color-danger)] border-[color:var(--color-danger)]/40',
+};
+
+const categoryFallbackIcon: Record<typeof data.category, string> = {
+	setup: 'lucide:terminal',
+	install: 'lucide:package',
+	optimise: 'lucide:gauge',
+	customise: 'lucide:palette',
+	retro: 'lucide:joystick',
+};
+const iconName = data.icon ?? categoryFallbackIcon[data.category];
+const sectionKey = data.group ?? data.category;
+const requiresDecky = data.group === 'decky' && !data.tags?.includes('prerequisite');
+
+const hasFooter = data.deck_only || data.danger || (data.reversible && data.undo);
+
+const peekData: PeekDetail = {
+	title: data.title,
+	summary: data.summary,
+	cmd: combinedCommand,
+	undo: data.reversible && data.undo ? data.undo : undefined,
+	danger: data.danger,
+	deckOnly: data.deck_only,
+};
+
+const initial = data.title.replace(/[^A-Za-z0-9]/, '').charAt(0).toUpperCase() || '·';
+const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
+	.join(' ')
+	.toLowerCase();
+---
+
+<article
+	id={entry.id}
+	data-command-id={entry.id}
+	data-category={data.category}
+	data-deck-only={data.deck_only ? 'true' : 'false'}
+	data-initial={initial}
+	data-search={searchHaystack}
+	class="card group relative flex h-full flex-col overflow-hidden rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)]/70"
+>
+	<script is:inline type="application/json" data-payload="peek" set:html={JSON.stringify(peekData)}></script>
+	<span class="accent-line" aria-hidden="true"></span>
+	<span class="card-illumination" aria-hidden="true">{initial}</span>
+
+	<header class="tap-target card-header-grid px-3.5 pt-3 pb-2">
+		<input
+			type="checkbox"
+			class="dx-check card-checkbox"
+			data-id={entry.id}
+			data-section={sectionKey}
+			data-category={data.category}
+			data-cmd={combinedCommand}
+			data-title={data.title}
+			data-danger={data.danger}
+			data-deck-only={data.deck_only ? 'true' : 'false'}
+			data-requires-decky={requiresDecky ? 'true' : 'false'}
+			aria-label={`Select ${data.title}`}
+		/>
+		<div class="card-copy min-w-0">
+			<h3 class="card-title-row text-sm font-medium leading-tight tracking-tight text-[color:var(--color-text)]">
+				<Icon
+					name={iconName}
+					class="card-title-icon h-4 w-4 text-[color:var(--color-text-dim)] transition-colors group-hover:text-[color:var(--color-accent)]"
+					aria-hidden="true"
+				/>
+				<span class="truncate">{data.title}</span>
+			</h3>
+			<p
+				class="mt-0.5 line-clamp-2 min-h-[2lh] text-xs leading-snug text-[color:var(--color-text-muted)]"
+			>
+				{data.summary}
+			</p>
+		</div>
+		{
+			data.upstream && (
+				<a
+					href={data.upstream.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="card-upstream text-[color:var(--color-text-dim)] transition-colors hover:text-[color:var(--color-accent)]"
+					aria-label={`Upstream: ${data.upstream.name}`}
+				>
+					<Icon
+						name="lucide:arrow-up-right"
+						class="h-3.5 w-3.5"
+						aria-hidden="true"
+					/>
+				</a>
+			)
+		}
+	</header>
+
+	<div class="flex-1 px-3.5 pb-3">
+		<button
+			type="button"
+			class="view-cmd flex w-full"
+			aria-label={`Review command for ${data.title}`}
+		>
+			<span class="view-cmd-label">
+				<Icon name="lucide:square-terminal" class="h-4 w-4 text-[color:var(--color-accent)]" aria-hidden="true" />
+				<span class="view-cmd-text">Review command</span>
+			</span>
+			<span class="view-cmd-chevron" aria-hidden="true">›</span>
+		</button>
+	</div>
+
+	{
+		hasFooter && (
+			<footer class="flex items-center justify-between gap-2 border-t border-[color:var(--color-border)]/60 px-3.5 py-1.5">
+				<div class="flex flex-wrap gap-1">
+					{data.deck_only && (
+						<span class="rounded border border-[color:var(--color-border)] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-[color:var(--color-text-muted)]">
+							Deck only
+						</span>
+					)}
+					{data.danger && (
+						<span
+							class={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${dangerStyles[data.danger]}`}
+						>
+							{data.danger} risk
+						</span>
+					)}
+				</div>
+				{data.reversible && data.undo && (
+					<button
+						type="button"
+						class="undo-toggle font-mono text-[10px] text-[color:var(--color-text-dim)] hover:text-[color:var(--color-text-muted)]"
+						aria-expanded="false"
+						aria-label={`Show undo command for ${data.title}`}
+					>
+						undo
+					</button>
+				)}
+			</footer>
+		)
+	}
+
+	{
+		data.reversible && data.undo && (
+			<div class="undo-content hidden border-t border-[color:var(--color-border)]/60 bg-[color:var(--color-bg)] px-3.5 py-2">
+				<pre class="cmd-pre overflow-auto font-mono text-[11px] text-[color:var(--color-text-muted)]"><code>{data.undo}</code></pre>
+			</div>
+		)
+	}
+</article>
+
+<script>
+	import type { PeekDetail } from '../lib/types';
+
+	const HINT_KEY = 'magus:card-hint-dismissed';
+	const PEEK_EVENT = 'command-peek:open';
+
+	const readPayload = (card: Element): PeekDetail | null => {
+		const node = card.querySelector<HTMLScriptElement>('script[data-payload="peek"]');
+		if (!node?.textContent) return null;
+		try {
+			return JSON.parse(node.textContent) as PeekDetail;
+		} catch {
+			return null;
+		}
+	};
+
+	document.querySelectorAll<HTMLButtonElement>('.undo-toggle').forEach((btn) => {
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const article = btn.closest('article');
+			const content = article?.querySelector<HTMLElement>('.undo-content');
+			if (!content) return;
+			const open = !content.classList.contains('hidden');
+			content.classList.toggle('hidden', open);
+			btn.setAttribute('aria-expanded', String(!open));
+		});
+	});
+
+	/* whole-header tap proxy — clicking the header toggles the checkbox */
+	document.querySelectorAll<HTMLElement>('.card .tap-target').forEach((target) => {
+		target.addEventListener('click', (e) => {
+			const el = e.target as HTMLElement;
+			if (el.closest('input, a, button')) return;
+			const checkbox = target.querySelector<HTMLInputElement>('input.card-checkbox');
+			if (!checkbox) return;
+			checkbox.checked = !checkbox.checked;
+			checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+			if ('vibrate' in navigator) navigator.vibrate?.(8);
+			dismissHint();
+		});
+	});
+
+	/* "Review command" row → open CommandPeek dialog */
+	document.querySelectorAll<HTMLButtonElement>('.view-cmd').forEach((btn) => {
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const card = btn.closest('article');
+			if (!card) return;
+			const detail = readPayload(card);
+			if (!detail) return;
+			document.dispatchEvent(new CustomEvent(PEEK_EVENT, { detail }));
+		});
+	});
+
+	/* Long-press a card to peek without ticking the checkbox.
+	   Cancels on movement > 8px or pointerup before threshold. */
+	const LONG_PRESS_MS = 500;
+	document.querySelectorAll<HTMLElement>('.card').forEach((card) => {
+		let timer: number | undefined;
+		let startX = 0;
+		let startY = 0;
+		let armed = false;
+		let fired = false;
+
+		const cancel = () => {
+			if (timer) window.clearTimeout(timer);
+			timer = undefined;
+			armed = false;
+		};
+
+		card.addEventListener('pointerdown', (e) => {
+			if (e.pointerType !== 'touch') return;
+			const target = e.target as HTMLElement;
+			if (target.closest('input, a, button, .view-cmd')) return;
+			armed = true;
+			fired = false;
+			startX = e.clientX;
+			startY = e.clientY;
+			timer = window.setTimeout(() => {
+				if (!armed) return;
+				const detail = readPayload(card);
+				if (!detail) return;
+				document.dispatchEvent(new CustomEvent(PEEK_EVENT, { detail }));
+				if ('vibrate' in navigator) navigator.vibrate?.(16);
+				fired = true;
+			}, LONG_PRESS_MS);
+		});
+
+		card.addEventListener('pointermove', (e) => {
+			if (!armed) return;
+			if (Math.hypot(e.clientX - startX, e.clientY - startY) > 8) cancel();
+		});
+
+		const swallow = (e: Event) => {
+			if (fired) {
+				e.preventDefault();
+				e.stopPropagation();
+				fired = false;
+			}
+			cancel();
+		};
+
+		card.addEventListener('pointerup', swallow);
+		card.addEventListener('pointercancel', cancel);
+		card.addEventListener('click', (e) => {
+			if (fired) {
+				e.preventDefault();
+				e.stopPropagation();
+				fired = false;
+			}
+		}, true);
+	});
+
+	/* first-visit "tap to pick" hint — shown only on the first card */
+	function dismissHint() {
+		document.documentElement.classList.remove('show-card-hint');
+		try {
+			localStorage.setItem(HINT_KEY, '1');
+		} catch {}
+	}
+
+	try {
+		if (!localStorage.getItem(HINT_KEY)) {
+			document.documentElement.classList.add('show-card-hint');
+		}
+	} catch {}
+</script>
+
+<style>
+	:global(.card-header-grid) {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		column-gap: 10px;
+		align-items: start;
+	}
+	:global(.card-header-grid .dx-check) {
+		margin-top: 2px;
+	}
+	:global(.card-copy) {
+		padding-top: 0;
+	}
+	:global(.card-title-row) {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: center;
+		column-gap: 8px;
+		min-height: 18px;
+	}
+	:global(.card-title-icon) {
+		flex-shrink: 0;
+	}
+	:global(.card-upstream) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		margin-top: -2px;
+	}
+
+	/* illuminated capital — appears when selected, a decorative drop-cap
+	   nodding to medieval manuscripts. Rendered absolute behind content. */
+	:global(.card-illumination) {
+		position: absolute;
+		right: -0.18em;
+		bottom: -0.4em;
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-weight: 400;
+		font-size: 8rem;
+		line-height: 0.85;
+		letter-spacing: -0.03em;
+		color: color-mix(in oklab, var(--color-accent) 16%, transparent);
+		pointer-events: none;
+		user-select: none;
+		opacity: 0;
+		transform: translate(0, 6px) rotate(-2deg);
+		transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+		z-index: 0;
+	}
+	:global(.card.selected .card-illumination) {
+		opacity: 1;
+		transform: translate(0, 0) rotate(-2deg);
+	}
+	:global(.card > :not(.card-illumination):not(.accent-line)) {
+		position: relative;
+		z-index: 1;
+	}
+	:global(.card.selected .card-illumination)::after {
+		content: "";
+		position: absolute;
+		inset: -0.4em -0.5em -0.2em -0.3em;
+		background: radial-gradient(closest-side, color-mix(in oklab, var(--color-accent) 12%, transparent), transparent 70%);
+		filter: blur(8px);
+		z-index: -1;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		:global(.card-illumination) {
+			transition: none;
+			transform: none;
+		}
+	}
+
+	.view-cmd {
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		min-height: var(--tap-min);
+		padding: 10px 12px;
+		border: 1px solid var(--color-border);
+		border-radius: 8px;
+		background: var(--color-bg);
+		color: var(--color-text-muted);
+		font-family: var(--font-mono);
+		font-size: 13px;
+		cursor: pointer;
+		transition:
+			border-color 0.15s,
+			color 0.15s,
+			background-color 0.15s,
+			transform 0.08s;
+	}
+	.view-cmd:active {
+		transform: scale(0.98);
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+	.view-cmd-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		min-width: 0;
+		flex: 1;
+		text-align: left;
+	}
+	.view-cmd-text {
+		font-family: var(--font-sans);
+		color: var(--color-text);
+		letter-spacing: -0.005em;
+	}
+	.view-cmd-chevron {
+		color: var(--color-text-dim);
+		font-size: 18px;
+		line-height: 1;
+		flex-shrink: 0;
+	}
+</style>

@@ -1,0 +1,610 @@
+---
+---
+
+<dialog id="script-sheet" class="sheet script-sheet" aria-labelledby="script-sheet-title">
+	<div class="sheet-inner">
+		<div class="sheet-handle" aria-hidden="true"></div>
+		<header class="sheet-header">
+			<div class="sheet-titles">
+				<h2 id="script-sheet-title" class="sheet-title">Script</h2>
+				<p class="sheet-subtitle">
+					<span class="sheet-count">0</span> <span class="sheet-cmd-word">commands</span> ·
+					<span class="sheet-lines">0</span> <span class="sheet-line-word">lines</span>
+				</p>
+			</div>
+			<button
+				type="button"
+				class="sheet-close"
+				aria-label="Close"
+				data-action="close"
+			>
+				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+					<path
+						d="M3 3 L13 13 M13 3 L3 13"
+						stroke="currentColor"
+						stroke-width="1.5"
+						fill="none"
+						stroke-linecap="round"
+					></path>
+				</svg>
+			</button>
+		</header>
+		<div class="sheet-scroll">
+			<div class="sheet-loading" aria-live="polite">
+				<p class="loading-line">Building script...</p>
+				<div class="loading-bar" aria-hidden="true"><span></span></div>
+			</div>
+			<div class="sheet-reveal" hidden>
+				<div class="sheet-review" aria-live="polite">
+					<p class="sheet-review-meta"></p>
+					<ul class="sheet-review-warnings" hidden></ul>
+				</div>
+				<h3 class="sheet-cta">Paste in Konsole</h3>
+				<div class="script-chunks" data-script-chunks></div>
+				<p class="sheet-hint">
+					Tap a stage to copy just that section. ⌘ + A then ⌘ + C inside the script for the lot.
+				</p>
+			</div>
+		</div>
+		<footer class="sheet-footer">
+			<button
+				type="button"
+				class="sheet-action sheet-action-secondary"
+				data-action="download"
+			>
+				<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+					<path
+						d="M8 1.5v9M4.5 7L8 10.5L11.5 7M3 13.5h10"
+						stroke="currentColor"
+						stroke-width="1.3"
+						fill="none"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					></path>
+				</svg>
+				.sh
+			</button>
+			<button
+				type="button"
+				class="sheet-action sheet-action-secondary"
+				data-action="share"
+				hidden
+			>
+				<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+					<path
+						d="M11 3.5L8 0.5L5 3.5M8 0.5V10.5M3 7.5V13.5C3 14.05 3.45 14.5 4 14.5H12C12.55 14.5 13 14.05 13 13.5V7.5"
+						stroke="currentColor"
+						stroke-width="1.3"
+						fill="none"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					></path>
+				</svg>
+				Share
+			</button>
+			<button
+				type="button"
+				class="sheet-action sheet-action-primary"
+				data-action="copy"
+			>
+				<span class="sheet-action-label">Copy all</span>
+			</button>
+		</footer>
+	</div>
+</dialog>
+
+<style>
+	.script-chunks {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+	.script-chunk {
+		border: 1px solid var(--color-border);
+		border-radius: 10px;
+		background: var(--color-bg);
+		overflow: hidden;
+	}
+	.script-chunk-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 10px 12px;
+		background: color-mix(in oklab, var(--color-surface) 60%, transparent);
+		border-bottom: 1px solid var(--color-border);
+	}
+	.script-chunk-stage {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.18em;
+		color: var(--color-accent);
+	}
+	.script-chunk-count {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--color-text-dim);
+	}
+	.script-chunk-copy {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 30px;
+		padding: 0 10px;
+		border: 1px solid var(--color-border-strong);
+		border-radius: 6px;
+		background: transparent;
+		color: var(--color-text-muted);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.02em;
+		cursor: pointer;
+		transition:
+			border-color 0.15s,
+			color 0.15s,
+			background-color 0.15s,
+			transform 0.08s;
+	}
+	@media (hover: hover) and (pointer: fine) {
+		.script-chunk-copy:hover {
+			border-color: var(--color-accent);
+			color: var(--color-accent);
+		}
+	}
+	.script-chunk-copy:active {
+		transform: scale(0.96);
+	}
+	.script-chunk-copy.copied {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+		background: var(--color-accent-soft);
+	}
+
+	.script-chunk-body {
+		padding: 0;
+		margin: 0;
+	}
+	.script-chunk-line {
+		display: grid;
+		grid-template-columns: 18px 1fr;
+		gap: 8px;
+		padding: 4px 12px;
+		font-family: var(--font-mono);
+		font-size: 13px;
+		line-height: 1.55;
+		color: var(--color-text);
+		white-space: pre-wrap;
+		word-break: break-word;
+		overflow-wrap: anywhere;
+	}
+	.script-chunk-line-comment {
+		color: var(--color-text-dim);
+	}
+	.script-chunk-gutter {
+		color: var(--color-text-dim);
+		opacity: 0.55;
+		text-align: right;
+		user-select: none;
+		font-variant-numeric: tabular-nums;
+		font-size: 11px;
+		padding-top: 2px;
+	}
+	.script-chunk-line[data-danger='medium'] {
+		background: color-mix(in oklab, var(--color-warn) 6%, transparent);
+		border-left: 2px solid var(--color-warn);
+		padding-left: 10px;
+	}
+	.script-chunk-line[data-danger='medium'] .script-chunk-gutter {
+		color: var(--color-warn);
+		opacity: 1;
+	}
+	.script-chunk-line[data-danger='high'] {
+		background: color-mix(in oklab, var(--color-danger) 8%, transparent);
+		border-left: 2px solid var(--color-danger);
+		padding-left: 10px;
+	}
+	.script-chunk-line[data-danger='high'] .script-chunk-gutter {
+		color: var(--color-danger);
+		opacity: 1;
+	}
+
+	.script-chunk-cmd-head {
+		margin-top: 4px;
+		padding: 6px 12px 2px;
+		font-family: var(--font-sans);
+		font-size: 12px;
+		color: var(--color-text);
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.script-chunk-cmd-head::before {
+		content: '›';
+		color: var(--color-accent);
+	}
+	.script-chunk-cmd-head[data-danger='medium']::before {
+		content: '†';
+		color: var(--color-warn);
+	}
+	.script-chunk-cmd-head[data-danger='high']::before {
+		content: '‡';
+		color: var(--color-danger);
+	}
+</style>
+
+<script>
+	import type { ScriptItem } from '../lib/types';
+	import { STAGE_LABELS } from '../lib/stages';
+	import { copyWithFeedback } from '../lib/clipboard';
+	import { lockBodyScroll } from '../lib/body-scroll-lock';
+
+	interface OpenDetail {
+		items: ScriptItem[];
+	}
+
+	const buildHeader = (items: ScriptItem[]): string => {
+		const selectedStages = Array.from(
+			new Set(items.map((item) => STAGE_LABELS[item.category as keyof typeof STAGE_LABELS] ?? item.category)),
+		).join(', ');
+		return [
+			'#!/usr/bin/env bash',
+			'# magus.sh review script',
+			`# ${items.length} ${items.length === 1 ? 'command' : 'commands'} selected`,
+			`# Stages: ${selectedStages}`,
+			'set -e',
+		].join('\n');
+	};
+
+	const itemBlock = (item: ScriptItem): string => {
+		const head = `# --- ${item.title.trim()}${item.danger ? ` (${item.danger} risk)` : ''} ---`;
+		return `${head}\n${item.cmd.trim()}`;
+	};
+
+	const buildFullScript = (items: ScriptItem[]): string => {
+		if (items.length === 0) return '';
+		const header = buildHeader(items);
+		const sections: string[] = [];
+		let activeStage = '';
+		for (const item of items) {
+			const stage = STAGE_LABELS[item.category as keyof typeof STAGE_LABELS] ?? item.category;
+			if (stage !== activeStage) {
+				activeStage = stage;
+				sections.push(`# === ${stage} ===`);
+			}
+			sections.push(itemBlock(item));
+		}
+		return `${header}\n\n${sections.join('\n\n')}\n`;
+	};
+
+	const buildStageScript = (stage: string, items: ScriptItem[]): string => {
+		const lines = [
+			'#!/usr/bin/env bash',
+			`# magus.sh — ${stage}`,
+			'set -e',
+			'',
+		];
+		for (const item of items) {
+			lines.push(itemBlock(item));
+			lines.push('');
+		}
+		return lines.join('\n');
+	};
+
+	const groupByStage = (items: ScriptItem[]): Array<{ stage: string; items: ScriptItem[] }> => {
+		const order: string[] = [];
+		const map = new Map<string, ScriptItem[]>();
+		for (const item of items) {
+			const stage = STAGE_LABELS[item.category as keyof typeof STAGE_LABELS] ?? item.category;
+			if (!map.has(stage)) {
+				map.set(stage, []);
+				order.push(stage);
+			}
+			map.get(stage)!.push(item);
+		}
+		return order.map((stage) => ({ stage, items: map.get(stage)! }));
+	};
+
+	const renderChunks = (
+		container: HTMLElement,
+		grouped: Array<{ stage: string; items: ScriptItem[] }>,
+	) => {
+		container.replaceChildren();
+		for (const { stage, items } of grouped) {
+			const chunk = document.createElement('section');
+			chunk.className = 'script-chunk';
+
+			const head = document.createElement('div');
+			head.className = 'script-chunk-head';
+			const stageEl = document.createElement('span');
+			stageEl.className = 'script-chunk-stage';
+			stageEl.textContent = `# ${stage}`;
+			const countEl = document.createElement('span');
+			countEl.className = 'script-chunk-count';
+			countEl.textContent = `${items.length} ${items.length === 1 ? 'cmd' : 'cmds'}`;
+			const copyBtn = document.createElement('button');
+			copyBtn.type = 'button';
+			copyBtn.className = 'script-chunk-copy';
+			const copyLabel = document.createElement('span');
+			copyLabel.textContent = 'Copy stage';
+			copyBtn.appendChild(copyLabel);
+			copyBtn.addEventListener('click', () => {
+				copyWithFeedback(buildStageScript(stage, items), copyBtn, copyLabel, 8);
+			});
+			head.append(stageEl, countEl, copyBtn);
+
+			const body = document.createElement('div');
+			body.className = 'script-chunk-body';
+			let lineNum = 1;
+			for (const item of items) {
+				const cmdHead = document.createElement('div');
+				cmdHead.className = 'script-chunk-cmd-head';
+				if (item.danger) cmdHead.dataset.danger = item.danger;
+				cmdHead.textContent = item.title;
+				body.appendChild(cmdHead);
+
+				for (const line of item.cmd.trim().split('\n')) {
+					const row = document.createElement('div');
+					row.className = 'script-chunk-line';
+					if (item.danger) row.dataset.danger = item.danger;
+					if (line.trim().startsWith('#')) row.classList.add('script-chunk-line-comment');
+
+					const gutter = document.createElement('span');
+					gutter.className = 'script-chunk-gutter';
+					gutter.textContent = String(lineNum++);
+
+					const text = document.createElement('span');
+					text.textContent = line;
+
+					row.append(gutter, text);
+					body.appendChild(row);
+				}
+			}
+			chunk.append(head, body);
+			container.appendChild(chunk);
+		}
+	};
+
+	const LOADING_LINES = [
+		'Building script...',
+		'Checking order...',
+		'Ready soon...',
+	];
+	const LOADING_DURATION_MS = 350;
+	const LINE_SWAP_MS = 500;
+
+	const init = () => {
+		const dialog = document.getElementById('script-sheet') as HTMLDialogElement | null;
+		if (!dialog) return;
+
+		const chunksContainer = dialog.querySelector<HTMLElement>('[data-script-chunks]');
+		const count = dialog.querySelector<HTMLElement>('.sheet-count');
+		const lines = dialog.querySelector<HTMLElement>('.sheet-lines');
+		const cmdWord = dialog.querySelector<HTMLElement>('.sheet-cmd-word');
+		const lineWord = dialog.querySelector<HTMLElement>('.sheet-line-word');
+		const copyBtn = dialog.querySelector<HTMLButtonElement>('[data-action="copy"]');
+		const copyLabel = dialog.querySelector<HTMLElement>('.sheet-action-label');
+		const closeBtn = dialog.querySelector<HTMLButtonElement>('[data-action="close"]');
+		const shareBtn = dialog.querySelector<HTMLButtonElement>('[data-action="share"]');
+		const downloadBtn = dialog.querySelector<HTMLButtonElement>('[data-action="download"]');
+		const loading = dialog.querySelector<HTMLElement>('.sheet-loading');
+		const reveal = dialog.querySelector<HTMLElement>('.sheet-reveal');
+		const loadingLine = dialog.querySelector<HTMLElement>('.loading-line');
+		const loadingBarFill = dialog.querySelector<HTMLElement>('.loading-bar > span');
+		const reviewMeta = dialog.querySelector<HTMLElement>('.sheet-review-meta');
+		const reviewWarnings = dialog.querySelector<HTMLElement>('.sheet-review-warnings');
+		if (
+			!chunksContainer ||
+			!count ||
+			!lines ||
+			!copyBtn ||
+			!copyLabel ||
+			!closeBtn ||
+			!shareBtn ||
+			!downloadBtn ||
+			!loading ||
+			!reveal ||
+			!loadingLine ||
+			!loadingBarFill ||
+			!reviewMeta ||
+			!reviewWarnings
+		)
+			return;
+
+		if ('share' in navigator) {
+			shareBtn.hidden = false;
+		}
+
+		let currentScript = '';
+		let unlockScroll: (() => void) | undefined;
+		let loadingTimer: number | undefined;
+		let lineTimer: number | undefined;
+		let barTimer: number | undefined;
+
+		const stopLoading = () => {
+			if (loadingTimer) {
+				window.clearTimeout(loadingTimer);
+				loadingTimer = undefined;
+			}
+			if (lineTimer) {
+				window.clearInterval(lineTimer);
+				lineTimer = undefined;
+			}
+			if (barTimer) {
+				window.clearInterval(barTimer);
+				barTimer = undefined;
+			}
+		};
+
+		const showReveal = () => {
+			loading.hidden = true;
+			reveal.hidden = false;
+			copyBtn.disabled = false;
+			shareBtn.disabled = false;
+			downloadBtn.disabled = false;
+		};
+
+		const renderReview = (items: ScriptItem[]) => {
+			const stages = Array.from(
+				new Set(items.map((item) => STAGE_LABELS[item.category as keyof typeof STAGE_LABELS] ?? item.category)),
+			);
+			reviewMeta.textContent =
+				stages.length === 1
+					? `${stages[0]} · ordered`
+					: `${stages.join(' › ')} · ordered`;
+
+			const warnings: string[] = [];
+			const dangerCounts = items.reduce<Record<string, number>>((acc, item) => {
+				if (!item.danger) return acc;
+				acc[item.danger] = (acc[item.danger] ?? 0) + 1;
+				return acc;
+			}, {});
+			Object.entries(dangerCounts).forEach(([level, total]) => {
+				warnings.push(`${total} ${level}-risk ${total === 1 ? 'command' : 'commands'} selected`);
+			});
+			const deckOnlyCount = items.filter((item) => item.deckOnly).length;
+			if (deckOnlyCount > 0) {
+				warnings.push(`${deckOnlyCount} Deck-only ${deckOnlyCount === 1 ? 'command' : 'commands'} selected`);
+			}
+			const needsDecky = items.some((item) => item.requiresDecky);
+			const hasDeckyLoader = items.some((item) => item.title === 'Install Decky Loader');
+			if (needsDecky && !hasDeckyLoader) {
+				warnings.push('Decky Loader is required for the selected plugins');
+			}
+
+			reviewWarnings.replaceChildren(
+				...warnings.map((warning) => {
+					const li = document.createElement('li');
+					li.textContent = warning;
+					return li;
+				}),
+			);
+			reviewWarnings.hidden = warnings.length === 0;
+		};
+
+		const showLoading = () => {
+			reveal.hidden = true;
+			loading.hidden = false;
+			copyBtn.disabled = true;
+			shareBtn.disabled = true;
+			downloadBtn.disabled = true;
+
+			let idx = Math.floor(Math.random() * LOADING_LINES.length);
+			loadingLine.textContent = LOADING_LINES[idx];
+			loadingBarFill.style.width = '0%';
+			const barStart = performance.now();
+			barTimer = window.setInterval(() => {
+				const progress = Math.min(1, (performance.now() - barStart) / LOADING_DURATION_MS);
+				loadingBarFill.style.width = `${(progress * 100).toFixed(1)}%`;
+				if (progress >= 1 && barTimer) {
+					window.clearInterval(barTimer);
+					barTimer = undefined;
+				}
+			}, 60);
+
+			lineTimer = window.setInterval(() => {
+				idx = (idx + 1) % LOADING_LINES.length;
+				loadingLine.textContent = LOADING_LINES[idx];
+			}, LINE_SWAP_MS);
+
+			loadingTimer = window.setTimeout(() => {
+				stopLoading();
+				showReveal();
+			}, LOADING_DURATION_MS);
+		};
+
+		const open = (items: ScriptItem[]) => {
+			currentScript = buildFullScript(items);
+			renderChunks(chunksContainer, groupByStage(items));
+			renderReview(items);
+			count.textContent = String(items.length);
+			const lineCount = currentScript.split('\n').length;
+			lines.textContent = String(lineCount);
+			if (cmdWord) cmdWord.textContent = items.length === 1 ? 'command' : 'commands';
+			if (lineWord) lineWord.textContent = lineCount === 1 ? 'line' : 'lines';
+			unlockScroll = lockBodyScroll();
+
+			stopLoading();
+
+			const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			if (prefersReducedMotion) {
+				showReveal();
+				dialog.showModal();
+			} else {
+				dialog.classList.add('opening');
+				dialog.showModal();
+				void dialog.offsetHeight;
+				const clearOpening = () => dialog.classList.remove('opening');
+				requestAnimationFrame(clearOpening);
+				window.setTimeout(clearOpening, 100);
+				showLoading();
+			}
+		};
+
+		const close = () => {
+			stopLoading();
+			dialog.classList.add('closing');
+			const onEnd = () => {
+				dialog.classList.remove('closing');
+				dialog.close();
+				dialog.removeEventListener('animationend', onEnd);
+				unlockScroll?.();
+				unlockScroll = undefined;
+			};
+			dialog.addEventListener('animationend', onEnd);
+			setTimeout(() => {
+				if (dialog.classList.contains('closing')) onEnd();
+			}, 320);
+		};
+
+		closeBtn.addEventListener('click', close);
+
+		dialog.addEventListener('click', (e) => {
+			if (e.target === dialog) close();
+		});
+
+		dialog.addEventListener('cancel', (e) => {
+			e.preventDefault();
+			close();
+		});
+
+		copyBtn.addEventListener('click', () => {
+			copyWithFeedback(currentScript, copyBtn, copyLabel, [8, 24, 8]);
+		});
+
+		downloadBtn.addEventListener('click', () => {
+			if (!currentScript) return;
+			const blob = new Blob([currentScript], { type: 'text/x-shellscript' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			const stamp = new Date().toISOString().slice(0, 10);
+			link.download = `magus-${stamp}.sh`;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 1000);
+			if ('vibrate' in navigator) navigator.vibrate?.(12);
+		});
+
+		shareBtn.addEventListener('click', async () => {
+			if (!currentScript || !('share' in navigator)) return;
+			try {
+				await navigator.share({
+					title: 'magus.sh script',
+					text: currentScript,
+				});
+			} catch {
+				/* user cancelled or share unavailable */
+			}
+		});
+
+		document.addEventListener('script-sheet:open', ((e: CustomEvent<OpenDetail>) => {
+			if (!e.detail?.items?.length) return;
+			open(e.detail.items);
+		}) as EventListener);
+	};
+
+	init();
+</script>

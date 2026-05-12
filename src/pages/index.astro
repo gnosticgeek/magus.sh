@@ -1,0 +1,428 @@
+---
+import { getCollection } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import Base from '../layouts/Base.astro';
+import UpdateBanner from '../components/UpdateBanner.astro';
+import SectionBlock from '../components/SectionBlock.astro';
+import SelectionBar from '../components/SelectionBar.astro';
+import ScriptSheet from '../components/ScriptSheet.astro';
+import CommandPeek from '../components/CommandPeek.astro';
+import CommandSearch from '../components/CommandSearch.astro';
+import ControllerHints from '../components/ControllerHints.astro';
+import { STAGES } from '../lib/stages';
+
+const all = await getCollection('commands');
+all.sort((a, b) => a.data.order - b.data.order);
+
+const setup = all.filter((e) => e.data.category === 'setup');
+const install = all.filter((e) => e.data.category === 'install');
+const optimise = all.filter((e) => e.data.category === 'optimise');
+const customise = all.filter((e) => e.data.category === 'customise');
+const retro = all.filter((e) => e.data.category === 'retro');
+
+const totalCommands = all.length;
+
+const spellbookEntries = await getCollection('spellbook');
+spellbookEntries.sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base>
+	<div class="relative mx-auto max-w-7xl px-5 pt-5 sm:pt-6">
+		<header class="app-header">
+			<h1
+				class="rise rise-2 max-w-[20ch] font-medium leading-[0.98] tracking-normal text-[color:var(--color-text)]"
+				style="font-size: var(--fs-app-title); font-family: var(--font-serif); font-style: italic; letter-spacing: -0.02em;"
+			>
+				SteamOS, tuned fast.
+			</h1>
+
+			<p
+				class="rise rise-3 mt-1 max-w-[44ch] text-sm leading-relaxed text-[color:var(--color-text-muted)] sm:text-[0.95rem]"
+			>
+				Pick commands. Copy. Paste in your terminal.
+			</p>
+		</header>
+
+		<div class="workbench-rail rise rise-4">
+			<nav
+				class="stage-tabs items-center text-sm"
+				aria-label="Stages"
+				role="tablist"
+			>
+				{
+					STAGES.map((c) => (
+						<a
+							href={`#${c.id}`}
+							role="tab"
+							data-stage={c.id}
+							aria-controls={c.id}
+							aria-selected="false"
+							class="stage-tab group inline-flex items-center gap-3 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface)] py-1.5 pl-3 pr-4 text-[color:var(--color-text)] hover:border-[color:var(--color-accent)] aria-selected:border-[color:var(--color-accent)] aria-selected:bg-[color:var(--color-accent)]/5"
+						>
+							<span class="font-mono text-[10px] tracking-wider text-[color:var(--color-text-dim)] transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
+								{c.num}
+							</span>
+							<span class="font-medium transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
+								{c.short}
+							</span>
+						</a>
+					))
+				}
+			</nav>
+
+			<div class="workbench-tools">
+				<CommandSearch />
+				<button
+					id="select-all-page"
+					type="button"
+					data-total={totalCommands}
+					aria-label={`Select all ${totalCommands} commands across all stages`}
+					class="inline-flex items-center gap-2 rounded-md border border-[color:var(--color-border)] bg-transparent px-3 font-mono text-[11px] uppercase tracking-wider text-[color:var(--color-text-muted)]"
+				>
+					all {totalCommands}
+				</button>
+			</div>
+		</div>
+
+		<UpdateBanner />
+
+		<SectionBlock
+			id="setup"
+			number="01"
+			stageLabel="stage_01"
+			title="Setup"
+			tagline="Sudo and Decky basics."
+			entries={setup}
+			rise={2}
+		/>
+
+		<SectionBlock
+			id="install"
+			number="02"
+			stageLabel="stage_02"
+			title="Install"
+			tagline="Apps, launchers, tools."
+			entries={install}
+			rise={3}
+		/>
+
+		<SectionBlock
+			id="optimise"
+			number="03"
+			stageLabel="stage_03"
+			title="Optimise"
+			tagline="Performance and Plasma tweaks."
+			entries={optimise}
+			rise={4}
+		/>
+
+		<SectionBlock
+			id="customise"
+			number="04"
+			stageLabel="stage_04"
+			title="Customise"
+			tagline="Plugins, art, polish."
+			entries={customise}
+			rise={5}
+		/>
+
+		<SectionBlock
+			id="retro"
+			number="05"
+			stageLabel="stage_05"
+			title="Retro"
+			tagline="Cartridge dust, phosphor glow. PS1, GameCube, Wii."
+			entries={retro}
+			rise={5}
+			variant="retro"
+		/>
+
+		<section class="rise rise-5 spellbook mt-24" aria-labelledby="spellbook-heading">
+			<div class="flex items-center gap-3">
+				<span
+					class="spellbook-kicker font-mono text-[10px] uppercase tracking-[0.28em] text-[color:var(--color-accent-dim)]"
+				>
+					/ future spells
+				</span>
+				<span class="spellbook-rule h-px flex-1"></span>
+				<span
+					class="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-text-dim)] sm:inline"
+				>
+					{spellbookEntries.length} entries · drafts &amp; research
+				</span>
+			</div>
+
+			<div class="mt-3 flex items-end justify-between gap-6">
+				<h2
+					id="spellbook-heading"
+					class="font-serif italic leading-[1.05] text-[color:var(--color-text)]"
+					style="font-size: clamp(2rem, 1.3rem + 3.5vw, 3.2rem); letter-spacing: -0.025em;"
+				>
+					Still being conjured.
+				</h2>
+				<Icon
+					name="lucide:sparkles"
+					class="spellbook-sparkle hidden h-6 w-6 text-[color:var(--color-accent)] sm:block"
+					aria-hidden="true"
+				/>
+			</div>
+
+			<p class="mt-3 max-w-prose text-sm leading-relaxed text-[color:var(--color-text-muted)]">
+				Spells in the spellbook — ink still wet. Drop your wishlist in the GitHub repo.
+			</p>
+
+			<ul class="spellbook-grid mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+				{
+					spellbookEntries.map((spell) => (
+						<li class="spell-card" data-status={spell.data.status}>
+							<div class="spell-card-head">
+								<Icon name={spell.data.icon} class="spell-card-icon" />
+								<span class="spell-status">
+									<span class="spell-status-dot" aria-hidden="true" />
+									{spell.data.status}
+								</span>
+							</div>
+							<h3 class="spell-card-title">{spell.data.title}</h3>
+							<p class="spell-card-teaser">{spell.data.teaser}</p>
+						</li>
+					))
+				}
+			</ul>
+		</section>
+	</div>
+
+	<SelectionBar />
+	<ScriptSheet />
+	<CommandPeek />
+	<ControllerHints />
+</Base>
+
+<script>
+	import { isStage, type Stage } from '../lib/stages';
+
+	const reduced = () =>
+		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	const runActivate = (stage: Stage, opts: { scroll?: boolean }) => {
+		document
+			.querySelectorAll<HTMLElement>('section.stage')
+			.forEach((sec) => {
+				sec.hidden = sec.id !== stage;
+			});
+		document
+			.querySelectorAll<HTMLAnchorElement>('a[role="tab"][data-stage]')
+			.forEach((tab) => {
+				tab.setAttribute(
+					'aria-selected',
+					tab.dataset.stage === stage ? 'true' : 'false',
+				);
+			});
+		if (opts.scroll) {
+			requestAnimationFrame(() => {
+				document.getElementById(stage)?.scrollIntoView({
+					behavior: reduced() ? 'auto' : 'smooth',
+					block: 'start',
+				});
+			});
+		}
+	};
+
+	const activate = (stage: Stage, opts: { scroll?: boolean } = {}) => {
+		/* Don't switch stages while a search is active — search shows all stages. */
+		if (document.documentElement.classList.contains('searching')) {
+			runActivate(stage, opts);
+			return;
+		}
+		/* Use View Transitions when available for a soft cross-fade between stages. */
+		const startVT = (
+			document as Document & {
+				startViewTransition?: (cb: () => void) => unknown;
+			}
+		).startViewTransition;
+		if (startVT && !reduced()) {
+			startVT.call(document, () => runActivate(stage, opts));
+		} else {
+			runActivate(stage, opts);
+		}
+	};
+
+	const fromHash = (): Stage => {
+		const h = location.hash.slice(1);
+		return isStage(h) ? h : 'setup';
+	};
+
+	document
+		.querySelectorAll<HTMLAnchorElement>('a[role="tab"][data-stage]')
+		.forEach((tab) => {
+			tab.addEventListener('click', (e) => {
+				e.preventDefault();
+				const stage = tab.dataset.stage;
+				if (!stage || !isStage(stage)) return;
+				const newHash = `#${stage}`;
+				if (location.hash !== newHash) {
+					history.pushState(null, '', newHash);
+				}
+				activate(stage, { scroll: true });
+			});
+		});
+
+	window.addEventListener('hashchange', () => {
+		activate(fromHash(), { scroll: true });
+	});
+
+	activate(fromHash());
+</script>
+
+<style>
+	.app-header {
+		padding-bottom: 0.25rem;
+	}
+
+	/* view transition: dissolve stages on tab switch */
+	::view-transition-old(stages),
+	::view-transition-new(stages) {
+		animation-duration: 0.28s;
+	}
+	section.stage:not([hidden]) {
+		view-transition-name: stages;
+	}
+
+	.spellbook {
+		position: relative;
+	}
+	.spellbook-rule {
+		background: linear-gradient(
+			to right,
+			var(--color-border),
+			color-mix(in oklab, var(--color-accent) 25%, transparent),
+			transparent
+		);
+	}
+	.spellbook-sparkle {
+		filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-accent) 45%, transparent));
+		animation: spellbook-twinkle 3.8s ease-in-out infinite;
+	}
+	@keyframes spellbook-twinkle {
+		0%, 100% { opacity: 0.55; transform: rotate(-4deg); }
+		50% { opacity: 1; transform: rotate(4deg); }
+	}
+
+	.spellbook-grid {
+		--card-pad: 1rem;
+	}
+
+	.spell-card {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.55rem;
+		padding: 0.95rem 1rem 1rem;
+		border-radius: 10px;
+		border: 1px dashed var(--color-border);
+		background: color-mix(in oklab, var(--color-bg-elevated) 55%, transparent);
+		transition:
+			border-color 0.22s ease,
+			transform 0.22s ease,
+			background 0.22s ease;
+		overflow: hidden;
+		isolation: isolate;
+	}
+	.spell-card::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: radial-gradient(
+			circle at 100% 0%,
+			color-mix(in oklab, var(--color-accent) 12%, transparent) 0%,
+			transparent 55%
+		);
+		opacity: 0;
+		transition: opacity 0.22s ease;
+		pointer-events: none;
+		z-index: -1;
+	}
+	.spell-card:hover {
+		border-color: color-mix(in oklab, var(--color-accent) 70%, var(--color-border));
+		transform: translateY(-2px);
+		background: color-mix(in oklab, var(--color-bg-elevated) 75%, transparent);
+	}
+	.spell-card:hover::before {
+		opacity: 1;
+	}
+
+	.spell-card-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.spell-card-icon {
+		width: 18px;
+		height: 18px;
+		color: var(--color-accent);
+		opacity: 0.78;
+		transition: opacity 0.22s ease, transform 0.22s ease;
+	}
+	.spell-card:hover .spell-card-icon {
+		opacity: 1;
+		transform: scale(1.08);
+	}
+
+	.spell-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-family: var(--font-mono);
+		font-size: 9px;
+		text-transform: uppercase;
+		letter-spacing: 0.2em;
+		color: var(--color-text-dim);
+	}
+	.spell-status-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: var(--color-text-dim);
+	}
+	[data-status='planned'] .spell-status-dot {
+		background: var(--color-accent);
+		box-shadow: 0 0 6px color-mix(in oklab, var(--color-accent) 55%, transparent);
+	}
+	[data-status='planned'] .spell-status {
+		color: color-mix(in oklab, var(--color-accent) 70%, var(--color-text-dim));
+	}
+	[data-status='research'] .spell-status-dot {
+		background: var(--color-warn);
+		box-shadow: 0 0 6px color-mix(in oklab, var(--color-warn) 55%, transparent);
+	}
+	[data-status='research'] .spell-status {
+		color: color-mix(in oklab, var(--color-warn) 60%, var(--color-text-dim));
+	}
+	[data-status='draft'] .spell-status-dot {
+		background: var(--color-text-dim);
+	}
+
+	.spell-card-title {
+		font-family: var(--font-sans);
+		font-size: 0.98rem;
+		font-weight: 500;
+		line-height: 1.2;
+		color: var(--color-text);
+		letter-spacing: -0.005em;
+	}
+	.spell-card-teaser {
+		font-size: 0.8rem;
+		line-height: 1.5;
+		color: var(--color-text-muted);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.spellbook-sparkle,
+		.spell-card,
+		.spell-card-icon,
+		.spell-card::before {
+			animation: none;
+			transition: none;
+		}
+	}
+</style>

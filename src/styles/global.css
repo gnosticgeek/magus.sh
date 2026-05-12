@@ -1,0 +1,1442 @@
+@import "tailwindcss";
+
+@theme {
+	/* default — tokyo night (dark) */
+	--color-bg: #1a1b26;
+	--color-bg-elevated: #16161e;
+	--color-surface: #24283b;
+	--color-border: #2f3549;
+	--color-border-strong: #3b4261;
+	--color-text: #c0caf5;
+	--color-text-muted: #9aa5ce;
+	--color-text-dim: #565f89;
+	--color-accent: #7aa2f7;
+	--color-accent-dim: #5d87e3;
+	--color-accent-soft: rgba(122, 162, 247, 0.12);
+	--color-warn: #e0af68;
+	--color-danger: #f7768e;
+	--color-glow-primary: rgba(122, 162, 247, 0.07);
+	--color-glow-secondary: rgba(187, 154, 247, 0.04);
+	--color-bar-bg: rgba(22, 22, 30, 0.9);
+	--color-scheme: dark;
+
+	/* theme swatch colors — exposed so ThemeSwitcher can read them via var() */
+	--swatch-tokyo-night: #7aa2f7;
+	--swatch-grimoire: #7c1d1d;
+	--swatch-konsole: #39ff14;
+
+	--font-sans:
+		"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+		sans-serif;
+	--font-serif:
+		"Fraunces", ui-serif, "Iowan Old Style", Georgia, "Times New Roman", serif;
+	--font-mono:
+		"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		monospace;
+	--font-crt: "VT323", "JetBrains Mono", ui-monospace, monospace;
+
+	/* touch target & spacing system */
+	--tap-min: 44px;
+	--tap-jumbo: 56px;
+	--space-safe-bottom: max(12px, env(safe-area-inset-bottom));
+
+	/* type scale */
+	--fs-app-title: 2rem;
+	--fs-stage-compact: 2.8rem;
+	--fs-stage-title: 1.75rem;
+}
+
+@media (min-width: 768px) {
+	:root {
+		--fs-app-title: 2.7rem;
+		--fs-stage-compact: 3.1rem;
+		--fs-stage-title: 2.05rem;
+	}
+}
+
+/* Grimoire — parchment / ink. Light theme designed for outdoor Deck use. */
+:root[data-theme="grimoire"] {
+	--color-bg: #f4ecdc;
+	--color-bg-elevated: #ece1c8;
+	--color-surface: #e3d6b8;
+	--color-border: #c8b591;
+	--color-border-strong: #a8916a;
+	--color-text: #231a14;
+	--color-text-muted: #5b4a36;
+	--color-text-dim: #8a7559;
+	--color-accent: #7c1d1d;
+	--color-accent-dim: #5c1313;
+	--color-accent-soft: rgba(124, 29, 29, 0.14);
+	--color-warn: #a98b3e;
+	--color-danger: #8b2c1f;
+	--color-glow-primary: rgba(124, 29, 29, 0.06);
+	--color-glow-secondary: rgba(169, 139, 62, 0.05);
+	--color-bar-bg: rgba(236, 225, 200, 0.9);
+	--color-scheme: light;
+}
+
+/* Konsole — high-contrast pure terminal. Sunlight + a11y mode. */
+:root[data-theme="konsole"] {
+	--color-bg: #000000;
+	--color-bg-elevated: #0a0a0a;
+	--color-surface: #141414;
+	--color-border: #2a2a2a;
+	--color-border-strong: #4a4a4a;
+	--color-text: #ffffff;
+	--color-text-muted: #d4d4d4;
+	--color-text-dim: #8a8a8a;
+	--color-accent: #39ff14;
+	--color-accent-dim: #2bd00f;
+	--color-accent-soft: rgba(57, 255, 20, 0.14);
+	--color-warn: #ffeb3b;
+	--color-danger: #ff5252;
+	--color-glow-primary: rgba(57, 255, 20, 0.1);
+	--color-glow-secondary: rgba(255, 235, 59, 0.06);
+	--color-bar-bg: rgba(10, 10, 10, 0.94);
+	--color-scheme: dark;
+}
+
+html {
+	background: var(--color-bg);
+	color: var(--color-text);
+	color-scheme: var(--color-scheme);
+	font-family: var(--font-sans);
+	font-feature-settings: "ss01", "ss03", "cv11";
+	font-optical-sizing: auto;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	html {
+		scroll-behavior: smooth;
+	}
+}
+
+body {
+	min-height: 100dvh;
+	position: relative;
+	/* `clip` prevents horizontal overflow without making the body a scroll
+	   container (the way `hidden` does — which forces overflow-y: auto and
+	   detaches scroll from window). */
+	overflow-x: clip;
+	/* keep last cards reachable above the mobile dock */
+	padding-bottom: calc(var(--space-safe-bottom) + 88px);
+}
+
+@media (min-width: 640px) {
+	body {
+		padding-bottom: 0;
+	}
+}
+
+/* fixed grain overlay — subtle warmth in dark, parchment fibre in light */
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: 200;
+	pointer-events: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	opacity: 0.05;
+	mix-blend-mode: overlay;
+}
+
+/* parchment-specific fibre texture — longer-grain noise that reads as paper */
+:root[data-theme="grimoire"] body::before {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65 0.95' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.32 0 0 0 0 0.18 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+	opacity: 0.18;
+	mix-blend-mode: multiply;
+}
+
+/* honour reduced-data: skip the texture entirely */
+@media (prefers-reduced-data: reduce) {
+	body::before {
+		display: none;
+	}
+}
+
+/* radial vignette behind hero */
+body::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background:
+		radial-gradient(60% 50% at 12% 6%, var(--color-glow-primary), transparent 70%),
+		radial-gradient(40% 35% at 92% 4%, var(--color-glow-secondary), transparent 70%);
+}
+
+::selection {
+	background: var(--color-accent);
+	color: var(--color-bg);
+}
+
+/* fine scrollbars in command panels */
+.cmd-pre::-webkit-scrollbar {
+	height: 4px;
+	width: 4px;
+}
+.cmd-pre::-webkit-scrollbar-track {
+	background: transparent;
+}
+.cmd-pre::-webkit-scrollbar-thumb {
+	background: var(--color-border-strong);
+	border-radius: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+	.cmd-pre::-webkit-scrollbar-thumb:hover {
+		background: var(--color-text-dim);
+	}
+}
+
+/* page-load — ink-bleed reveal: blur clears as the element settles in,
+   evoking ink soaking into parchment / phosphor blooming into focus. */
+@keyframes riseIn {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+		filter: blur(5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+		filter: blur(0);
+	}
+}
+@media (prefers-reduced-motion: no-preference) {
+	.rise {
+		opacity: 0;
+		animation: riseIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+		will-change: transform, filter, opacity;
+	}
+	.rise-1 {
+		animation-delay: 0.04s;
+	}
+	.rise-2 {
+		animation-delay: 0.10s;
+	}
+	.rise-3 {
+		animation-delay: 0.18s;
+	}
+	.rise-4 {
+		animation-delay: 0.28s;
+	}
+	.rise-5 {
+		animation-delay: 0.40s;
+	}
+}
+
+/* low-data mode: skip the filter cost (still get the translate fade) */
+@media (prefers-reduced-data: reduce) {
+	@keyframes riseIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+}
+
+/* card */
+.card {
+	transition:
+		transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+		border-color 0.25s,
+		background-color 0.25s,
+		box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	touch-action: manipulation;
+	-webkit-user-select: none;
+	user-select: none;
+}
+@media (hover: hover) and (pointer: fine) {
+	.card:hover {
+		transform: translateY(-2px);
+		border-color: var(--color-border-strong);
+		box-shadow: 0 12px 36px -16px rgba(0, 0, 0, 0.6);
+	}
+}
+.card:active {
+	transform: scale(0.99);
+	transition: transform 0.08s ease-out;
+}
+.card.selected,
+.card:has(input.card-checkbox:focus-visible) {
+	border-color: var(--color-accent);
+	background-color: var(--color-bg-elevated);
+	box-shadow:
+		0 0 0 1px var(--color-accent),
+		0 12px 36px -16px var(--color-accent-soft);
+}
+.card.selected::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: var(--color-accent);
+	z-index: 1;
+}
+
+/* whole-header tap target — large hit area with subtle hover affordance */
+.card .tap-target {
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+	.card:hover .tap-target {
+		background-color: color-mix(in oklab, var(--color-accent) 4%, transparent);
+	}
+}
+
+/* first-visit hint — only on the very first card, dismissed on first interaction */
+.show-card-hint .command-grid > .card:first-child::after,
+.show-card-hint .group-grid > .card:first-child::after,
+.show-card-hint .decky-plugins-grid > .card:first-child::after {
+	content: "↑ tap to pick";
+	position: absolute;
+	right: 10px;
+	top: 8px;
+	z-index: 2;
+	font-family: var(--font-mono);
+	font-size: 9px;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+	padding: 2px 6px;
+	border: 1px dashed color-mix(in oklab, var(--color-accent) 50%, transparent);
+	border-radius: 4px;
+	background: color-mix(in oklab, var(--color-bg) 80%, transparent);
+	animation: hint-pulse 2.4s ease-in-out infinite;
+	pointer-events: none;
+}
+@keyframes hint-pulse {
+	0%, 100% { opacity: 0.65; }
+	50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.show-card-hint .card:first-child::after {
+		animation: none;
+		opacity: 0.85;
+	}
+}
+
+/* custom checkbox — used in cards and section toggles */
+.dx-check {
+	appearance: none;
+	width: 18px;
+	height: 18px;
+	border: 1.5px solid var(--color-border-strong);
+	border-radius: 3px;
+	background: transparent;
+	cursor: pointer;
+	display: inline-block;
+	position: relative;
+	flex-shrink: 0;
+	transition:
+		background-color 0.15s,
+		border-color 0.15s,
+		transform 0.1s;
+	margin: 0;
+	padding: 0;
+}
+/* 44×44 tap area without 44×44 visual */
+.dx-check::before {
+	content: "";
+	position: absolute;
+	inset: -13px;
+	border-radius: 8px;
+}
+@media (min-width: 640px) {
+	.dx-check {
+		width: 14px;
+		height: 14px;
+	}
+	.dx-check::before {
+		inset: -8px;
+	}
+}
+@media (hover: hover) and (pointer: fine) {
+	.dx-check:hover {
+		border-color: var(--color-text-muted);
+	}
+}
+.dx-check:active {
+	transform: scale(0.92);
+}
+.dx-check:checked {
+	background: var(--color-accent);
+	border-color: var(--color-accent);
+}
+.dx-check:checked::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 5px;
+	width: 4.5px;
+	height: 9.5px;
+	border: solid var(--color-bg);
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+@media (min-width: 640px) {
+	.dx-check:checked::after {
+		top: 1px;
+		left: 4px;
+		width: 3.5px;
+		height: 7.5px;
+		border-width: 0 1.75px 1.75px 0;
+	}
+}
+.dx-check:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
+}
+
+/* section "select all" — tri-state */
+.section-select {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 14px;
+	border: 1px solid var(--color-border);
+	border-radius: 8px;
+	background: var(--color-surface);
+	color: var(--color-text-muted);
+	font-family: var(--font-mono);
+	font-size: 11px;
+	cursor: pointer;
+	min-height: var(--tap-min);
+	transition:
+		border-color 0.15s,
+		color 0.15s,
+		background-color 0.15s,
+		transform 0.08s;
+}
+@media (min-width: 640px) {
+	.section-select {
+		padding: 6px 10px;
+		border-radius: 6px;
+		min-height: 0;
+	}
+}
+@media (hover: hover) and (pointer: fine) {
+	.section-select:hover {
+		border-color: var(--color-border-strong);
+		color: var(--color-text);
+	}
+}
+.section-select:active {
+	transform: scale(0.97);
+}
+.section-select .icon {
+	width: 12px;
+	height: 12px;
+	border: 1.5px solid var(--color-border-strong);
+	border-radius: 2px;
+	position: relative;
+	display: inline-block;
+	transition: all 0.15s;
+}
+.section-select[data-state="all"] {
+	color: var(--color-accent);
+	border-color: var(--color-accent);
+}
+.section-select[data-state="all"] .icon {
+	background: var(--color-accent);
+	border-color: var(--color-accent);
+}
+.section-select[data-state="all"] .icon::after {
+	content: "";
+	position: absolute;
+	top: 0px;
+	left: 3px;
+	width: 3px;
+	height: 6px;
+	border: solid var(--color-bg);
+	border-width: 0 1.5px 1.5px 0;
+	transform: rotate(45deg);
+}
+.section-select[data-state="some"] {
+	color: var(--color-accent);
+	border-color: var(--color-accent);
+}
+.section-select[data-state="some"] .icon {
+	background: var(--color-accent-soft);
+	border-color: var(--color-accent);
+}
+.section-select[data-state="some"] .icon::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 5px;
+	height: 1.5px;
+	background: var(--color-accent);
+}
+
+/* ------------------------------------------------------------------ */
+/* selection — desktop pill (sm+) and mobile dock (default)             */
+/* ------------------------------------------------------------------ */
+
+/* MOBILE DOCK — full-width sticky bar with safe-area inset */
+.selection-bar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 60;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	padding-bottom: var(--space-safe-bottom);
+	border-top: 1px solid var(--color-border-strong);
+	background: var(--color-bar-bg);
+	backdrop-filter: blur(20px) saturate(140%);
+	-webkit-backdrop-filter: blur(20px) saturate(140%);
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--color-text);
+	box-shadow: 0 -8px 24px -12px rgba(0, 0, 0, 0.5);
+	transition:
+		transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+		opacity 0.3s;
+	transform: translateY(110%);
+	opacity: 0;
+	pointer-events: none;
+}
+.selection-bar.visible {
+	transform: translateY(0);
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* DESKTOP PILL — overrides the dock layout at sm+ */
+@media (min-width: 640px) {
+	.selection-bar {
+		left: 50%;
+		right: auto;
+		bottom: 18px;
+		transform: translateX(-50%) translateY(140%);
+		gap: 14px;
+		padding: 9px 9px 9px 16px;
+		border: 1px solid var(--color-border-strong);
+		border-top: 1px solid var(--color-border-strong);
+		border-radius: 999px;
+		background: var(--color-bar-bg);
+		box-shadow:
+			0 18px 40px -16px rgba(0, 0, 0, 0.6),
+			0 0 0 6px var(--color-accent-soft);
+		opacity: 0;
+		pointer-events: none;
+	}
+	.selection-bar.visible {
+		transform: translateX(-50%) translateY(0);
+		opacity: 1;
+		pointer-events: auto;
+	}
+	.selection-bar:not(.visible) .copy-action,
+	.selection-bar:not(.visible) [data-action="clear"] {
+		opacity: 1;
+	}
+	.selection-bar:not(.visible) .dot {
+		opacity: 1;
+		animation: pulse 1.6s ease-in-out infinite;
+		box-shadow: 0 0 10px var(--color-accent);
+	}
+}
+
+.selection-bar .dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--color-accent);
+	display: inline-block;
+	box-shadow: 0 0 10px var(--color-accent);
+	flex-shrink: 0;
+	animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.5;
+		transform: scale(0.85);
+	}
+}
+.selection-bar .selection-text {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	flex: 1;
+	min-width: 0;
+}
+@media (min-width: 640px) {
+	.selection-bar .selection-text {
+		flex: 0 0 auto;
+		flex-direction: row;
+		align-items: baseline;
+		gap: 4px;
+	}
+}
+.selection-bar .label {
+	letter-spacing: 0.02em;
+	color: var(--color-text-muted);
+	font-size: 11px;
+}
+.selection-bar .count {
+	color: var(--color-text);
+	font-weight: 500;
+}
+.selection-bar button {
+	min-height: var(--tap-min);
+	padding: 0 14px;
+	border: 1px solid var(--color-border);
+	border-radius: 10px;
+	background: transparent;
+	color: var(--color-text-muted);
+	cursor: pointer;
+	transition:
+		background-color 0.15s,
+		border-color 0.15s,
+		color 0.15s,
+		transform 0.08s;
+	font-family: inherit;
+	font-size: inherit;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+}
+@media (min-width: 640px) {
+	.selection-bar button {
+		min-height: 0;
+		padding: 7px 12px;
+		border-radius: 999px;
+	}
+}
+@media (hover: hover) and (pointer: fine) {
+	.selection-bar button:hover {
+		border-color: var(--color-text-muted);
+		color: var(--color-text);
+	}
+}
+.selection-bar button:active {
+	transform: scale(0.96);
+}
+.selection-bar button.copy-action {
+	background: var(--color-accent);
+	color: var(--color-bg);
+	border-color: var(--color-accent);
+	font-weight: 600;
+	transition:
+		background-color 0.15s,
+		border-color 0.15s,
+		color 0.15s,
+		opacity 0.2s,
+		transform 0.08s;
+}
+@media (hover: hover) and (pointer: fine) {
+	.selection-bar button.copy-action:hover {
+		background: var(--color-accent-dim);
+		border-color: var(--color-accent-dim);
+		transform: translateY(-1px);
+	}
+}
+.selection-bar button.copy-action.copied {
+	background: var(--color-accent-dim);
+}
+
+/* theme switcher — swatch row */
+.theme-switcher {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: 999px;
+	background: var(--color-surface);
+}
+.theme-switcher .label {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--color-text-dim);
+	padding-right: 2px;
+}
+@media (max-width: 479px) {
+	.theme-switcher {
+		gap: 8px;
+		padding: 6px 10px;
+	}
+	.theme-switcher .label {
+		display: none;
+	}
+}
+.theme-swatch {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--swatch);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	cursor: pointer;
+	padding: 0;
+	position: relative;
+	transition:
+		transform 0.15s,
+		box-shadow 0.2s;
+}
+/* expanded 36×36 tap area without enlarging visual */
+.theme-swatch::before {
+	content: "";
+	position: absolute;
+	inset: -9px;
+	border-radius: 50%;
+}
+@media (hover: hover) and (pointer: fine) {
+	.theme-swatch:hover {
+		transform: scale(1.12);
+	}
+}
+.theme-swatch:active {
+	transform: scale(0.88);
+}
+.theme-swatch[aria-pressed="true"] {
+	box-shadow:
+		0 0 0 2px var(--color-bg),
+		0 0 0 3.5px var(--swatch);
+}
+.theme-swatch:focus-visible {
+	outline: 2px solid var(--swatch);
+	outline-offset: 3px;
+}
+
+/* search filter — cards matching the current query stay; others collapse out */
+.card.search-hidden {
+	display: none;
+}
+/* dim the stage-tab indicator while searching so users know the hash router
+   has been bypassed and every match is currently visible across stages. */
+.searching .stage-tab[aria-selected="true"] {
+	border-color: var(--color-border);
+	background: transparent;
+}
+.searching .stage-tab[aria-selected="true"] span {
+	color: var(--color-text-muted);
+}
+
+/* magnetic accent line on cards — always visible at low opacity */
+.card .accent-line {
+	position: absolute;
+	top: 0;
+	left: 12px;
+	right: 12px;
+	height: 1px;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		var(--color-accent),
+		transparent
+	);
+	opacity: 0.18;
+	transition: opacity 0.3s;
+}
+@media (hover: hover) and (pointer: fine) {
+	.card:hover .accent-line {
+		opacity: 0.5;
+	}
+}
+.card.selected .accent-line {
+	opacity: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* workbench rail — stage tabs + search + page-wide select-all          */
+/* ------------------------------------------------------------------ */
+.workbench-rail {
+	display: grid;
+	gap: 10px;
+	margin-top: 0.85rem;
+	margin-bottom: 0.65rem;
+	padding: 8px;
+	border: 1px solid color-mix(in oklab, var(--color-border) 82%, transparent);
+	border-radius: 10px;
+	background: color-mix(in oklab, var(--color-bg-elevated) 72%, transparent);
+	backdrop-filter: blur(18px) saturate(130%);
+	-webkit-backdrop-filter: blur(18px) saturate(130%);
+}
+@media (min-width: 768px) {
+	.workbench-rail {
+		position: sticky;
+		top: 10px;
+		z-index: 40;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		margin-top: 1rem;
+		margin-bottom: 0.75rem;
+	}
+}
+
+/* Mobile: horizontally scrollable strip with a fade mask on the right.
+   Replaces the 2×3 grid which ate 120px of vertical space at 800px viewport. */
+.stage-tabs {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 6px;
+	overflow-x: auto;
+	scroll-snap-type: x proximity;
+	padding: 0 12px 0 0;
+	margin-inline: 0;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: none;
+	mask-image: linear-gradient(to right, black 92%, transparent 100%);
+	-webkit-mask-image: linear-gradient(to right, black 92%, transparent 100%);
+}
+.stage-tabs::-webkit-scrollbar {
+	display: none;
+}
+.stage-tabs .stage-tab {
+	flex-shrink: 0;
+	min-height: var(--tap-min);
+	justify-content: flex-start;
+	scroll-snap-align: start;
+}
+@media (min-width: 640px) {
+	.stage-tabs {
+		mask-image: none;
+		-webkit-mask-image: none;
+		padding-right: 0;
+	}
+	.stage-tabs .stage-tab {
+		min-height: 0;
+	}
+}
+
+/* workbench-tools row — search + page-wide select-all sit together */
+.workbench-tools {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 8px;
+	align-items: center;
+}
+@media (min-width: 768px) {
+	.workbench-tools {
+		grid-template-columns: minmax(180px, 280px) auto;
+		justify-content: end;
+		justify-self: end;
+	}
+}
+
+.stage-tab {
+	transition:
+		border-color 0.2s,
+		background-color 0.2s,
+		color 0.2s,
+		transform 0.2s;
+}
+@media (hover: hover) and (pointer: fine) {
+	.stage-tab:hover {
+		transform: translateY(-1px);
+	}
+}
+.stage-tab:active {
+	transform: scale(0.97);
+}
+
+/* secondary buttons get hover/active parity */
+@media (hover: hover) and (pointer: fine) {
+	#select-all-page:hover {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+}
+#select-all-page {
+	min-height: var(--tap-min);
+	transition: all 0.15s, transform 0.08s;
+}
+#select-all-page:active {
+	transform: scale(0.97);
+}
+@media (min-width: 640px) {
+	#select-all-page {
+		min-height: 0;
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* shared bottom-sheet dialog (ScriptSheet + CommandPeek)               */
+/* ------------------------------------------------------------------ */
+/* Closed-state defaults. Author CSS overrides the UA `dialog:not([open])
+   { display: none }` rule regardless of specificity (origin precedence),
+   so we explicitly mirror it here — without it, any property that sets a
+   non-none display on `.sheet` would unhide the dialog. */
+.sheet:not([open]) {
+	display: none;
+}
+.sheet {
+	max-width: 100vw;
+	width: 100%;
+	max-height: 92dvh;
+	margin: 0 auto;
+	margin-top: auto;
+	margin-bottom: 0;
+	padding: 0;
+	border: none;
+	border-top: 1px solid var(--color-border-strong);
+	border-top-left-radius: 20px;
+	border-top-right-radius: 20px;
+	background: var(--color-bg-elevated);
+	color: var(--color-text);
+	overflow: hidden;
+	box-shadow: 0 -24px 60px -20px rgba(0, 0, 0, 0.7);
+	/* Lay out children directly inside the dialog. Previously .sheet-inner
+	   used height: 100% to fill the dialog, but Safari/WebKit don't resolve
+	   that percentage when the parent <dialog> has no definite height,
+	   collapsing the dialog content to 0px. Making the dialog itself the
+	   flex container (and .sheet-inner display: contents) sidesteps the
+	   percentage chain entirely. */
+	flex-direction: column;
+}
+.sheet[open] {
+	display: flex;
+}
+@media (min-width: 640px) {
+	.sheet {
+		max-width: 640px;
+		max-height: 80dvh;
+		margin-top: auto;
+		margin-bottom: 32px;
+		border-radius: 16px;
+		border: 1px solid var(--color-border-strong);
+	}
+}
+.sheet::backdrop {
+	background: rgba(0, 0, 0, 0.55);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+}
+/* Open animation via .opening class + transition (driven by JS — see
+   ScriptSheet.astro). Resting [open] state is always visible, so if the
+   transition fails to fire (Safari does not reliably transition out of
+   @starting-style on <dialog>; Chromium/Firefox can stall a CSS animation
+   at frame 0 — the same display:none→block bug the loading-bar comment
+   in ScriptSheet.astro calls out), the dialog snaps to its open position
+   instead of getting stuck at translateY(100%). */
+.sheet[open] {
+	transform: translateY(0);
+	opacity: 1;
+	transition:
+		transform 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+		opacity 0.36s ease-out;
+}
+.sheet[open]::backdrop {
+	opacity: 1;
+	transition: opacity 0.36s ease-out;
+}
+.sheet[open].opening {
+	transform: translateY(100%);
+	opacity: 0.7;
+}
+.sheet[open].opening::backdrop {
+	opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+	.sheet[open],
+	.sheet[open]::backdrop {
+		transition: none;
+	}
+}
+.sheet.closing {
+	animation: sheet-fall 0.28s cubic-bezier(0.5, 0, 0.75, 0);
+}
+.sheet.closing::backdrop {
+	animation: backdrop-fade 0.28s ease-in reverse;
+}
+@keyframes sheet-fall {
+	to {
+		transform: translateY(100%);
+		opacity: 0;
+	}
+}
+.sheet-inner {
+	/* Pass-through wrapper — children participate in .sheet's flex layout
+	   directly (see comment on .sheet). Has no semantic role of its own,
+	   so safe to remove from the layout/a11y tree. */
+	display: contents;
+}
+.sheet-handle {
+	width: 36px;
+	height: 4px;
+	background: var(--color-border-strong);
+	border-radius: 2px;
+	margin: 10px auto 6px;
+	flex-shrink: 0;
+}
+@media (min-width: 640px) {
+	.sheet-handle {
+		display: none;
+	}
+}
+.sheet-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 6px 20px 16px;
+	border-bottom: 1px solid var(--color-border);
+	flex-shrink: 0;
+}
+@media (min-width: 640px) {
+	.sheet-header {
+		padding: 18px 22px 16px;
+	}
+}
+.sheet-titles {
+	flex: 1;
+	min-width: 0;
+}
+.sheet-title {
+	font-family: var(--font-serif);
+	font-style: italic;
+	font-size: 1.75rem;
+	line-height: 1;
+	color: var(--color-accent);
+	letter-spacing: -0.01em;
+}
+.sheet-subtitle {
+	margin-top: 4px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	color: var(--color-text-dim);
+}
+.sheet-close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--tap-min);
+	height: var(--tap-min);
+	min-width: var(--tap-min);
+	border: 1px solid var(--color-border);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--color-text-muted);
+	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		color 0.15s,
+		transform 0.08s;
+}
+@media (hover: hover) and (pointer: fine) {
+	.sheet-close:hover {
+		border-color: var(--color-text-muted);
+		color: var(--color-text);
+	}
+}
+.sheet-close:active {
+	transform: scale(0.94);
+}
+.sheet-scroll {
+	/* flex-basis: auto so the scroll area starts at its content size and
+	   grows from there. The default `flex: 1` shorthand uses basis: 0%,
+	   which in Safari leaves a flex item with no content-derived height
+	   when the parent has only max-height (not a definite height) — the
+	   item collapses to ~0px and the script content gets clipped. The
+	   min-height is a belt-and-braces guarantee that the scroll area is
+	   always usable, mirroring .sheet-loading's own min-height. */
+	flex: 1 1 auto;
+	min-height: min(200px, 30dvh);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: 16px 20px 12px;
+}
+@media (min-width: 640px) {
+	.sheet-scroll {
+		padding: 18px 22px 12px;
+	}
+}
+.sheet-script {
+	font-family: var(--font-mono);
+	font-size: 14px;
+	line-height: 1.55;
+	color: var(--color-text);
+	white-space: pre-wrap;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+	background: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: 10px;
+	padding: 14px 16px;
+	margin: 0;
+}
+.sheet-script code {
+	font: inherit;
+	color: inherit;
+	background: transparent;
+	display: block;
+}
+.sheet-review {
+	margin-bottom: 14px;
+	padding: 12px 14px;
+	border: 1px solid var(--color-border);
+	border-radius: 10px;
+	background: color-mix(in oklab, var(--color-surface) 42%, transparent);
+}
+.sheet-review-meta {
+	margin: 0;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	line-height: 1.45;
+	color: var(--color-text-muted);
+	letter-spacing: 0.01em;
+}
+.sheet-review-warnings {
+	list-style: none;
+	margin: 10px 0 0;
+	padding: 0;
+	display: grid;
+	gap: 6px;
+}
+.sheet-review-warnings li {
+	position: relative;
+	padding-left: 16px;
+	font-size: 12.5px;
+	line-height: 1.45;
+	color: var(--color-warn);
+}
+.sheet-review-warnings li::before {
+	content: "!";
+	position: absolute;
+	left: 0;
+	top: 0;
+	font-family: var(--font-mono);
+	color: var(--color-warn);
+}
+.sheet-hint {
+	margin-top: 14px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--color-text-dim);
+	letter-spacing: 0.01em;
+}
+.sheet-loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 18px;
+	padding: 48px 16px 56px;
+	min-height: 200px;
+}
+.loading-line {
+	margin: 0;
+	font-family: var(--font-mono);
+	font-size: 13px;
+	letter-spacing: 0.01em;
+	color: var(--color-text-muted);
+	text-align: center;
+	animation: loading-line-fade 0.5s ease;
+}
+@keyframes loading-line-fade {
+	from {
+		opacity: 0;
+		transform: translateY(2px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.loading-bar {
+	width: 100%;
+	max-width: 260px;
+	height: 4px;
+	border-radius: 999px;
+	background: var(--color-border);
+	overflow: hidden;
+}
+.loading-bar > span {
+	display: block;
+	height: 100%;
+	width: 0%;
+	background: var(--color-accent);
+	border-radius: inherit;
+}
+.sheet-cta {
+	margin: 0 0 12px;
+	font-family: var(--font-sans);
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: -0.005em;
+	color: var(--color-text);
+}
+.sheet-cta::before {
+	content: "$ ";
+	color: var(--color-accent);
+	font-family: var(--font-mono);
+}
+.sheet-action[disabled] {
+	opacity: 0.45;
+	pointer-events: none;
+}
+.sheet-footer {
+	display: flex;
+	gap: 10px;
+	padding: 12px 16px;
+	padding-bottom: max(12px, env(safe-area-inset-bottom));
+	border-top: 1px solid var(--color-border);
+	background: var(--color-bg-elevated);
+	flex-shrink: 0;
+}
+@media (min-width: 640px) {
+	.sheet-footer {
+		padding: 14px 22px;
+	}
+}
+.sheet-action {
+	min-height: var(--tap-jumbo);
+	padding: 0 18px;
+	border-radius: 12px;
+	font-family: var(--font-mono);
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.01em;
+	cursor: pointer;
+	transition:
+		background-color 0.15s,
+		border-color 0.15s,
+		color 0.15s,
+		transform 0.08s;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+.sheet-action:active {
+	transform: scale(0.97);
+}
+.sheet-action-primary {
+	flex: 1;
+	background: var(--color-accent);
+	border: 1px solid var(--color-accent);
+	color: var(--color-bg);
+	font-weight: 600;
+}
+@media (hover: hover) and (pointer: fine) {
+	.sheet-action-primary:hover {
+		background: var(--color-accent-dim);
+		border-color: var(--color-accent-dim);
+	}
+}
+.sheet-action-primary.copied {
+	background: var(--color-accent-dim);
+}
+.sheet-action-secondary {
+	background: transparent;
+	border: 1px solid var(--color-border-strong);
+	color: var(--color-text-muted);
+}
+@media (hover: hover) and (pointer: fine) {
+	.sheet-action-secondary:hover {
+		border-color: var(--color-text-muted);
+		color: var(--color-text);
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* retro stage — CRT phosphor & scanlines                               */
+/* ------------------------------------------------------------------ */
+section.stage[data-variant="retro"] {
+	position: relative;
+	isolation: isolate;
+	padding-top: 0.25rem;
+}
+
+/* horizontal scanline texture — only over the section header band */
+section.stage[data-variant="retro"]::before {
+	content: "";
+	position: absolute;
+	inset: 0 -1rem auto -1rem;
+	height: 220px;
+	z-index: -1;
+	pointer-events: none;
+	background-image:
+		repeating-linear-gradient(
+			to bottom,
+			transparent 0,
+			transparent 2px,
+			color-mix(in oklab, var(--color-accent) 18%, transparent) 2px,
+			color-mix(in oklab, var(--color-accent) 18%, transparent) 3px
+		);
+	opacity: 0.16;
+	mask-image: radial-gradient(
+		120% 100% at 6% 30%,
+		black 0%,
+		black 35%,
+		transparent 85%
+	);
+	-webkit-mask-image: radial-gradient(
+		120% 100% at 6% 30%,
+		black 0%,
+		black 35%,
+		transparent 85%
+	);
+}
+
+/* phosphor halo behind the stage number */
+section.stage[data-variant="retro"] .stage-number-wrap::after {
+	content: "";
+	position: absolute;
+	left: -8%;
+	top: 8%;
+	width: 140%;
+	height: 90%;
+	z-index: -1;
+	pointer-events: none;
+	background: radial-gradient(
+		closest-side,
+		color-mix(in oklab, var(--color-accent) 22%, transparent),
+		transparent 75%
+	);
+	filter: blur(14px);
+	opacity: 0.65;
+}
+
+/* override stage number — chunky CRT typeface with phosphor bloom */
+section.stage[data-variant="retro"] .stage-number {
+	font-family: var(--font-crt);
+	font-style: normal;
+	font-weight: 400;
+	letter-spacing: 0;
+	line-height: 0.9;
+	color: var(--color-accent);
+	text-shadow:
+		0 0 1px color-mix(in oklab, var(--color-accent) 90%, white 10%),
+		0 0 8px color-mix(in oklab, var(--color-accent) 55%, transparent),
+		0 0 22px color-mix(in oklab, var(--color-accent) 35%, transparent),
+		0 0 44px color-mix(in oklab, var(--color-accent) 18%, transparent);
+}
+section.stage[data-variant="retro"] .stage-number-sigil {
+	display: none;
+}
+
+/* override stage title — VT323 with blinking cursor */
+section.stage[data-variant="retro"] h2 {
+	font-family: var(--font-crt);
+	font-weight: 400;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: var(--color-text);
+	display: inline-flex;
+	align-items: baseline;
+}
+section.stage[data-variant="retro"] h2::after {
+	content: "_";
+	margin-left: 0.08em;
+	color: var(--color-accent);
+	font-family: var(--font-crt);
+	animation: crt-blink 1.05s steps(2, jump-none) infinite;
+	text-shadow:
+		0 0 6px color-mix(in oklab, var(--color-accent) 60%, transparent),
+		0 0 14px color-mix(in oklab, var(--color-accent) 30%, transparent);
+}
+@keyframes crt-blink {
+	0%, 50% { opacity: 1; }
+	51%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+	section.stage[data-variant="retro"] h2::after {
+		animation: none;
+		opacity: 1;
+	}
+}
+
+/* eyebrow — tint the stage label with the accent in retro */
+section.stage[data-variant="retro"] .stage-eyebrow-label {
+	color: var(--color-accent);
+}
+
+/* tighten line-height on the chunky retro title */
+section.stage[data-variant="retro"] h2 {
+	line-height: 1;
+	font-size: calc(var(--fs-stage-title) * 1.65);
+}
+@media (min-width: 768px) {
+	section.stage[data-variant="retro"] h2 {
+		font-size: calc(var(--fs-stage-title) * 1.6);
+	}
+}
+
+/* tagline gets a faint scanline-overlay vibe via slight letter-spacing */
+section.stage[data-variant="retro"] header p {
+	color: var(--color-text-muted);
+}
+
+/* card icons in retro section — boost glow on hover */
+@media (hover: hover) and (pointer: fine) {
+	section.stage[data-variant="retro"] .card:hover .card-title-icon {
+		filter: drop-shadow(0 0 4px color-mix(in oklab, var(--color-accent) 55%, transparent));
+	}
+}
+
+/* retro stage tab — phosphor tint when active */
+.stage-tab[data-stage="retro"][aria-selected="true"] {
+	box-shadow:
+		inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 35%, transparent),
+		0 0 12px -2px color-mix(in oklab, var(--color-accent) 40%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* print — assembled script in a clean monochrome layout                */
+/* ------------------------------------------------------------------ */
+@media print {
+	body::before,
+	body::after,
+	.nav-header,
+	.controller-hints,
+	.selection-bar,
+	.workbench-rail,
+	.theme-switcher,
+	.nav-skip,
+	[data-update-banner],
+	.cmd-search,
+	.spellbook,
+	.site-footer,
+	.view-cmd,
+	.card-illumination {
+		display: none !important;
+	}
+
+	html,
+	body {
+		background: #fff !important;
+		color: #000 !important;
+	}
+
+	section.stage[hidden] {
+		display: block !important;
+	}
+
+	.card {
+		break-inside: avoid;
+		border: 1px solid #888 !important;
+		background: #fff !important;
+		color: #000 !important;
+		page-break-inside: avoid;
+	}
+	.card .dx-check {
+		display: none;
+	}
+}

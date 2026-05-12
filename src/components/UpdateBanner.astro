@@ -1,0 +1,48 @@
+---
+import { Icon } from 'astro-icon/components';
+---
+
+<aside
+	data-update-banner
+	class="rise rise-1 flex items-center gap-3 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/40 px-4 py-2.5 text-sm text-[color:var(--color-text-muted)]"
+	role="note"
+	hidden
+>
+	<Icon
+		name="lucide:triangle-alert"
+		class="h-4 w-4 flex-shrink-0 text-[color:var(--color-warn)]"
+		aria-hidden="true"
+	/>
+	<span class="flex-1">
+		<strong class="font-medium text-[color:var(--color-text)]">Add or uninstall any time.</strong>
+		<span class="ml-0.5">
+			Fill your boots.
+		</span>
+	</span>
+	<button
+		type="button"
+		data-update-banner-close
+		class="-mr-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[color:var(--color-text-dim)] transition-colors hover:bg-[color:var(--color-surface)] hover:text-[color:var(--color-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--color-accent)]"
+		aria-label="Dismiss notice"
+	>
+		<Icon name="lucide:x" class="h-4 w-4" aria-hidden="true" />
+	</button>
+</aside>
+
+<script>
+	const STORAGE_KEY = 'magus:update-banner-dismissed';
+	const banner = document.querySelector<HTMLElement>('[data-update-banner]');
+	if (banner) {
+		if (localStorage.getItem(STORAGE_KEY) !== '1') {
+			banner.hidden = false;
+		}
+		banner
+			.querySelector<HTMLButtonElement>('[data-update-banner-close]')
+			?.addEventListener('click', () => {
+				banner.hidden = true;
+				try {
+					localStorage.setItem(STORAGE_KEY, '1');
+				} catch {}
+			});
+	}
+</script>

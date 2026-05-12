@@ -1,0 +1,173 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+	version?: string;
+	githubUrl?: string;
+	lastUpdated?: string;
+	status?: 'ok' | 'alpha' | 'warn';
+}
+
+const {
+	version = 'v0.1 alpha',
+	githubUrl = '#',
+	lastUpdated,
+	status = 'alpha',
+} = Astro.props;
+---
+
+<footer class="site-footer" role="contentinfo" data-status={status}>
+	<div class="site-footer-inner">
+		<span class="site-footer-brand">
+			<span class="site-footer-prompt" aria-hidden="true">~/magus.sh $</span>
+			<span class="site-footer-word">magus.sh</span>
+			<span class="site-footer-sep" aria-hidden="true">·</span>
+			<span class="site-footer-dim">SteamOS command kit</span>
+		</span>
+
+		<span class="site-footer-meta">
+			<span class="site-footer-dot" aria-hidden="true"></span>
+			<span>status: {status}</span>
+			<span class="site-footer-sep" aria-hidden="true">·</span>
+			<span>{version}</span>
+			{
+				lastUpdated && (
+					<>
+						<span class="site-footer-sep" aria-hidden="true">
+							·
+						</span>
+						<span class="site-footer-dim">last sync {lastUpdated}</span>
+					</>
+				)
+			}
+		</span>
+
+		<a
+			class="site-footer-gh"
+			href={githubUrl}
+			target="_blank"
+			rel="noopener noreferrer"
+			aria-label="GitHub repository (opens in new tab)"
+		>
+			<Icon name="simple-icons:github" class="site-footer-icon" />
+		</a>
+	</div>
+</footer>
+
+<style>
+	.site-footer {
+		max-width: 72rem;
+		margin: 6rem auto 2.5rem;
+		padding: 1rem 20px 0;
+		border-top: 1px solid var(--color-border);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.04em;
+		color: var(--color-text-dim);
+	}
+	.site-footer-inner {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 1.25rem;
+	}
+	.site-footer-brand,
+	.site-footer-meta {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		white-space: nowrap;
+	}
+	.site-footer-prompt {
+		color: var(--color-accent);
+		opacity: 0.7;
+	}
+	.site-footer-word {
+		font-family: var(--font-crt);
+		font-size: 14px;
+		line-height: 1;
+		letter-spacing: 0.02em;
+		background: linear-gradient(
+			90deg,
+			var(--color-accent),
+			var(--color-warn),
+			var(--color-danger)
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+	}
+	.site-footer-dim {
+		color: var(--color-text-dim);
+		opacity: 0.75;
+	}
+	.site-footer-sep {
+		color: var(--color-border-strong);
+	}
+
+	.site-footer-dot {
+		display: inline-block;
+		width: 7px;
+		height: 7px;
+		border-radius: 999px;
+		background: var(--color-warn);
+		box-shadow: 0 0 8px var(--color-warn);
+	}
+	.site-footer[data-status='ok'] .site-footer-dot {
+		background: var(--color-accent);
+		box-shadow: 0 0 8px var(--color-accent-soft);
+	}
+	.site-footer[data-status='warn'] .site-footer-dot {
+		background: var(--color-danger);
+		box-shadow: 0 0 8px rgba(247, 118, 142, 0.4);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.site-footer-dot {
+			animation: footer-pulse 2.4s ease-in-out infinite;
+		}
+		@keyframes footer-pulse {
+			0%,
+			100% {
+				opacity: 1;
+			}
+			50% {
+				opacity: 0.55;
+			}
+		}
+	}
+
+	.site-footer-gh {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 6px;
+		color: var(--color-text-dim);
+		transition:
+			color 0.18s ease,
+			background 0.18s ease;
+	}
+	.site-footer-gh:hover,
+	.site-footer-gh:focus-visible {
+		color: var(--color-accent);
+		background: var(--color-accent-soft);
+		outline: none;
+	}
+	.site-footer-icon {
+		width: 14px;
+		height: 14px;
+	}
+
+	@media (max-width: 640px) {
+		.site-footer-prompt {
+			display: none;
+		}
+		.site-footer-inner {
+			gap: 0.5rem 0.875rem;
+		}
+	}
+</style>

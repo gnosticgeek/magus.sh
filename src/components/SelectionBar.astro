@@ -1,0 +1,198 @@
+---
+---
+
+<div id="selection-bar" class="selection-bar" role="region" aria-label="Selection">
+	<span class="dot" aria-hidden="true"></span>
+	<span class="selection-text">
+		<span><span class="count">0</span> <span class="label">selected</span></span>
+	</span>
+	<button type="button" class="copy-action" data-action="copy">
+		<span class="copy-action-label">Script</span>
+	</button>
+	<button type="button" data-action="clear">Clear</button>
+</div>
+
+<script>
+	import type { ScriptItem } from '../lib/types';
+
+	type Card = HTMLInputElement;
+
+	const STORAGE_KEY = 'magus:selected-commands';
+
+	const readPersisted = (): Set<string> => {
+		try {
+			const raw = localStorage.getItem(STORAGE_KEY);
+			if (!raw) return new Set();
+			const parsed = JSON.parse(raw);
+			if (!Array.isArray(parsed)) return new Set();
+			return new Set(parsed.filter((id): id is string => typeof id === 'string'));
+		} catch {
+			return new Set();
+		}
+	};
+
+	const persist = (ids: Iterable<string>) => {
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(ids)));
+		} catch {}
+	};
+
+	const init = () => {
+		const bar = document.getElementById('selection-bar');
+		if (!bar) return;
+		const countEl = bar.querySelector<HTMLElement>('.count');
+		const copyBtn = bar.querySelector<HTMLButtonElement>('[data-action="copy"]');
+		const copyLabel = copyBtn?.querySelector<HTMLElement>('.copy-action-label');
+		const clearBtn = bar.querySelector<HTMLButtonElement>('[data-action="clear"]');
+		const selectAllPage = document.getElementById('select-all-page');
+		if (!countEl || !copyBtn || !copyLabel || !clearBtn) return;
+
+		const cards = Array.from(
+			document.querySelectorAll<Card>('input.card-checkbox'),
+		);
+		const sectionToggles = Array.from(
+			document.querySelectorAll<HTMLButtonElement>('.section-select'),
+		);
+
+		const cardsBySection = new Map<string, Card[]>();
+		for (const c of cards) {
+			const s = c.dataset.section ?? '';
+			let bucket = cardsBySection.get(s);
+			if (!bucket) {
+				bucket = [];
+				cardsBySection.set(s, bucket);
+			}
+			bucket.push(c);
+		}
+
+		const selected = new Map<string, string>();
+		const selectedMeta = new Map<string, ScriptItem>();
+
+		const render = () => {
+			const count = selected.size;
+			countEl.textContent = String(count);
+			bar.classList.toggle('visible', count > 0);
+			copyBtn.disabled = count === 0;
+			copyLabel.textContent =
+				count === 0
+					? 'Script'
+					: count === 1
+						? 'Script · 1'
+						: `Script · ${count}`;
+
+			if (selectAllPage) {
+				const allChecked = cards.length > 0 && cards.every((c) => c.checked);
+				const total = selectAllPage.dataset.total ?? String(cards.length);
+				selectAllPage.textContent = allChecked
+					? `clear all ${total}`
+					: `select all ${total}`;
+				selectAllPage.setAttribute(
+					'aria-label',
+					allChecked
+						? `Clear all ${total} selected commands`
+						: `Select all ${total} commands across all stages`,
+				);
+			}
+
+			sectionToggles.forEach((btn) => {
+				const sectionId = btn.dataset.sectionId;
+				if (!sectionId) return;
+				const inSection = cardsBySection.get(sectionId) ?? [];
+				const checked = inSection.filter((c) => c.checked).length;
+				const total = inSection.length;
+				const state =
+					checked === 0 ? 'none' : checked === total ? 'all' : 'some';
+				btn.dataset.state = state;
+				const label = btn.querySelector<HTMLElement>('.label');
+				if (label) {
+					label.textContent = state === 'all' ? 'clear all' : 'select all';
+				}
+			});
+		};
+
+		const setCard = (cb: Card, on: boolean) => {
+			cb.checked = on;
+			const article = cb.closest('article');
+			article?.classList.toggle('selected', on);
+			const id = cb.dataset.id ?? '';
+			const cmd = cb.dataset.cmd ?? '';
+			const title = cb.dataset.title ?? id;
+			const category = cb.dataset.category ?? '';
+			const danger = cb.dataset.danger;
+			const deckOnly = cb.dataset.deckOnly === 'true';
+			const requiresDecky = cb.dataset.requiresDecky === 'true';
+			if (on) {
+				selected.set(id, cmd);
+				selectedMeta.set(id, { title, cmd, category, danger, deckOnly, requiresDecky });
+			} else {
+				selected.delete(id);
+				selectedMeta.delete(id);
+			}
+		};
+
+		cards.forEach((cb) => {
+			cb.addEventListener('change', () => {
+				setCard(cb, cb.checked);
+				render();
+				persist(selected.keys());
+			});
+		});
+
+		sectionToggles.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const sectionId = btn.dataset.sectionId;
+				if (!sectionId) return;
+				const inSection = cardsBySection.get(sectionId) ?? [];
+				const allChecked = inSection.every((c) => c.checked);
+				inSection.forEach((c) => setCard(c, !allChecked));
+				render();
+				persist(selected.keys());
+			});
+		});
+
+		copyBtn.addEventListener('click', () => {
+			if (selected.size === 0) return;
+			const items = cards
+				.filter((c) => c.checked)
+				.map((c) => selectedMeta.get(c.dataset.id ?? ''))
+				.filter((item): item is ScriptItem => Boolean(item));
+			if ('vibrate' in navigator) navigator.vibrate?.(12);
+			document.dispatchEvent(
+				new CustomEvent('script-sheet:open', { detail: { items } }),
+			);
+		});
+
+		clearBtn.addEventListener('click', () => {
+			cards.forEach((cb) => setCard(cb, false));
+			render();
+			persist(selected.keys());
+		});
+
+		if (selectAllPage) {
+			selectAllPage.addEventListener('click', () => {
+				const allChecked = cards.every((c) => c.checked);
+				cards.forEach((c) => setCard(c, !allChecked));
+				render();
+				persist(selected.keys());
+			});
+		}
+
+		/* restore prior session selection before first render */
+		const persisted = readPersisted();
+		if (persisted.size > 0) {
+			for (const cb of cards) {
+				if (cb.dataset.id && persisted.has(cb.dataset.id)) {
+					setCard(cb, true);
+				}
+			}
+		}
+
+		render();
+	};
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', init);
+	} else {
+		init();
+	}
+</script>
