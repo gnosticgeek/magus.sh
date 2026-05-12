@@ -7,9 +7,10 @@ summary: How Long to Beat estimates on every game page. Useful for handheld sess
 icon: lucide:clock
 commands:
   - run: |
-      sudo systemctl stop plugin_loader.service
       mkdir -p ~/homebrew/plugins
-      curl -L https://github.com/OMGDuke/HLTB-for-Deck/releases/latest/download/HLTB-for-Deck.tar.gz -o /tmp/hltb.tar.gz
+      ASSET=$(curl -fsSL https://api.github.com/repos/OMGDuke/HLTB-for-Deck/releases/latest | grep -oE '"browser_download_url": *"[^"]+\.tar\.gz"' | head -1 | cut -d'"' -f4)
+      curl -fL "$ASSET" -o /tmp/hltb.tar.gz
+      sudo systemctl stop plugin_loader.service
       tar -xzf /tmp/hltb.tar.gz -C ~/homebrew/plugins/
       sudo chown -R deck:deck ~/homebrew/plugins/
       sudo systemctl start plugin_loader.service

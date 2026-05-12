@@ -7,9 +7,10 @@ summary: Replace ugly default artwork on non-Steam shortcuts and EmuDeck entries
 icon: lucide:image
 commands:
   - run: |
-      sudo systemctl stop plugin_loader.service
       mkdir -p ~/homebrew/plugins
-      curl -L https://github.com/SteamGridDB/decky-steamgriddb/releases/latest/download/SteamGridDB.tar.gz -o /tmp/sgdb.tar.gz
+      ASSET=$(curl -fsSL https://api.github.com/repos/SteamGridDB/decky-steamgriddb/releases/latest | grep -oE '"browser_download_url": *"[^"]+\.tar\.gz"' | head -1 | cut -d'"' -f4)
+      curl -fL "$ASSET" -o /tmp/sgdb.tar.gz
+      sudo systemctl stop plugin_loader.service
       tar -xzf /tmp/sgdb.tar.gz -C ~/homebrew/plugins/
       sudo chown -R deck:deck ~/homebrew/plugins/
       sudo systemctl start plugin_loader.service

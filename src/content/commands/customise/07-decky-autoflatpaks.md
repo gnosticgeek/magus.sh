@@ -7,9 +7,10 @@ summary: Background Flatpak updates without dropping to desktop mode.
 icon: lucide:refresh-cw
 commands:
   - run: |
-      sudo systemctl stop plugin_loader.service
       mkdir -p ~/homebrew/plugins
-      curl -L https://github.com/jurassicplayer/decky-autoflatpaks/releases/latest/download/AutoFlatpaks.tar.gz -o /tmp/autoflatpaks.tar.gz
+      ASSET=$(curl -fsSL https://api.github.com/repos/jurassicplayer/decky-autoflatpaks/releases/latest | grep -oE '"browser_download_url": *"[^"]+\.tar\.gz"' | head -1 | cut -d'"' -f4)
+      curl -fL "$ASSET" -o /tmp/autoflatpaks.tar.gz
+      sudo systemctl stop plugin_loader.service
       tar -xzf /tmp/autoflatpaks.tar.gz -C ~/homebrew/plugins/
       sudo chown -R deck:deck ~/homebrew/plugins/
       sudo systemctl start plugin_loader.service
