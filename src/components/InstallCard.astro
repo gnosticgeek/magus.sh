@@ -1,0 +1,285 @@
+---
+interface Props {
+	name?: string;
+	version?: string;
+	command: string;
+	scriptHref?: string;
+}
+
+const {
+	name = 'magus.sh',
+	version = 'v0.1',
+	command,
+	scriptHref = '#install-script',
+} = Astro.props;
+---
+
+<section class="install-card rise rise-3" aria-labelledby="install-card-title">
+	<header class="install-card-head">
+		<h2 id="install-card-title" class="install-card-title">
+			Install <span class="install-card-name">{name}</span>
+			<span class="install-card-version">{version}</span>
+		</h2>
+	</header>
+
+	<div class="install-tabs" role="tablist" aria-label="Install target">
+		<button
+			class="install-tab"
+			role="tab"
+			type="button"
+			aria-selected="true"
+			tabindex="0"
+		>
+			Linux &amp; macOS
+		</button>
+		<a class="install-tab install-tab-link" href={scriptHref}>
+			View install script
+		</a>
+	</div>
+
+	<div class="install-snippet">
+		<pre class="install-snippet-pre"><code><span class="install-prompt" aria-hidden="true">$</span> <span class="install-cmd" data-install-cmd>{command}</span></code></pre>
+		<button
+			type="button"
+			class="install-copy"
+			data-install-copy
+			aria-label="Copy install command"
+		>
+			<svg
+				class="install-copy-icon"
+				viewBox="0 0 16 16"
+				width="14"
+				height="14"
+				aria-hidden="true"
+			>
+				<path
+					d="M5.5 4V2.75C5.5 2.2 5.95 1.75 6.5 1.75h6.75c.55 0 1 .45 1 1v8.5c0 .55-.45 1-1 1H12M3 5.75h6.75c.55 0 1 .45 1 1v8.5c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1v-8.5c0-.55.45-1 1-1z"
+					stroke="currentColor"
+					stroke-width="1.3"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"></path>
+			</svg>
+			<svg
+				class="install-copy-check"
+				viewBox="0 0 16 16"
+				width="14"
+				height="14"
+				aria-hidden="true"
+			>
+				<path
+					d="M3 8.5l3.25 3.25L13 5"
+					stroke="currentColor"
+					stroke-width="1.6"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"></path>
+			</svg>
+		</button>
+	</div>
+</section>
+
+<script>
+	const card = document.querySelector<HTMLElement>('.install-card');
+	const btn = card?.querySelector<HTMLButtonElement>('[data-install-copy]');
+	const target = card?.querySelector<HTMLElement>('[data-install-cmd]');
+
+	if (btn && target) {
+		btn.addEventListener('click', async () => {
+			const text = target.textContent?.trim() ?? '';
+			if (!text) return;
+			try {
+				await navigator.clipboard.writeText(text);
+				btn.dataset.copied = 'true';
+				setTimeout(() => {
+					delete btn.dataset.copied;
+				}, 1400);
+			} catch {
+				/* clipboard unavailable — fail silently */
+			}
+		});
+	}
+</script>
+
+<style>
+	.install-card {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 14px 14px 16px;
+		border-radius: 14px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 75%, transparent);
+		background:
+			radial-gradient(
+				circle at 0% 0%,
+				color-mix(in oklab, var(--color-accent) 10%, transparent) 0%,
+				transparent 55%
+			),
+			color-mix(in oklab, var(--color-bg-elevated) 78%, transparent);
+		backdrop-filter: blur(14px) saturate(120%);
+		-webkit-backdrop-filter: blur(14px) saturate(120%);
+	}
+
+	.install-card-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		padding: 0 2px 2px;
+	}
+	.install-card-title {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: 0.95rem;
+		font-weight: 600;
+		line-height: 1.2;
+		letter-spacing: -0.005em;
+		color: var(--color-text);
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.45rem;
+	}
+	.install-card-name {
+		color: var(--color-text);
+	}
+	.install-card-version {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 400;
+		letter-spacing: 0.04em;
+		color: var(--color-text-dim);
+	}
+
+	.install-tabs {
+		display: flex;
+		align-items: flex-end;
+		gap: 4px;
+		margin-bottom: -1px;
+		position: relative;
+		z-index: 1;
+	}
+	.install-tab {
+		display: inline-flex;
+		align-items: center;
+		padding: 6px 11px 7px;
+		font-family: var(--font-sans);
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 1;
+		color: var(--color-text-muted);
+		background: color-mix(in oklab, var(--color-surface) 80%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+		border-top-left-radius: 8px;
+		border-top-right-radius: 8px;
+		cursor: pointer;
+		transition:
+			background 0.18s ease,
+			color 0.18s ease,
+			border-color 0.18s ease;
+	}
+	.install-tab[aria-selected='true'] {
+		background: var(--color-accent);
+		color: var(--color-bg);
+		border-color: var(--color-accent);
+		font-weight: 600;
+	}
+	.install-tab-link {
+		background: transparent;
+		border-color: transparent;
+		color: var(--color-text-dim);
+		text-decoration: none;
+	}
+	.install-tab-link:hover {
+		color: var(--color-text-muted);
+	}
+	.install-tab:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+
+	.install-snippet {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 12px 12px 12px 14px;
+		border-radius: 10px;
+		border: 1px solid var(--color-accent);
+		background: color-mix(in oklab, var(--color-bg) 88%, transparent);
+		box-shadow:
+			0 0 0 1px color-mix(in oklab, var(--color-accent) 10%, transparent)
+				inset,
+			0 6px 18px -8px color-mix(in oklab, var(--color-accent) 35%, transparent);
+		position: relative;
+		z-index: 0;
+	}
+	.install-snippet-pre {
+		flex: 1;
+		min-width: 0;
+		margin: 0;
+		overflow-x: auto;
+		font-family: var(--font-mono);
+		font-size: 13px;
+		line-height: 1.45;
+		color: var(--color-text);
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+	.install-snippet-pre::-webkit-scrollbar {
+		display: none;
+	}
+	.install-prompt {
+		color: var(--color-text-dim);
+		margin-right: 6px;
+		user-select: none;
+	}
+	.install-cmd {
+		color: var(--color-text);
+	}
+
+	.install-copy {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 30px;
+		height: 30px;
+		border-radius: 7px;
+		border: 1px solid transparent;
+		background: transparent;
+		color: var(--color-text-dim);
+		cursor: pointer;
+		transition:
+			background 0.18s ease,
+			color 0.18s ease,
+			border-color 0.18s ease;
+	}
+	.install-copy:hover {
+		background: color-mix(in oklab, var(--color-surface) 80%, transparent);
+		color: var(--color-text);
+		border-color: color-mix(in oklab, var(--color-border) 70%, transparent);
+	}
+	.install-copy:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+	.install-copy-check {
+		display: none;
+	}
+	.install-copy[data-copied='true'] {
+		color: var(--color-accent);
+		border-color: color-mix(in oklab, var(--color-accent) 45%, transparent);
+		background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+	}
+	.install-copy[data-copied='true'] .install-copy-icon {
+		display: none;
+	}
+	.install-copy[data-copied='true'] .install-copy-check {
+		display: inline-block;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.install-tab,
+		.install-copy {
+			transition: none;
+		}
+	}
+</style>
