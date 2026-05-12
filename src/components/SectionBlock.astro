@@ -85,43 +85,48 @@ const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 >
 	<div class="stage-rule" aria-hidden="true"></div>
 
-	<header class="stage-header mt-4 mb-4 grid grid-cols-[4rem_1fr] gap-x-4 gap-y-3 sm:mt-5 sm:mb-5 sm:grid-cols-[4.8rem_1fr] sm:gap-x-5 lg:grid-cols-[5rem_1fr]">
-		<div class="stage-number-wrap relative">
-			<span
-				class="stage-number block font-mono leading-[0.9] text-[color:var(--color-accent)]"
-				style="font-size: var(--fs-stage-compact);"
-			>
-				<span class="stage-number-sigil" aria-hidden="true">▌</span>{number}
-			</span>
-		</div>
+	<header class:list={['stage-header mt-3 mb-4 sm:mt-4 sm:mb-5', variant === 'retro' && 'stage-header-retro']}>
+		{variant === 'retro' && (
+			<div class="stage-number-wrap relative" aria-hidden="true">
+				<span
+					class="stage-number block font-mono leading-[0.9] text-[color:var(--color-accent)]"
+					style="font-size: var(--fs-stage-compact);"
+				>
+					<span class="stage-number-sigil" aria-hidden="true">▌</span>{number}
+				</span>
+			</div>
+		)}
 		<div class="min-w-0">
 			<div class="stage-eyebrow flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-mono text-[12px] text-[color:var(--color-text-dim)]">
+				<span class="stage-eyebrow-num" aria-hidden="true">{number}</span>
 				<span class="stage-eyebrow-mark" aria-hidden="true">//</span>
 				<span class="stage-eyebrow-label">{stageLabel}</span>
 				<span class="stage-eyebrow-dot" aria-hidden="true">·</span>
 				<span class="stage-eyebrow-count">{entries.length} cmds</span>
 			</div>
-			<h2
-				class="mt-2 font-medium leading-[0.98] tracking-normal text-[color:var(--color-text)]"
-				style="font-size: var(--fs-stage-title);"
-			>
-				{title}
-			</h2>
-			<p class="mt-0.5 max-w-[55ch] text-sm leading-snug text-[color:var(--color-text-muted)] sm:text-[0.92rem]">
-				{tagline}
-			</p>
-			{ungrouped.length > 0 && (
-				<button
-					type="button"
-					class="section-select mt-2.5"
-					data-section-id={id}
-					data-state="none"
-					aria-label={`Select all in ${title}`}
+			<div class="stage-title-row mt-1.5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+				<h2
+					class="font-medium leading-[0.98] tracking-normal text-[color:var(--color-text)]"
+					style="font-size: var(--fs-stage-title);"
 				>
-					<span class="icon" aria-hidden="true"></span>
-					<span class="label">select all</span>
-				</button>
-			)}
+					{title}
+				</h2>
+				<p class="stage-tagline max-w-[55ch] text-sm leading-snug text-[color:var(--color-text-muted)] sm:text-[0.92rem]">
+					{tagline}
+				</p>
+				{ungrouped.length > 0 && (
+					<button
+						type="button"
+						class="section-select stage-section-select"
+						data-section-id={id}
+						data-state="none"
+						aria-label={`Select all in ${title}`}
+					>
+						<span class="icon" aria-hidden="true"></span>
+						<span class="label">select all</span>
+					</button>
+				)}
+			</div>
 		</div>
 	</header>
 
@@ -178,6 +183,24 @@ const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 			transparent 100%
 		);
 	}
+	.stage-header-retro {
+		display: grid;
+		grid-template-columns: 4rem 1fr;
+		column-gap: 1rem;
+		row-gap: 0.75rem;
+		align-items: start;
+	}
+	@media (min-width: 640px) {
+		.stage-header-retro {
+			grid-template-columns: 4.8rem 1fr;
+			column-gap: 1.25rem;
+		}
+	}
+	@media (min-width: 1024px) {
+		.stage-header-retro {
+			grid-template-columns: 5rem 1fr;
+		}
+	}
 	.stage-number-wrap {
 		overflow: clip;
 	}
@@ -200,6 +223,11 @@ const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 		color: color-mix(in oklab, var(--color-accent) 65%, transparent);
 		text-shadow: 0 0 8px color-mix(in oklab, var(--color-accent) 45%, transparent);
 	}
+	.stage-eyebrow-num {
+		color: var(--color-accent);
+		font-weight: 600;
+		letter-spacing: 0.04em;
+	}
 	.stage-eyebrow-mark {
 		color: color-mix(in oklab, var(--color-text-dim) 80%, transparent);
 		letter-spacing: -0.02em;
@@ -214,14 +242,17 @@ const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 	.stage-eyebrow-count {
 		color: var(--color-text-muted);
 	}
+	.stage-section-select {
+		margin-left: auto;
+	}
 	.group-stack {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: 1.25rem;
 	}
 	@media (min-width: 640px) {
 		.group-stack {
-			gap: 2rem;
+			gap: 1.5rem;
 		}
 	}
 </style>

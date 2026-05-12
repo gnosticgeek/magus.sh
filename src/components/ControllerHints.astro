@@ -33,13 +33,55 @@ const HINTS = [
 
 <script>
 	const STORAGE_KEY = 'magus:controller-hints-dismissed';
+	const SEEN_KEY = 'magus:controller-hints-seen';
 	const node = document.getElementById('controller-hints');
 	if (node) {
+		let dismissed = false;
 		try {
-			if (!localStorage.getItem(STORAGE_KEY)) {
-				node.hidden = false;
-			}
+			dismissed = localStorage.getItem(STORAGE_KEY) === '1';
 		} catch {}
+
+		const reveal = () => {
+			if (dismissed) return;
+			node.hidden = false;
+			try { localStorage.setItem(SEEN_KEY, '1'); } catch {}
+		};
+
+		const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+		let alreadySeen = false;
+		try { alreadySeen = localStorage.getItem(SEEN_KEY) === '1'; } catch {}
+
+		/* Coarse pointer (Deck / touch) — show immediately, as before.
+		   Otherwise wait for a real gamepad signal so mouse/keyboard users
+		   don't get a floating tip about buttons they don't have. */
+		if (isCoarsePointer || alreadySeen) {
+			reveal();
+		} else {
+			const onGamepad = () => {
+				reveal();
+				window.removeEventListener('gamepadconnected', onGamepad);
+				cancelAnimationFrame(rafId);
+			};
+			window.addEventListener('gamepadconnected', onGamepad);
+
+			/* Some controllers (Steam Input remapped, browser-quirky) never
+			   fire gamepadconnected until the first input. Poll a few times. */
+			let polls = 0;
+			let rafId = 0;
+			const poll = () => {
+				polls++;
+				const pads = navigator.getGamepads?.() ?? [];
+				const live = Array.from(pads).some((p) => {
+					if (!p) return false;
+					if (p.buttons.some((b) => b.pressed)) return true;
+					if (p.axes.some((a) => Math.abs(a) > 0.5)) return true;
+					return false;
+				});
+				if (live) { onGamepad(); return; }
+				if (polls < 600) rafId = requestAnimationFrame(poll);
+			};
+			rafId = requestAnimationFrame(poll);
+		}
 
 		node.querySelector<HTMLButtonElement>('[data-action="dismiss"]')?.addEventListener('click', () => {
 			node.hidden = true;

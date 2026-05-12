@@ -44,7 +44,14 @@
 		const copyBtn = bar.querySelector<HTMLButtonElement>('[data-action="copy"]');
 		const copyLabel = copyBtn?.querySelector<HTMLElement>('.copy-action-label');
 		const clearBtn = bar.querySelector<HTMLButtonElement>('[data-action="clear"]');
-		const selectAllPage = document.getElementById('select-all-page');
+		const stageCountEls = new Map(
+			Array.from(document.querySelectorAll<HTMLElement>('[data-stage-count]')).map(
+				(el) => [el.dataset.stageCount ?? '', el],
+			),
+		);
+		const stageTabs = Array.from(
+			document.querySelectorAll<HTMLElement>('a[role="tab"][data-stage-tab-id]'),
+		);
 		if (!countEl || !copyBtn || !copyLabel || !clearBtn) return;
 
 		const cards = Array.from(
@@ -55,6 +62,7 @@
 		);
 
 		const cardsBySection = new Map<string, Card[]>();
+		const cardsByStage = new Map<string, Card[]>();
 		for (const c of cards) {
 			const s = c.dataset.section ?? '';
 			let bucket = cardsBySection.get(s);
@@ -63,6 +71,14 @@
 				cardsBySection.set(s, bucket);
 			}
 			bucket.push(c);
+
+			const stage = c.dataset.category ?? '';
+			let stageBucket = cardsByStage.get(stage);
+			if (!stageBucket) {
+				stageBucket = [];
+				cardsByStage.set(stage, stageBucket);
+			}
+			stageBucket.push(c);
 		}
 
 		const selected = new Map<string, string>();
@@ -80,19 +96,20 @@
 						? 'Script · 1'
 						: `Script · ${count}`;
 
-			if (selectAllPage) {
-				const allChecked = cards.length > 0 && cards.every((c) => c.checked);
-				const total = selectAllPage.dataset.total ?? String(cards.length);
-				selectAllPage.textContent = allChecked
-					? `clear all ${total}`
-					: `select all ${total}`;
-				selectAllPage.setAttribute(
-					'aria-label',
-					allChecked
-						? `Clear all ${total} selected commands`
-						: `Select all ${total} commands across all stages`,
-				);
-			}
+			stageTabs.forEach((tab) => {
+				const stage = tab.dataset.stageTabId ?? '';
+				const bucket = cardsByStage.get(stage) ?? [];
+				const total = bucket.length;
+				const checked = bucket.filter((c) => c.checked).length;
+				const ratio = total === 0 ? 0 : checked / total;
+				tab.style.setProperty('--stage-progress', String(ratio));
+				const state = checked === 0 ? 'empty' : checked === total ? 'full' : 'some';
+				tab.dataset.progressState = state;
+				const countEl = stageCountEls.get(stage);
+				if (countEl) {
+					countEl.textContent = total === 0 ? '' : `${checked}/${total}`;
+				}
+			});
 
 			sectionToggles.forEach((btn) => {
 				const sectionId = btn.dataset.sectionId;
@@ -167,15 +184,6 @@
 			render();
 			persist(selected.keys());
 		});
-
-		if (selectAllPage) {
-			selectAllPage.addEventListener('click', () => {
-				const allChecked = cards.every((c) => c.checked);
-				cards.forEach((c) => setCard(c, !allChecked));
-				render();
-				persist(selected.keys());
-			});
-		}
 
 		/* restore prior session selection before first render */
 		const persisted = readPersisted();

@@ -23,19 +23,11 @@ const count = entries.length;
 
 <section class="group-block" data-group={groupKey} aria-labelledby={`group-${groupKey}-title`}>
 	<header class="group-header">
-		<div class="group-eyebrow">
-			<span class="group-eyebrow-num">{parentNumber}·{letter.toUpperCase()}</span>
-			<span class="group-eyebrow-dot" aria-hidden="true">·</span>
-			<span class="group-eyebrow-count">{count} apps</span>
-		</div>
-
-		<h3 class="group-title" id={`group-${groupKey}-title`}>
-			<Icon name={meta.icon} class="group-title-icon" aria-hidden="true" />
-			<span class="group-title-text">{meta.label}</span>
-		</h3>
-
-		<p class="group-tagline">{meta.tagline}</p>
-
+		<span class="group-eyebrow-num" aria-hidden="true">{parentNumber}·{letter.toUpperCase()}</span>
+		<Icon name={meta.icon} class="group-title-icon" aria-hidden="true" />
+		<h3 class="group-title" id={`group-${groupKey}-title`}>{meta.label}</h3>
+		<span class="group-tagline" aria-hidden="true">{meta.tagline}</span>
+		<span class="group-count" aria-hidden="true">{count} apps</span>
 		<button
 			type="button"
 			class="section-select group-select"
@@ -56,91 +48,73 @@ const count = entries.length;
 <style>
 	.group-block {
 		position: relative;
-		margin-top: 2.75rem;
-		padding-top: 1.5rem;
+		margin-top: 1.5rem;
 	}
 	.group-block:first-child {
-		margin-top: 0.75rem;
-		padding-top: 0;
-	}
-	.group-block:not(:first-child)::before {
-		content: "";
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 1px;
-		background: linear-gradient(
-			90deg,
-			color-mix(in oklab, var(--color-border) 80%, transparent),
-			transparent 60%
-		);
+		margin-top: 0.5rem;
 	}
 
 	.group-header {
-		margin-bottom: 1.25rem;
-	}
-	@media (min-width: 640px) {
-		.group-header {
-			margin-bottom: 1.5rem;
-		}
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.45rem 0.65rem;
+		padding: 0.4rem 0 0.55rem;
+		margin-bottom: 0.65rem;
+		border-bottom: 1px solid color-mix(in oklab, var(--color-border) 75%, transparent);
 	}
 
-	.group-eyebrow {
-		display: flex;
-		align-items: center;
-		gap: 0.55rem;
-		font-family: var(--font-mono);
-		font-size: 10.5px;
-		text-transform: uppercase;
-		letter-spacing: 0.22em;
-		color: var(--color-text-dim);
-	}
 	.group-eyebrow-num {
-		color: var(--color-accent-dim);
+		font-family: var(--font-mono);
+		font-size: 10px;
 		font-weight: 500;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--color-accent-dim);
+		padding: 2px 6px;
+		border: 1px solid color-mix(in oklab, var(--color-accent-dim) 35%, transparent);
+		border-radius: 4px;
 	}
-	.group-eyebrow-dot {
-		color: var(--color-text-dim);
-		opacity: 0.6;
-	}
-	.group-eyebrow-count {
-		color: var(--color-text-muted);
+
+	.group-title-icon {
+		width: 16px;
+		height: 16px;
+		color: var(--color-accent);
+		opacity: 0.85;
+		flex-shrink: 0;
 	}
 
 	.group-title {
-		display: flex;
-		align-items: center;
-		gap: 0.55rem;
-		margin: 0.45rem 0 0;
 		font-family: var(--font-sans);
-		font-size: clamp(1.25rem, 1rem + 0.8vw, 1.55rem);
+		font-size: 0.98rem;
 		font-weight: 500;
 		line-height: 1.1;
-		letter-spacing: -0.02em;
+		letter-spacing: -0.005em;
 		color: var(--color-text);
-	}
-	.group-title-icon {
-		width: 1em;
-		height: 1em;
-		color: var(--color-accent);
-		opacity: 0.8;
-		flex-shrink: 0;
-	}
-	.group-title-text {
-		min-width: 0;
+		margin: 0;
 	}
 
 	.group-tagline {
-		margin: 0.3rem 0 0;
-		max-width: 60ch;
-		font-size: 0.92rem;
-		line-height: 1.55;
+		font-size: 0.82rem;
+		line-height: 1.4;
 		color: var(--color-text-muted);
+		flex: 1;
+		min-width: 12ch;
+	}
+	@media (max-width: 640px) {
+		.group-tagline { display: none; }
+	}
+
+	.group-count {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
 	}
 
 	.group-select {
-		margin-top: 0.85rem;
+		margin-left: auto;
 		font-size: 11px;
 	}
 

@@ -11,6 +11,10 @@ const { entry } = Astro.props;
 const { data } = entry;
 
 const combinedCommand = data.commands.map((c) => c.run.trim()).join('\n');
+const previewCommand = (data.commands[0]?.run ?? '')
+	.trim()
+	.split('\n')[0]
+	.replace(/\s+/g, ' ');
 
 const dangerStyles = {
 	low: 'text-[color:var(--color-text-muted)] border-[color:var(--color-border)]',
@@ -88,38 +92,43 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 				{data.summary}
 			</p>
 		</div>
-		{
-			data.upstream && (
-				<a
-					href={data.upstream.url}
-					target="_blank"
-					rel="noopener noreferrer"
-					class="card-upstream text-[color:var(--color-text-dim)] transition-colors hover:text-[color:var(--color-accent)]"
-					aria-label={`Upstream: ${data.upstream.name}`}
-				>
-					<Icon
-						name="lucide:arrow-up-right"
-						class="h-3.5 w-3.5"
-						aria-hidden="true"
-					/>
-				</a>
-			)
-		}
+		<div class="card-corner">
+			{
+				data.upstream && (
+					<a
+						href={data.upstream.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="card-upstream text-[color:var(--color-text-dim)] transition-colors hover:text-[color:var(--color-accent)]"
+						aria-label={`Upstream: ${data.upstream.name}`}
+					>
+						<Icon
+							name="lucide:arrow-up-right"
+							class="h-3.5 w-3.5"
+							aria-hidden="true"
+						/>
+					</a>
+				)
+			}
+			<button
+				type="button"
+				class="view-cmd-glyph"
+				aria-label={`Review command for ${data.title}`}
+				title="Review command"
+			>
+				<Icon name="lucide:square-terminal" class="h-3.5 w-3.5" aria-hidden="true" />
+			</button>
+		</div>
 	</header>
 
-	<div class="flex-1 px-3.5 pb-3">
-		<button
-			type="button"
-			class="view-cmd flex w-full"
-			aria-label={`Review command for ${data.title}`}
-		>
-			<span class="view-cmd-label">
-				<Icon name="lucide:square-terminal" class="h-4 w-4 text-[color:var(--color-accent)]" aria-hidden="true" />
-				<span class="view-cmd-text">Review command</span>
-			</span>
-			<span class="view-cmd-chevron" aria-hidden="true">›</span>
-		</button>
-	</div>
+	<button
+		type="button"
+		class="view-cmd-preview flex-1"
+		aria-label={`Review command for ${data.title}`}
+	>
+		<span class="view-cmd-prompt" aria-hidden="true">$</span>
+		<span class="view-cmd-text">{previewCommand}</span>
+	</button>
 
 	{
 		hasFooter && (
@@ -203,8 +212,8 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 		});
 	});
 
-	/* "Review command" row → open CommandPeek dialog */
-	document.querySelectorAll<HTMLButtonElement>('.view-cmd').forEach((btn) => {
+	/* Any "review" trigger → open CommandPeek dialog */
+	document.querySelectorAll<HTMLButtonElement>('.view-cmd-glyph, .view-cmd-preview').forEach((btn) => {
 		btn.addEventListener('click', (e) => {
 			e.stopPropagation();
 			const card = btn.closest('article');
@@ -234,7 +243,7 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 		card.addEventListener('pointerdown', (e) => {
 			if (e.pointerType !== 'touch') return;
 			const target = e.target as HTMLElement;
-			if (target.closest('input, a, button, .view-cmd')) return;
+			if (target.closest('input, a, button, .view-cmd-preview, .view-cmd-glyph')) return;
 			armed = true;
 			fired = false;
 			startX = e.clientX;
@@ -312,13 +321,36 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 	:global(.card-title-icon) {
 		flex-shrink: 0;
 	}
-	:global(.card-upstream) {
+	:global(.card-corner) {
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		margin-top: -2px;
+	}
+	:global(.card-upstream),
+	:global(.view-cmd-glyph) {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 22px;
-		height: 22px;
-		margin-top: -2px;
+		width: 24px;
+		height: 24px;
+		border-radius: 6px;
+		background: transparent;
+		color: var(--color-text-dim);
+		cursor: pointer;
+		border: 0;
+		transition: color 0.15s, background-color 0.15s, transform 0.08s;
+	}
+	:global(.view-cmd-glyph) {
+		color: var(--color-text-dim);
+	}
+	:global(.view-cmd-glyph:hover),
+	:global(.card-upstream:hover) {
+		color: var(--color-accent);
+		background: color-mix(in oklab, var(--color-accent) 8%, transparent);
+	}
+	:global(.view-cmd-glyph:active) {
+		transform: scale(0.92);
 	}
 
 	/* illuminated capital — appears when selected, a decorative drop-cap
@@ -365,47 +397,40 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 		}
 	}
 
-	.view-cmd {
+	.view-cmd-preview {
+		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		gap: 10px;
-		min-height: var(--tap-min);
-		padding: 10px 12px;
-		border: 1px solid var(--color-border);
-		border-radius: 8px;
-		background: var(--color-bg);
-		color: var(--color-text-muted);
+		gap: 8px;
+		min-height: 32px;
+		margin: 0 12px 10px;
+		padding: 6px 10px;
+		border: 1px dashed color-mix(in oklab, var(--color-border) 80%, transparent);
+		border-radius: 6px;
+		background: color-mix(in oklab, var(--color-bg) 65%, transparent);
 		font-family: var(--font-mono);
-		font-size: 13px;
+		font-size: 11.5px;
+		line-height: 1.3;
+		color: var(--color-text-muted);
 		cursor: pointer;
-		transition:
-			border-color 0.15s,
-			color 0.15s,
-			background-color 0.15s,
-			transform 0.08s;
-	}
-	.view-cmd:active {
-		transform: scale(0.98);
-		border-color: var(--color-accent);
-		color: var(--color-accent);
-	}
-	.view-cmd-label {
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		min-width: 0;
-		flex: 1;
 		text-align: left;
+		transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+		overflow: hidden;
 	}
-	.view-cmd-text {
-		font-family: var(--font-sans);
+	.view-cmd-preview:hover {
+		border-color: color-mix(in oklab, var(--color-accent) 55%, var(--color-border));
 		color: var(--color-text);
-		letter-spacing: -0.005em;
+		background: var(--color-bg);
 	}
-	.view-cmd-chevron {
-		color: var(--color-text-dim);
-		font-size: 18px;
-		line-height: 1;
+	.view-cmd-prompt {
+		color: var(--color-accent);
 		flex-shrink: 0;
+		opacity: 0.85;
+	}
+	.view-cmd-preview .view-cmd-text {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		flex: 1;
 	}
 </style>

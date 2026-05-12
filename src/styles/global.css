@@ -762,34 +762,111 @@ body::after {
 }
 
 /* ------------------------------------------------------------------ */
-/* workbench rail — stage tabs + search + page-wide select-all          */
+/* page shell — left rail + content                                     */
 /* ------------------------------------------------------------------ */
-.workbench-rail {
-	display: grid;
+.page-shell {
+	display: block;
+}
+@media (min-width: 1024px) {
+	.page-shell {
+		display: grid;
+		grid-template-columns: 220px minmax(0, 1fr);
+		column-gap: 2rem;
+		align-items: start;
+	}
+}
+@media (min-width: 1280px) {
+	.page-shell {
+		grid-template-columns: 240px minmax(0, 1fr);
+		column-gap: 2.25rem;
+	}
+}
+
+.page-content {
+	min-width: 0;
+}
+
+.page-rail {
+	display: flex;
+	flex-direction: column;
 	gap: 10px;
-	margin-top: 0.85rem;
 	margin-bottom: 0.65rem;
-	padding: 8px;
+	padding: 10px;
 	border: 1px solid color-mix(in oklab, var(--color-border) 82%, transparent);
-	border-radius: 10px;
+	border-radius: 12px;
 	background: color-mix(in oklab, var(--color-bg-elevated) 72%, transparent);
 	backdrop-filter: blur(18px) saturate(130%);
 	-webkit-backdrop-filter: blur(18px) saturate(130%);
 }
-@media (min-width: 768px) {
-	.workbench-rail {
+@media (min-width: 1024px) {
+	.page-rail {
 		position: sticky;
-		top: 10px;
+		top: 14px;
 		z-index: 40;
-		grid-template-columns: minmax(0, 1fr) auto;
-		align-items: center;
-		margin-top: 1rem;
-		margin-bottom: 0.75rem;
+		gap: 14px;
+		padding: 14px;
+		max-height: calc(100dvh - 28px);
+		overflow-y: auto;
 	}
 }
 
-/* Mobile: horizontally scrollable strip with a fade mask on the right.
-   Replaces the 2×3 grid which ate 120px of vertical space at 800px viewport. */
+/* compact brand block lives inside the rail */
+.rail-brand {
+	display: block;
+	padding: 0 2px;
+}
+.rail-title {
+	font-size: 1.45rem;
+	font-style: italic;
+	font-weight: 500;
+	line-height: 1;
+	letter-spacing: -0.02em;
+	color: var(--color-text);
+	margin: 0;
+}
+.rail-title-em {
+	font-style: italic;
+	color: var(--color-accent);
+}
+.rail-sub {
+	margin-top: 4px;
+	font-size: 11px;
+	font-family: var(--font-mono);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-text-dim);
+}
+@media (min-width: 1024px) {
+	.rail-title {
+		font-size: 1.55rem;
+	}
+}
+
+/* tablet: brand sits left, tools right */
+@media (min-width: 640px) and (max-width: 1023px) {
+	.page-rail {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(180px, 320px);
+		grid-template-areas:
+			"brand tools"
+			"tabs tabs"
+			"banner banner";
+		gap: 10px 14px;
+		align-items: center;
+	}
+	.rail-brand { grid-area: brand; }
+	.rail-tools { grid-area: tools; align-self: center; }
+	.stage-tabs { grid-area: tabs; }
+	.page-rail [data-update-banner] { grid-area: banner; }
+}
+
+/* phone: stack everything full-width */
+@media (max-width: 639px) {
+	.rail-title { font-size: 1.2rem; }
+	.rail-sub { display: none; }
+}
+
+/* TABS */
 .stage-tabs {
 	display: flex;
 	flex-wrap: nowrap;
@@ -803,9 +880,7 @@ body::after {
 	mask-image: linear-gradient(to right, black 92%, transparent 100%);
 	-webkit-mask-image: linear-gradient(to right, black 92%, transparent 100%);
 }
-.stage-tabs::-webkit-scrollbar {
-	display: none;
-}
+.stage-tabs::-webkit-scrollbar { display: none; }
 .stage-tabs .stage-tab {
 	flex-shrink: 0;
 	min-height: var(--tap-min);
@@ -813,32 +888,27 @@ body::after {
 	scroll-snap-align: start;
 }
 @media (min-width: 640px) {
+	.stage-tabs { mask-image: none; -webkit-mask-image: none; padding-right: 0; }
+	.stage-tabs .stage-tab { min-height: 0; }
+}
+@media (min-width: 1024px) {
 	.stage-tabs {
+		flex-direction: column;
+		gap: 4px;
+		overflow: visible;
 		mask-image: none;
 		-webkit-mask-image: none;
-		padding-right: 0;
+		padding: 0;
 	}
 	.stage-tabs .stage-tab {
-		min-height: 0;
-	}
-}
-
-/* workbench-tools row — search + page-wide select-all sit together */
-.workbench-tools {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	gap: 8px;
-	align-items: center;
-}
-@media (min-width: 768px) {
-	.workbench-tools {
-		grid-template-columns: minmax(180px, 280px) auto;
-		justify-content: end;
-		justify-self: end;
+		width: 100%;
+		justify-content: flex-start;
+		padding: 8px 12px;
 	}
 }
 
 .stage-tab {
+	overflow: hidden;
 	transition:
 		border-color 0.2s,
 		background-color 0.2s,
@@ -846,32 +916,45 @@ body::after {
 		transform 0.2s;
 }
 @media (hover: hover) and (pointer: fine) {
-	.stage-tab:hover {
-		transform: translateY(-1px);
-	}
+	.stage-tab:hover { transform: translateY(-1px); }
 }
-.stage-tab:active {
-	transform: scale(0.97);
+.stage-tab:active { transform: scale(0.97); }
+
+/* per-stage progress bar — fills as user picks commands in that stage */
+.stage-tab-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2px;
+	background: var(--color-accent);
+	transform-origin: left center;
+	transform: scaleX(var(--stage-progress, 0));
+	transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+	pointer-events: none;
+	opacity: 0.85;
+}
+.stage-tab[data-progress-state="full"] .stage-tab-progress {
+	opacity: 1;
+	box-shadow: 0 0 8px color-mix(in oklab, var(--color-accent) 60%, transparent);
+}
+.stage-tab[data-progress-state="empty"] .stage-tab-progress { opacity: 0; }
+
+.stage-tab-count {
+	margin-left: auto;
+	opacity: 0.75;
+}
+.stage-tab[data-progress-state="empty"] .stage-tab-count { display: none; }
+.stage-tab[aria-selected="true"] .stage-tab-count {
+	color: var(--color-accent);
+	opacity: 1;
 }
 
-/* secondary buttons get hover/active parity */
-@media (hover: hover) and (pointer: fine) {
-	#select-all-page:hover {
-		border-color: var(--color-accent);
-		color: var(--color-accent);
-	}
-}
-#select-all-page {
-	min-height: var(--tap-min);
-	transition: all 0.15s, transform 0.08s;
-}
-#select-all-page:active {
-	transform: scale(0.97);
-}
-@media (min-width: 640px) {
-	#select-all-page {
-		min-height: 0;
-	}
+/* update banner inside the rail — fluid width, less heavy */
+.page-rail [data-update-banner] {
+	margin: 0;
+	padding: 8px 10px;
+	font-size: 12px;
 }
 
 /* ------------------------------------------------------------------ */

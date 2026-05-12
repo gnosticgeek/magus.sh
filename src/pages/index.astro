@@ -20,30 +20,24 @@ const optimise = all.filter((e) => e.data.category === 'optimise');
 const customise = all.filter((e) => e.data.category === 'customise');
 const retro = all.filter((e) => e.data.category === 'retro');
 
-const totalCommands = all.length;
-
 const spellbookEntries = await getCollection('spellbook');
 spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 ---
 
 <Base>
-	<div class="relative mx-auto max-w-7xl px-5 pt-5 sm:pt-6">
-		<header class="app-header">
-			<h1
-				class="rise rise-2 max-w-[20ch] font-medium leading-[0.98] tracking-normal text-[color:var(--color-text)]"
-				style="font-size: var(--fs-app-title); font-family: var(--font-serif); font-style: italic; letter-spacing: -0.02em;"
-			>
-				SteamOS, tuned fast.
-			</h1>
+	<div class="page-shell relative mx-auto max-w-7xl px-5 pt-5 sm:pt-6">
+		<aside class="page-rail rise rise-2" aria-label="Magus controls">
+			<header class="rail-brand">
+				<h1 class="rail-title" style="font-family: var(--font-serif);">
+					SteamOS, <em class="rail-title-em">tuned fast.</em>
+				</h1>
+				<p class="rail-sub">Pick. Copy. Paste.</p>
+			</header>
 
-			<p
-				class="rise rise-3 mt-1 max-w-[44ch] text-sm leading-relaxed text-[color:var(--color-text-muted)] sm:text-[0.95rem]"
-			>
-				Pick commands. Copy. Paste in your terminal.
-			</p>
-		</header>
+			<div class="rail-tools">
+				<CommandSearch />
+			</div>
 
-		<div class="workbench-rail rise rise-4">
 			<nav
 				class="stage-tabs items-center text-sm"
 				aria-label="Stages"
@@ -55,37 +49,28 @@ spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 							href={`#${c.id}`}
 							role="tab"
 							data-stage={c.id}
+							data-stage-tab-id={c.id}
 							aria-controls={c.id}
 							aria-selected="false"
-							class="stage-tab group inline-flex items-center gap-3 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface)] py-1.5 pl-3 pr-4 text-[color:var(--color-text)] hover:border-[color:var(--color-accent)] aria-selected:border-[color:var(--color-accent)] aria-selected:bg-[color:var(--color-accent)]/5"
+							class="stage-tab group relative inline-flex items-center gap-3 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface)] py-1.5 pl-3 pr-4 text-[color:var(--color-text)] hover:border-[color:var(--color-accent)] aria-selected:border-[color:var(--color-accent)] aria-selected:bg-[color:var(--color-accent)]/5"
 						>
+							<span class="stage-tab-progress" aria-hidden="true"></span>
 							<span class="font-mono text-[10px] tracking-wider text-[color:var(--color-text-dim)] transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
 								{c.num}
 							</span>
-							<span class="font-medium transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
+							<span class="stage-tab-label font-medium transition-colors group-hover:text-[color:var(--color-accent)] group-aria-selected:text-[color:var(--color-accent)]">
 								{c.short}
 							</span>
+							<span class="stage-tab-count font-mono text-[10px] text-[color:var(--color-text-dim)] tabular-nums" data-stage-count={c.id}></span>
 						</a>
 					))
 				}
 			</nav>
 
-			<div class="workbench-tools">
-				<CommandSearch />
-				<button
-					id="select-all-page"
-					type="button"
-					data-total={totalCommands}
-					aria-label={`Select all ${totalCommands} commands across all stages`}
-					class="inline-flex items-center gap-2 rounded-md border border-[color:var(--color-border)] bg-transparent px-3 font-mono text-[11px] uppercase tracking-wider text-[color:var(--color-text-muted)]"
-				>
-					all {totalCommands}
-				</button>
-			</div>
-		</div>
+			<UpdateBanner />
+		</aside>
 
-		<UpdateBanner />
-
+		<div class="page-content">
 		<SectionBlock
 			id="setup"
 			number="01"
@@ -137,41 +122,27 @@ spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 			variant="retro"
 		/>
 
-		<section class="rise rise-5 spellbook mt-24" aria-labelledby="spellbook-heading">
-			<div class="flex items-center gap-3">
+		<details class="rise rise-5 spellbook mt-16" aria-labelledby="spellbook-heading">
+			<summary class="spellbook-summary">
 				<span
 					class="spellbook-kicker font-mono text-[10px] uppercase tracking-[0.28em] text-[color:var(--color-accent-dim)]"
 				>
 					/ future spells
 				</span>
 				<span class="spellbook-rule h-px flex-1"></span>
-				<span
-					class="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-text-dim)] sm:inline"
-				>
-					{spellbookEntries.length} entries · drafts &amp; research
-				</span>
-			</div>
-
-			<div class="mt-3 flex items-end justify-between gap-6">
 				<h2
 					id="spellbook-heading"
-					class="font-serif italic leading-[1.05] text-[color:var(--color-text)]"
-					style="font-size: clamp(2rem, 1.3rem + 3.5vw, 3.2rem); letter-spacing: -0.025em;"
+					class="spellbook-heading"
 				>
 					Still being conjured.
 				</h2>
-				<Icon
-					name="lucide:sparkles"
-					class="spellbook-sparkle hidden h-6 w-6 text-[color:var(--color-accent)] sm:block"
-					aria-hidden="true"
-				/>
-			</div>
+				<span class="spellbook-meta font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-text-dim)]">
+					{spellbookEntries.length} drafts
+				</span>
+				<span class="spellbook-marker" aria-hidden="true">+</span>
+			</summary>
 
-			<p class="mt-3 max-w-prose text-sm leading-relaxed text-[color:var(--color-text-muted)]">
-				Spells in the spellbook — ink still wet. Drop your wishlist in the GitHub repo.
-			</p>
-
-			<ul class="spellbook-grid mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+			<ul class="spellbook-grid mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 				{
 					spellbookEntries.map((spell) => (
 						<li class="spell-card" data-status={spell.data.status}>
@@ -188,7 +159,8 @@ spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 					))
 				}
 			</ul>
-		</section>
+		</details>
+		</div>
 	</div>
 
 	<SelectionBar />
@@ -274,10 +246,6 @@ spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 </script>
 
 <style>
-	.app-header {
-		padding-bottom: 0.25rem;
-	}
-
 	/* view transition: dissolve stages on tab switch */
 	::view-transition-old(stages),
 	::view-transition-new(stages) {
@@ -290,7 +258,38 @@ spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 	.spellbook {
 		position: relative;
 	}
+	.spellbook[open] .spellbook-marker {
+		transform: rotate(45deg);
+	}
+	.spellbook-summary {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		list-style: none;
+		cursor: pointer;
+		padding: 6px 2px;
+		border-radius: 8px;
+		transition: background-color 0.2s ease;
+	}
+	.spellbook-summary::-webkit-details-marker {
+		display: none;
+	}
+	.spellbook-summary:hover {
+		background: color-mix(in oklab, var(--color-surface) 35%, transparent);
+	}
+	.spellbook-heading {
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-weight: 400;
+		font-size: 1rem;
+		line-height: 1.1;
+		letter-spacing: -0.005em;
+		color: var(--color-text);
+		margin: 0;
+	}
 	.spellbook-rule {
+		flex: 1;
+		min-width: 24px;
 		background: linear-gradient(
 			to right,
 			var(--color-border),
@@ -298,13 +297,13 @@ spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 			transparent
 		);
 	}
-	.spellbook-sparkle {
-		filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-accent) 45%, transparent));
-		animation: spellbook-twinkle 3.8s ease-in-out infinite;
-	}
-	@keyframes spellbook-twinkle {
-		0%, 100% { opacity: 0.55; transform: rotate(-4deg); }
-		50% { opacity: 1; transform: rotate(4deg); }
+	.spellbook-marker {
+		font-family: var(--font-mono);
+		font-size: 14px;
+		line-height: 1;
+		color: var(--color-accent);
+		transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+		flex-shrink: 0;
 	}
 
 	.spellbook-grid {
