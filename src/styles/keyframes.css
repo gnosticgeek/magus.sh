@@ -1,0 +1,68 @@
+/* page-load — ink-bleed reveal: blur clears as the element settles in,
+   evoking ink soaking into parchment / phosphor blooming into focus. */
+@keyframes riseIn {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+		filter: blur(5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+		filter: blur(0);
+	}
+}
+
+/* low-data mode: skip the filter cost (still get the translate fade) */
+@media (prefers-reduced-data: reduce) {
+	@keyframes riseIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+}
+
+@keyframes hint-pulse {
+	0%, 100% { opacity: 0.65; }
+	50% { opacity: 1; }
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.5;
+		transform: scale(0.85);
+	}
+}
+
+@keyframes sheet-fall {
+	to {
+		transform: translateY(100%);
+		opacity: 0;
+	}
+}
+
+@keyframes loading-line-fade {
+	from {
+		opacity: 0;
+		transform: translateY(2px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes crt-blink {
+	0%, 50% { opacity: 1; }
+	51%, 100% { opacity: 0; }
+}

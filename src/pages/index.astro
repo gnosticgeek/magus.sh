@@ -14,11 +14,9 @@ import { STAGES } from '../lib/stages';
 const all = await getCollection('commands');
 all.sort((a, b) => a.data.order - b.data.order);
 
-const setup = all.filter((e) => e.data.category === 'setup');
-const install = all.filter((e) => e.data.category === 'install');
-const optimise = all.filter((e) => e.data.category === 'optimise');
-const customise = all.filter((e) => e.data.category === 'customise');
-const retro = all.filter((e) => e.data.category === 'retro');
+const entriesByStage = new Map(
+	STAGES.map((s) => [s.id, all.filter((e) => e.data.category === s.id)]),
+);
 
 const spellbookEntries = await getCollection('spellbook');
 spellbookEntries.sort((a, b) => a.data.order - b.data.order);
@@ -71,56 +69,20 @@ spellbookEntries.sort((a, b) => a.data.order - b.data.order);
 		</aside>
 
 		<div class="page-content">
-		<SectionBlock
-			id="setup"
-			number="01"
-			stageLabel="stage_01"
-			title="Setup"
-			tagline="Sudo and Decky basics."
-			entries={setup}
-			rise={2}
-		/>
-
-		<SectionBlock
-			id="install"
-			number="02"
-			stageLabel="stage_02"
-			title="Install"
-			tagline="Apps, launchers, tools."
-			entries={install}
-			rise={3}
-		/>
-
-		<SectionBlock
-			id="optimise"
-			number="03"
-			stageLabel="stage_03"
-			title="Optimise"
-			tagline="Performance and Plasma tweaks."
-			entries={optimise}
-			rise={4}
-		/>
-
-		<SectionBlock
-			id="customise"
-			number="04"
-			stageLabel="stage_04"
-			title="Customise"
-			tagline="Plugins, art, polish."
-			entries={customise}
-			rise={5}
-		/>
-
-		<SectionBlock
-			id="retro"
-			number="05"
-			stageLabel="stage_05"
-			title="Retro"
-			tagline="Cartridge dust, phosphor glow. PS1, GameCube, Wii."
-			entries={retro}
-			rise={5}
-			variant="retro"
-		/>
+		{
+			STAGES.map((stage) => (
+				<SectionBlock
+					id={stage.id}
+					number={stage.num}
+					stageLabel={stage.stageLabel}
+					title={stage.title}
+					tagline={stage.tagline}
+					entries={entriesByStage.get(stage.id) ?? []}
+					rise={stage.rise}
+					variant={'variant' in stage ? stage.variant : undefined}
+				/>
+			))
+		}
 
 		<details class="rise rise-5 spellbook mt-16" aria-labelledby="spellbook-heading">
 			<summary class="spellbook-summary">

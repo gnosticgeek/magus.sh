@@ -237,74 +237,17 @@
 <script>
 	import type { ScriptItem } from '../lib/types';
 	import { STAGE_LABELS } from '../lib/stages';
+	import {
+		buildFullScript,
+		buildStageScript,
+		groupByStage,
+	} from '../lib/script-builder';
 	import { copyWithFeedback } from '../lib/clipboard';
-	import { lockBodyScroll } from '../lib/body-scroll-lock';
+	import { createSheetDialog } from '../lib/client/sheet-dialog';
 
 	interface OpenDetail {
 		items: ScriptItem[];
 	}
-
-	const buildHeader = (items: ScriptItem[]): string => {
-		const selectedStages = Array.from(
-			new Set(items.map((item) => STAGE_LABELS[item.category as keyof typeof STAGE_LABELS] ?? item.category)),
-		).join(', ');
-		return [
-			'#!/usr/bin/env bash',
-			'# magus.sh review script',
-			`# ${items.length} ${items.length === 1 ? 'command' : 'commands'} selected`,
-			`# Stages: ${selectedStages}`,
-			'set -e',
-		].join('\n');
-	};
-
-	const itemBlock = (item: ScriptItem): string => {
-		const head = `# --- ${item.title.trim()}${item.danger ? ` (${item.danger} risk)` : ''} ---`;
-		return `${head}\n${item.cmd.trim()}`;
-	};
-
-	const buildFullScript = (items: ScriptItem[]): string => {
-		if (items.length === 0) return '';
-		const header = buildHeader(items);
-		const sections: string[] = [];
-		let activeStage = '';
-		for (const item of items) {
-			const stage = STAGE_LABELS[item.category as keyof typeof STAGE_LABELS] ?? item.category;
-			if (stage !== activeStage) {
-				activeStage = stage;
-				sections.push(`# === ${stage} ===`);
-			}
-			sections.push(itemBlock(item));
-		}
-		return `${header}\n\n${sections.join('\n\n')}\n`;
-	};
-
-	const buildStageScript = (stage: string, items: ScriptItem[]): string => {
-		const lines = [
-			'#!/usr/bin/env bash',
-			`# magus.sh — ${stage}`,
-			'set -e',
-			'',
-		];
-		for (const item of items) {
-			lines.push(itemBlock(item));
-			lines.push('');
-		}
-		return lines.join('\n');
-	};
-
-	const groupByStage = (items: ScriptItem[]): Array<{ stage: string; items: ScriptItem[] }> => {
-		const order: string[] = [];
-		const map = new Map<string, ScriptItem[]>();
-		for (const item of items) {
-			const stage = STAGE_LABELS[item.category as keyof typeof STAGE_LABELS] ?? item.category;
-			if (!map.has(stage)) {
-				map.set(stage, []);
-				order.push(stage);
-			}
-			map.get(stage)!.push(item);
-		}
-		return order.map((stage) => ({ stage, items: map.get(stage)! }));
-	};
 
 	const renderChunks = (
 		container: HTMLElement,
@@ -385,7 +328,6 @@
 		const lineWord = dialog.querySelector<HTMLElement>('.sheet-line-word');
 		const copyBtn = dialog.querySelector<HTMLButtonElement>('[data-action="copy"]');
 		const copyLabel = dialog.querySelector<HTMLElement>('.sheet-action-label');
-		const closeBtn = dialog.querySelector<HTMLButtonElement>('[data-action="close"]');
 		const shareBtn = dialog.querySelector<HTMLButtonElement>('[data-action="share"]');
 		const downloadBtn = dialog.querySelector<HTMLButtonElement>('[data-action="download"]');
 		const loading = dialog.querySelector<HTMLElement>('.sheet-loading');
@@ -400,7 +342,6 @@
 			!lines ||
 			!copyBtn ||
 			!copyLabel ||
-			!closeBtn ||
 			!shareBtn ||
 			!downloadBtn ||
 			!loading ||
@@ -417,7 +358,6 @@
 		}
 
 		let currentScript = '';
-		let unlockScroll: (() => void) | undefined;
 		let loadingTimer: number | undefined;
 		let lineTimer: number | undefined;
 		let barTimer: number | undefined;
@@ -514,6 +454,8 @@
 			}, LOADING_DURATION_MS);
 		};
 
+		const sheet = createSheetDialog(dialog, { beforeClose: stopLoading });
+
 		const open = (items: ScriptItem[]) => {
 			currentScript = buildFullScript(items);
 			renderChunks(chunksContainer, groupByStage(items));
@@ -523,7 +465,7 @@
 			lines.textContent = String(lineCount);
 			if (cmdWord) cmdWord.textContent = items.length === 1 ? 'command' : 'commands';
 			if (lineWord) lineWord.textContent = lineCount === 1 ? 'line' : 'lines';
-			unlockScroll = lockBodyScroll();
+			sheet.open();
 
 			stopLoading();
 
@@ -541,33 +483,6 @@
 				showLoading();
 			}
 		};
-
-		const close = () => {
-			stopLoading();
-			dialog.classList.add('closing');
-			const onEnd = () => {
-				dialog.classList.remove('closing');
-				dialog.close();
-				dialog.removeEventListener('animationend', onEnd);
-				unlockScroll?.();
-				unlockScroll = undefined;
-			};
-			dialog.addEventListener('animationend', onEnd);
-			setTimeout(() => {
-				if (dialog.classList.contains('closing')) onEnd();
-			}, 320);
-		};
-
-		closeBtn.addEventListener('click', close);
-
-		dialog.addEventListener('click', (e) => {
-			if (e.target === dialog) close();
-		});
-
-		dialog.addEventListener('cancel', (e) => {
-			e.preventDefault();
-			close();
-		});
 
 		copyBtn.addEventListener('click', () => {
 			copyWithFeedback(currentScript, copyBtn, copyLabel, [8, 24, 8]);

@@ -1,108 +1,7 @@
 @import "tailwindcss";
-
-@theme {
-	/* default — tokyo night (dark) */
-	--color-bg: #1a1b26;
-	--color-bg-elevated: #16161e;
-	--color-surface: #24283b;
-	--color-border: #2f3549;
-	--color-border-strong: #3b4261;
-	--color-text: #c0caf5;
-	--color-text-muted: #9aa5ce;
-	--color-text-dim: #565f89;
-	--color-accent: #7aa2f7;
-	--color-accent-dim: #5d87e3;
-	--color-accent-soft: rgba(122, 162, 247, 0.12);
-	--color-warn: #e0af68;
-	--color-danger: #f7768e;
-	--color-glow-primary: rgba(122, 162, 247, 0.07);
-	--color-glow-secondary: rgba(187, 154, 247, 0.04);
-	--color-bar-bg: rgba(22, 22, 30, 0.9);
-	--color-scheme: dark;
-
-	--font-sans:
-		"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-		sans-serif;
-	--font-serif:
-		"Fraunces", ui-serif, "Iowan Old Style", Georgia, "Times New Roman", serif;
-	--font-mono:
-		"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-		monospace;
-	--font-crt: "VT323", "JetBrains Mono", ui-monospace, monospace;
-
-	/* touch target & spacing system */
-	--tap-min: 44px;
-	--tap-jumbo: 56px;
-	--space-safe-bottom: max(12px, env(safe-area-inset-bottom));
-
-	/* type scale */
-	--fs-app-title: 2rem;
-	--fs-stage-compact: 2.8rem;
-	--fs-stage-title: 1.75rem;
-}
-
-@media (min-width: 768px) {
-	:root {
-		--fs-app-title: 2.7rem;
-		--fs-stage-compact: 3.1rem;
-		--fs-stage-title: 2.05rem;
-	}
-}
-
-/* Theme swatch colors live on :root, not in @theme. Tailwind v4 only emits
-   variables that match a recognised namespace prefix (--color-*, --font-*,
-   etc.) — anything else is silently dropped, which used to leave the
-   ThemeSwitcher rendering empty circles. */
-:root {
-	--swatch-tokyo-night: #7aa2f7;
-	--swatch-tokyo-night-deep: #1a1b26;
-	--swatch-grimoire: #7c1d1d;
-	--swatch-grimoire-paper: #f4ecdc;
-	--swatch-konsole: #39ff14;
-	--swatch-konsole-deep: #000000;
-}
-
-/* Grimoire — parchment / ink. Light theme designed for outdoor Deck use. */
-:root[data-theme="grimoire"] {
-	--color-bg: #f4ecdc;
-	--color-bg-elevated: #ece1c8;
-	--color-surface: #e3d6b8;
-	--color-border: #c8b591;
-	--color-border-strong: #a8916a;
-	--color-text: #231a14;
-	--color-text-muted: #5b4a36;
-	--color-text-dim: #8a7559;
-	--color-accent: #7c1d1d;
-	--color-accent-dim: #5c1313;
-	--color-accent-soft: rgba(124, 29, 29, 0.14);
-	--color-warn: #a98b3e;
-	--color-danger: #8b2c1f;
-	--color-glow-primary: rgba(124, 29, 29, 0.06);
-	--color-glow-secondary: rgba(169, 139, 62, 0.05);
-	--color-bar-bg: rgba(236, 225, 200, 0.9);
-	--color-scheme: light;
-}
-
-/* Konsole — high-contrast pure terminal. Sunlight + a11y mode. */
-:root[data-theme="konsole"] {
-	--color-bg: #000000;
-	--color-bg-elevated: #0a0a0a;
-	--color-surface: #141414;
-	--color-border: #2a2a2a;
-	--color-border-strong: #4a4a4a;
-	--color-text: #ffffff;
-	--color-text-muted: #d4d4d4;
-	--color-text-dim: #8a8a8a;
-	--color-accent: #39ff14;
-	--color-accent-dim: #2bd00f;
-	--color-accent-soft: rgba(57, 255, 20, 0.14);
-	--color-warn: #ffeb3b;
-	--color-danger: #ff5252;
-	--color-glow-primary: rgba(57, 255, 20, 0.1);
-	--color-glow-secondary: rgba(255, 235, 59, 0.06);
-	--color-bar-bg: rgba(10, 10, 10, 0.94);
-	--color-scheme: dark;
-}
+@import "./tokens.css";
+@import "./themes.css";
+@import "./keyframes.css";
 
 html {
 	background: var(--color-bg);
@@ -201,20 +100,6 @@ body::after {
 	}
 }
 
-/* page-load — ink-bleed reveal: blur clears as the element settles in,
-   evoking ink soaking into parchment / phosphor blooming into focus. */
-@keyframes riseIn {
-	from {
-		opacity: 0;
-		transform: translateY(14px);
-		filter: blur(5px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-		filter: blur(0);
-	}
-}
 @media (prefers-reduced-motion: no-preference) {
 	.rise {
 		opacity: 0;
@@ -235,20 +120,6 @@ body::after {
 	}
 	.rise-5 {
 		animation-delay: 0.40s;
-	}
-}
-
-/* low-data mode: skip the filter cost (still get the translate fade) */
-@media (prefers-reduced-data: reduce) {
-	@keyframes riseIn {
-		from {
-			opacity: 0;
-			transform: translateY(10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
 	}
 }
 
@@ -324,10 +195,6 @@ body::after {
 	background: color-mix(in oklab, var(--color-bg) 80%, transparent);
 	animation: hint-pulse 2.4s ease-in-out infinite;
 	pointer-events: none;
-}
-@keyframes hint-pulse {
-	0%, 100% { opacity: 0.65; }
-	50% { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
 	.show-card-hint .card:first-child::after {
@@ -572,17 +439,6 @@ body::after {
 	box-shadow: 0 0 10px var(--color-accent);
 	flex-shrink: 0;
 	animation: pulse 1.6s ease-in-out infinite;
-}
-@keyframes pulse {
-	0%,
-	100% {
-		opacity: 1;
-		transform: scale(1);
-	}
-	50% {
-		opacity: 0.5;
-		transform: scale(0.85);
-	}
 }
 .selection-bar .selection-text {
 	display: flex;
@@ -1054,12 +910,6 @@ body::after {
 .sheet.closing::backdrop {
 	animation: backdrop-fade 0.28s ease-in reverse;
 }
-@keyframes sheet-fall {
-	to {
-		transform: translateY(100%);
-		opacity: 0;
-	}
-}
 .sheet-inner {
 	/* Pass-through wrapper — children participate in .sheet's flex layout
 	   directly (see comment on .sheet). Has no semantic role of its own,
@@ -1238,16 +1088,6 @@ body::after {
 	color: var(--color-text-muted);
 	text-align: center;
 	animation: loading-line-fade 0.5s ease;
-}
-@keyframes loading-line-fade {
-	from {
-		opacity: 0;
-		transform: translateY(2px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
 }
 .loading-bar {
 	width: 100%;
@@ -1442,10 +1282,6 @@ section.stage[data-variant="retro"] h2::after {
 	text-shadow:
 		0 0 6px color-mix(in oklab, var(--color-accent) 60%, transparent),
 		0 0 14px color-mix(in oklab, var(--color-accent) 30%, transparent);
-}
-@keyframes crt-blink {
-	0%, 50% { opacity: 1; }
-	51%, 100% { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
 	section.stage[data-variant="retro"] h2::after {
