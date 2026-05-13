@@ -1,0 +1,6 @@
+# compiled binary
+/magus
+
+# Go build cache
+*.test
+*.out

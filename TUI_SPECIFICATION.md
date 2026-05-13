@@ -1,8 +1,8 @@
 # magus.sh TUI Specification
 
-**Status:** Draft (validated via interactive prototype at `/tui`)  
-**Last Updated:** 2026-05-12  
-**Target:** Node.js CLI using @inquirer/prompts
+**Status:** Draft (validated via interactive prototype at `/tui`, Go implementation in `magus/`)  
+**Last Updated:** 2026-05-13  
+**Target:** Static Go binary using [Bubble Tea](https://github.com/charmbracelet/bubbletea) + Lipgloss + Bubbles
 
 ---
 
@@ -46,11 +46,46 @@ Both paths share the same pick state — picks accumulate across stages and are 
 ### Typography
 
 - **Step titles:** accent color, bright weight
-- **Stage labels:** padded to 22 chars, bright when focused
+- **Stage labels:** padded to 20 chars, bright when focused. In the Pick Menu each stage label is prefixed with its alchemical sigil (see *Sigils*).
 - **Command titles:** bright when focused, text if picked, muted if unpicked
 - **Checkboxes:** filled (◉) when picked, hollow (◯) otherwise
 - **Cursor indicator:** right-pointing chevron (❯) when focused
 - **Group rows:** padded name + pick count + dim `›` arrow
+
+### Sigils
+
+Each stage carries a single Unicode glyph that runs through the splash legend, the menu rows, and the right-pane preview header. Defined once in `src/lib/stages.ts` as `STAGE_SIGILS`:
+
+| Stage | Sigil | Element |
+|-------|-------|---------|
+| setup | 🜃 | Earth |
+| install (Apps) | 🜁 | Air |
+| optimise | 🜂 | Fire |
+| customise | 🜄 | Water |
+| gaming | ☉ | Sun |
+
+The same constant is consumed by both `index.astro` and `tui.astro` — the wordmark on the homepage and the menu rows in the TUI never drift.
+
+### Layout — Split Pane (Pick Menu, Pick Stage)
+
+The Pick Menu and Pick Stage views render two columns inside the terminal body:
+
+- **Left (~52% of width):** the row list — stages, presets, action rows, or commands
+- **Right (~48% of width):** a *preview pane* that updates as you move the cursor
+
+The split is implemented by wrapping rendered output in `<div class="split">` with a CSS-grid two-column layout, and a thin dashed left border on the right pane. The preview block always opens with a small section header — `── stage ──`, `── preset ──`, `── apps ──`, `── shortcut ──`, `── back ──`, `── quit ──`, `── review ──`, `── group ──`, or `── install ──` — so the user can tell what kind of row they're looking at.
+
+The Splash, Pick Search, Pick Installing, Review, Write, and Run screens render single-column.
+
+### Status Bar — Key Hierarchy
+
+Hint keys at the bottom of the terminal are typed as `'primary' | 'normal' | 'system'`:
+
+- **primary** — the action this view is centred on (`enter open`, `space toggle`, `y retry`, `↵ continue`). Accent-tinted background and border on the `<kbd>`.
+- **normal** — supporting navigation (`← →`, `↑ ↓`, `esc`, `/`, `e edit`). Default styling.
+- **system** — destructive / escape hatches (`r reset`, `q abort`, `q quit`). Reduced opacity, never primary.
+
+`Hint` carries an optional `kind` field; the renderer maps it to a `data-kind` attribute on each `<kbd>`. Each `kind` should appear at most once per status bar.
 
 ### Separators & Structure
 
@@ -177,11 +212,10 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 **Purpose:** Welcome ritual, ASCII branding, set expectations.
 
 **Content:**
-- Centered ASCII logo (geometric diamond with "magus" centered)
-- Tagline: "transmute your deck"
-- Alchemical symbols (5 stages): 🜃🜁🜂🜄☉
-- Welcome message (ritual-themed language)
-- Stats: number of spells (commands), number of stages, estimated time
+- Block-letter `MAGUS` wordmark on the left, info box on the right (`magus.sh v0.1`, `spells N`, `stages 5`, `runtime ~10 min`)
+- Tagline: `transmute your device`
+- **Stage legend** (replaces the cryptic glyph row): `── 🜃 setup · 🜁 apps · 🜂 optimise · 🜄 customise · ☉ gaming ──` — pairs each sigil with the stage name once on splash, then the menu rows reuse the sigils as a learned shorthand. Built dynamically from `STAGE_SIGILS` so it stays in sync.
+- Two `✓` bullet lines: `idempotent — safe to run again`, `no telemetry · one bash script · paste & walk away`
 - Call-to-action: `press [enter] to begin the ceremony`
 
 **No cursor, no movement.**
@@ -192,6 +226,8 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 
 **Purpose:** Choose which stage(s) to explore, apply a preset, or go to review.
 
+**Layout:** split — row list on the left, preview pane on the right.
+
 **Header:**
 ```
 ? Where to next? (↑ ↓ move · enter open)
@@ -199,24 +235,33 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 
 **Rows (in order):**
 
-1. **Stage rows** — one per stage with commands:
-   - `❯ 01  Setup             0/5` — unfocused, nothing picked
-   - `❯ 02  Apps              3/23 ✓` — all picked (✓ in accent)
-   - `❯ 02  Apps              3/23 ⚡` — installed via wizard (⚡ replaces ✓)
-   - Label padded to 22 chars; count in accent if any picked, dim otherwise
+1. **Stage rows** — one per stage with commands. Each row carries the stage's sigil:
+   - `  🜃 01  Setup           0/2` — unfocused, nothing picked (sigil dim)
+   - `❯ 🜁 02  Apps            3/11 ✓` — focused, all picked (sigil + count in accent; ✓ in accent)
+   - `  🜂 03  Optimise        0/8 ⚡` — installed via wizard (⚡ replaces ✓)
+   - Label (`NN  Short`) padded to 20 chars; count in accent if any picked, dim otherwise.
 
 2. **Separator:** `────`
 
-3. **Preset rows** — curated bundles:
-   - `✦ Magnum Opus · the full proven kit  12 commands`
-   - Entering a preset instantly marks all matching commands as picked
-   - `✦` icon dim when unfocused, accent when focused
+3. **Preset rows** — curated bundles. The menu currently ships three:
+   - `✦ Magnum Opus · the full proven kit  12`
+   - `✦ Retro Operator · shaders & bezels  8`
+   - `✦ Hush Mode · a calm Deck            5`
+   - Trailing number is the de-duplicated count of commands the preset would apply.
+   - Entering a preset instantly marks all matching commands as picked. Presets *only add*; they never deselect.
+   - `✦` icon dim when unfocused, accent when focused.
 
 4. **Separator:** `────`
 
 5. **Action rows:**
    - `Review my picks (N)` — N is total picked count; leads to Review screen
    - `Quit`
+
+**Right pane (preview):** updated on every cursor move.
+
+- **Stage focused** — `── stage ──` header, sigil + `NN Short` title, tagline, `includes` block (groups + per-group counts) for stages that have groups, otherwise a `commands` list (first 8 + `… +N more`), and a footer `N/M picked · ~K min if all`.
+- **Preset focused** — `── preset ──` header, `✦ Name`, tagline, `applies N commands` followed by the `+ Title` list (first 12 + `… +N more`), and `enter to apply · won't deselect anything`.
+- **Action focused (review / quit)** — short blurb explaining what the row does and a current-state line (e.g., `N commands queued so far`).
 
 **Footer:**
 ```
@@ -230,34 +275,46 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 
 ---
 
-### Pick Stage — Group List (Apps stage only)
+### Pick Stage — Group List (Apps and Gaming)
 
-**Purpose:** Sub-navigate the 23-command Apps stage via logical groups.
+**Purpose:** Sub-navigate the larger stages (Apps · 11 commands, Gaming · 23 commands) via logical groups.
+
+**Layout:** split — group list on the left, preview pane on the right.
 
 **Header:**
 ```
 ? 02 · Apps (space toggle · enter open)
 ```
 
-**Rows:**
-- `❯ Gaming            2/6 ›`
-- `  Streaming & Remote 0/5 ›`
-- `  System Tools       0/5 ›`
-- `  Browsers & Comms   0/4 ›`
-- `  Media              0/3 ›`
+**Rows (Apps):**
+- `❯ Capture & Chat       0/2 ›`
+- `  System Tools         0/3 ›`
+- `  Browsers & Comms     0/4 ›`
+- `  Media                0/2 ›`
 - `────`
-- `⚡ Install N commands`
+- `⚡ Install N commands` (or `⚡ pick at least one to install` when 0)
 - `← back to stages`
 
 **Groups (Apps stage):**
 
 | Group | Items |
 |-------|-------|
-| Gaming | ProtonUp-Qt, Wine Cellar, Bottles, Cartridges, Heroic, Lutris |
-| Streaming & Remote | GeForce NOW, Chiaki4deck, Moonlight, Sunshine, OBS Studio |
-| System Tools | Discover Overlay, Flatseal, Warehouse, Mission Center, GOverlay |
+| Capture & Chat | OBS Studio, Discover Overlay |
+| System Tools | Flatseal, Warehouse, Mission Center |
 | Browsers & Comms | Bitwarden, Brave, Firefox, Vesktop |
-| Media | VLC, Spotify, Ludusavi |
+| Media | VLC, Spotify |
+
+**Groups (Gaming stage):**
+
+| Group | Items |
+|-------|-------|
+| Retro & Emulation | RetroArch, Dolphin Emulator, DuckStation, EmuDeck, RetroDeck, Mega Bezel, Duimon Mega Bezel Shaders |
+| Launchers & Compat | ProtonUp-Qt, Wine Cellar, Bottles, Cartridges, Heroic Games Launcher, Lutris, Waydroid (Android container) |
+| Streaming & Remote Play | GeForce Now, PS Remote Play (Chiaki4deck), Moonlight, Sunshine |
+| Tools & Overlays | GOverlay, Ludusavi |
+| Source Ports | GZDoom, OpenMW, DevilutionX |
+
+**Right pane (preview):** for the focused group — `── group ──` header, group name, `N commands · K picked`, then the first 10 items as `◯ Title` / `◉ Title`. For the install / back rows, the same blurbs as in the Command List view (see below).
 
 **Behavior:**
 - Enter opens the focused group → command list scoped to that group
@@ -270,6 +327,8 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 
 **Purpose:** Select commands within a single stage (or group).
 
+**Layout:** split — command list on the left, preview pane on the right.
+
 **Header (stage root):**
 ```
 ? 02 · Apps (space toggle · enter open)
@@ -277,8 +336,11 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 
 **Header (inside a group):**
 ```
-? 02 · Apps › Gaming (space toggle · enter open)
+? 02 · Apps › Browsers & Comms (space toggle · enter open)
+  Capture & Chat  System Tools  [Browsers & Comms]  Media
 ```
+
+The second line is the **group tab strip**: every group in the current stage rendered inline, the active group bracketed and accent-coloured. It's a visual breadcrumb only — there is no keyboard shortcut to hop between groups; users escape to the group list and re-enter. (Future: bind `[` / `]` for direct hop.)
 
 **Rows:**
 1. Commands (sorted by order):
@@ -292,15 +354,24 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 3. Special rows:
    - `select all in this stage` — toggles all items
    - `← back to Apps` (if inside a group) — returns to group list
-   - `⚡ Install N commands` (if at stage root) — enters installing view
+   - `⚡ Install N commands` (if at stage root, with picks) — enters installing view
+   - `⚡ pick at least one to install` (if at stage root, no picks) — dim, non-focusable
    - `← back to stages` (if at stage root) — returns to menu
 
-**Summary & Stats:**
+**Footer:**
 ```
-› Command summary text here
-
 N of M selected in this stage
 ```
+
+The single-line summary that used to sit above this footer is gone — its content now lives in the right pane.
+
+**Right pane (preview):** updates on every cursor move.
+
+- **Command focused** — `── <stage> ──` header (e.g., `── apps ──`), `◯/◉ Title`, full `summary`, then a `will run` block listing the first 3 `run` strings as `$ <command>` (with `… +N more` if the command bundles more than 3 lines), and a final hint line `space toggles · enter also toggles`.
+- **Group focused (group list)** — `── group ──`, name, `N commands · K picked`, then the first 10 items as `◯/◉ Title`.
+- **Install focused** — `── install ──`, either `nothing picked yet · space toggles a command…` or `⚡ N commands ready · est. ~M min · <stage> stage only` followed by `✓ Title` rows for the picked items.
+- **select-all focused** — `── shortcut ──`, `Select all in this stage` / `Deselect all in this stage` (toggle-aware), and a one-line `toggles every command in <stage> (M total)` blurb.
+- **back / back-group focused** — `── back ──`, the row label, and a one-liner reassuring the user that picks carry across.
 
 **Behavior:**
 - Space toggles focused command
@@ -333,11 +404,13 @@ installing 2/5  [████████░░░░░░░░░░░░░
   ✓ Heroic Games Launcher
   ✗ Bottles
 
-  error · connection timed out — could not reach download server
+  error · connection timed out — could not reach download server (simulated)
   exit code 1
 
   [y] retry   [s] skip   [q] abort
 ```
+
+The trailing `(simulated)` chip is rendered in dim text. It clarifies that the failure is a deterministic prototype demo (triggered at index 2 when `picked.length ≥ 4`), not a real network error — reviewers were assuming the prototype was broken. Strip it out when the TUI runs against a real installer.
 
 **Done state:**
 ```
@@ -480,21 +553,25 @@ type Stage = {
   id: string;     // e.g., "setup", "install"
   num: string;    // Display number (e.g., "01")
   short: string;  // Display name (e.g., "Apps")
+  tagline: string; // One-line description; surfaced in the Pick Menu preview pane
+  sigil: string;  // Alchemical glyph from STAGE_SIGILS (e.g., "🜁")
   items: Cmd[];   // Commands in this stage
 };
 ```
+
+`tagline` and `sigil` are populated server-side in `tui.astro` from `STAGES` and `STAGE_SIGILS` (both exported from `src/lib/stages.ts`).
 
 ### AppGroup
 
 ```typescript
 type AppGroup = {
-  id: string;          // e.g., "gaming"
-  name: string;        // Display name, e.g., "Gaming"
+  id: string;          // e.g., "retro"
+  name: string;        // Display name, e.g., "Retro & Emulation"
   patterns: RegExp[];  // Matched against cmd.id to assign commands to group
 };
 ```
 
-Groups are defined in `STAGE_GROUPS: Record<string, AppGroup[]>`, currently only for the `install` stage. Pattern matching is order-independent; each command must match exactly one group.
+Groups are defined in `STAGE_GROUPS: Record<string, AppGroup[]>`, currently for the `install` (Apps, 4 groups) and `gaming` (Gaming, 5 groups) stages. Pattern matching is order-independent; each command must match exactly one group.
 
 ### Preset
 
@@ -509,9 +586,13 @@ type Preset = {
 
 **Current presets:**
 
-| Preset | Commands |
-|--------|----------|
-| Magnum Opus | Set Sudo Password, Install Dependencies, ProtonUp-Qt, Heroic, CryoUtilities, Wi-Fi Powersave, Tablet Mode, Decky Loader, CSS Loader, SteamGridDB, Flatseal, Brave |
+| Preset | Tagline | Commands |
+|--------|---------|----------|
+| Magnum Opus | the full proven kit | Set Sudo Password, Install Dependencies, ProtonUp-Qt, Heroic, CryoUtilities, Wi-Fi Powersave, Tablet Mode, Decky Loader, CSS Loader, SteamGridDB, Flatseal, Brave (12) |
+| Retro Operator | shaders & bezels | Set Sudo Password, Install Dependencies, RetroArch, Dolphin, DuckStation, RetroDECK, Duimon Mega Bezel, ProtonUp-Qt (8) |
+| Hush Mode | a calm Deck | Set Sudo Password, Wi-Fi Powersave, Tablet Mode, Flatseal, Brave (5) |
+
+The de-duplicated match count for each preset is computed by the `presetMatches(preset): Cmd[]` helper — patterns may overlap without inflating the displayed count.
 
 ### Row Types
 
@@ -608,27 +689,87 @@ type PickState = {
 
 ## Command Catalogue
 
-### Setup (01)
+**Total: 51 commands across 5 stages.** Stage IDs (`setup`, `install`, `optimise`, `customise`, `gaming`) are the source of truth — display names live in `STAGES`, sigils in `STAGE_SIGILS`, both exported from `src/lib/stages.ts`.
+
+### Setup (01) — 2 commands · sigil 🜃
 | Order | Command | Notes |
 |-------|---------|-------|
-| 10 | Set Sudo Password | Required first step |
-| 20 | Install Dependencies | nvm + Node.js 22 + tsx + @inquirer/prompts, installs to `~/.nvm` (survives SteamOS updates) |
-| 30 | Install Decky Loader | Plugin framework |
-| … | … | … |
+| 10 | Set a sudo password | Prerequisite for anything that touches `/etc`, `/var`, or kernel modules. |
+| 20 | Install Dependencies | nvm + Node.js 22 + tsx + @inquirer/prompts, installs to `~/.nvm` (survives SteamOS updates). The TUI itself runs on this stack. |
 
-### Apps (02) — 23 commands across 5 groups
+### Apps (02) — 11 commands across 4 groups · sigil 🜁
 Managed via `STAGE_GROUPS['install']`. All Flatpak IDs verified against Flathub. Notable:
 - `io.github.trigg.discover_overlay` — lowercase `discover_overlay` (not `Discover_overlay`)
 
-### Retro (05)
+| Order | Command | Group |
+|-------|---------|-------|
+| 34 | OBS Studio | Capture & Chat |
+| 36 | Discover Overlay | Capture & Chat |
+| 40 | Flatseal | System Tools |
+| 42 | Warehouse | System Tools |
+| 44 | Mission Center | System Tools |
+| 60 | Brave | Browsers & Comms |
+| 62 | Firefox | Browsers & Comms |
+| 64 | Bitwarden | Browsers & Comms |
+| 66 | Spotify | Media |
+| 68 | Vesktop | Browsers & Comms |
+| 70 | VLC | Media |
+
+### Optimise (03) — 8 commands · sigil 🜂
+Mostly small `kwriteconfig5` / `qdbus` invocations and `/etc` drop-ins.
+
 | Order | Command | Notes |
 |-------|---------|-------|
-| 10 | RetroArch | Flatpak `org.libretro.RetroArch` |
-| 20 | Dolphin | Flatpak `org.DolphinEmu.dolphin-emu` |
-| 30 | DuckStation | AppImage from GitHub releases (removed from Flathub) |
-| 40 | EmuDeck | |
-| 50 | RetroDECK | Flatpak `net.retrodeck.retrodeck` |
-| 60 | Duimon Mega Bezel | `git clone` into `~/.var/app/org.libretro.RetroArch/config/retroarch/shaders/Mega_Bezel_Packs/`; requires Mega Bezel shader pack via RetroArch Online Updater |
+| 10 | Install CryoUtilities | Performance + filesystem tweaks (community installer). |
+| 20 | Force touch mode | `kwriteconfig5` — KWin tablet-mode. |
+| 30 | Larger cursor for touch | KCM cursor-size override. |
+| 40 | Double-click to open | KDE single-click → double-click. |
+| 50 | Disable Baloo (file indexer) | Stops background indexing on `~`. |
+| 60 | Persistent Wi-Fi power save | Drops a NetworkManager `conf.d` snippet. |
+| 70 | Btrfs `/home` conversion | Filesystem migration; high-impact, marked `danger: medium`. |
+| 80 | Nested Desktop in Game Mode | Writes `~/.local/bin/PlasmaNested.sh` (davidedmundson script). User finishes by adding it as a non-Steam game once. |
+
+### Customise (04) — 7 commands · sigil 🜄
+All Decky plugins — installed via Decky Loader (the Setup stage covers Loader installation through the Magnum Opus / Hush Mode presets and stage 01).
+
+| Order | Command | Notes |
+|-------|---------|-------|
+| 1 | Install Decky Loader | Plugin runtime — same idempotent script as Setup. Safe to re-run. |
+| 2 | CSS Loader | Theme engine for the Steam UI. |
+| 3 | SteamGridDB | Grid art for non-Steam games. |
+| 4 | ProtonDB Badges | Compatibility badges in the library. |
+| 5 | HLTB for Deck | "How long to beat" overlay. |
+| 6 | PlayTime | Per-title playtime tracking. |
+| 7 | AutoFlatpaks | Background Flatpak updater. |
+
+### Gaming (05) — 23 commands across 5 groups · sigil ☉
+Managed via `STAGE_GROUPS['gaming']`. Flatpak-first where Flathub coverage exists; `git clone` for source-port content (Mega Bezel) and AppImage for orphans (DuckStation).
+
+| Order | Command | Group |
+|-------|---------|-------|
+| 100 | RetroArch | Retro & Emulation (Flatpak `org.libretro.RetroArch`) |
+| 110 | Dolphin Emulator | Retro & Emulation (Flatpak `org.DolphinEmu.dolphin-emu`) |
+| 120 | DuckStation | Retro & Emulation (AppImage from GitHub — removed from Flathub) |
+| 130 | EmuDeck | Retro & Emulation |
+| 140 | RetroDeck | Retro & Emulation (Flatpak `net.retrodeck.retrodeck`) |
+| 150 | Mega Bezel | Retro & Emulation (shader pack via RetroArch Online Updater) |
+| 160 | Duimon Mega Bezel Shaders | Retro & Emulation — `git clone` into `~/.var/app/org.libretro.RetroArch/config/retroarch/shaders/Mega_Bezel_Packs/` |
+| 200 | ProtonUp-Qt | Launchers & Compat |
+| 210 | Wine Cellar | Launchers & Compat |
+| 220 | Bottles | Launchers & Compat |
+| 230 | Cartridges | Launchers & Compat |
+| 240 | Heroic Games Launcher | Launchers & Compat |
+| 250 | Lutris | Launchers & Compat |
+| 260 | Waydroid (Android container) | Launchers & Compat — clones ryanrudolfoba/SteamOS-Waydroid-Installer; user finishes from a terminal (interactive). `deck_only: true`. |
+| 300 | GeForce Now | Streaming & Remote Play |
+| 310 | PS Remote Play (Chiaki4deck) | Streaming & Remote Play |
+| 320 | Moonlight | Streaming & Remote Play |
+| 330 | Sunshine | Streaming & Remote Play |
+| 400 | GOverlay | Tools & Overlays |
+| 410 | Ludusavi | Tools & Overlays |
+| 500 | GZDoom | Source Ports |
+| 510 | OpenMW | Source Ports |
+| 520 | DevilutionX | Source Ports |
 
 ---
 
@@ -656,24 +797,34 @@ Managed via `STAGE_GROUPS['install']`. All Flatpak IDs verified against Flathub.
 ## Implementation Notes
 
 ### Technology Stack
-- **Runtime:** Node.js (via nvm) + tsx
-- **UI library:** @inquirer/prompts
-- **Scaffold:** `tui/` directory
-- **Dependencies installed by:** the "Install Dependencies" command in the Setup stage
+- **Runtime:** Statically-linked Go binary — no runtime, no package manager, no `$PATH` surgery
+- **UI library:** [Bubble Tea](https://github.com/charmbracelet/bubbletea) (Elm-style update/view/model) + [Lipgloss](https://github.com/charmbracelet/lipgloss) (styles) + [Bubbles](https://github.com/charmbracelet/bubbles) (progress/spinner primitives)
+- **Scaffold:** `magus/` directory
+- **Distribution:** prebuilt `linux/amd64` binary from GitHub releases; ~5 MB, drops into `~/.local/bin/magus` and survives SteamOS immutable updates
+- **Data:** `magus/commands.json` is embedded at compile time via `//go:embed`; regenerated from `src/content/commands/**/*.md` by `magus/scripts/gen-commands.mjs`
 
 ### File Structure
 ```
-tui/
-├── index.ts           # Entry point + state machine
-├── load-commands.ts   # Load from content collection JSON
-├── screens/
-│   ├── splash.ts
-│   ├── pick.ts        # Menu, stage, group, search, installing
-│   ├── review.ts
-│   ├── write.ts
-│   └── run.ts
-└── types.ts           # Cmd, Stage, AppGroup, Preset, PickState
+magus/
+├── go.mod               # module: magus
+├── commands.json        # generated catalogue, embedded via //go:embed
+├── scripts/
+│   └── gen-commands.mjs # walks markdown frontmatter → commands.json
+├── data.go              # Catalogue + Cmd/Stage/Group/Preset + lookups
+├── styles.go            # lipgloss palette + status-bar key hierarchy
+├── main.go              # Model, Update, View dispatcher
+├── splash.go            # splash screen
+├── menu.go              # pick menu (split pane)
+├── stage.go             # pick stage (groups + commands + select-all)
+├── search.go            # fuzzy search across catalogue
+├── install.go           # per-stage install animation
+├── review.go            # cross-stage review
+├── write.go             # script-write animation
+└── run.go               # final-run prompt + execution
 ```
+
+The Astro `/tui` page remains the visual design source of truth — both
+implementations consume the same content collection and `STAGE_SIGILS`.
 
 ### Testing Strategy
 1. Unit tests for state transitions (pick → install → done, escape chains)
@@ -685,10 +836,15 @@ tui/
 1. **`?` help overlay** — context-sensitive keyboard shortcut reference
 2. **Undo last action** — pop last toggle from a history stack
 3. **History tracking** — remember user's last selections across runs
-4. **Smart preview pane** — show command details as you navigate
+4. ~~**Smart preview pane** — show command details as you navigate~~ ✓ shipped 2026-05-13 (split layout in Pick Menu and Pick Stage)
 5. **Command filtering** — filter by tag or danger level
-6. **Pre-flight checks** — detect real Steam Deck, skip Deck-only commands otherwise
+6. **Pre-flight checks** — detect real Steam Deck, skip Deck-only commands otherwise (relevant to `deck_only: true` items like Waydroid)
 7. **Custom output path** — let user choose script destination
+8. **Group hop shortcuts** — `[` / `]` to cycle through the group tab strip without bouncing back to the group list
+9. **Live syntax-tinted Run preview** — line numbers in a gutter, fade-out instead of `… +N more`, comments dim / `bash`-keywords accent / `$` calls bright
+10. **Live script-assembly Write screen** — stream the generated `magus.sh` into a small code window as it "writes," replacing the dot-padded animation
+11. **In-frame status bar** — pull the keyboard-hint rail inside the terminal chrome (vim/btop convention) so the prototype stops reading like dev-tools chrome
+12. **Preset-applied confirmation** — brief in-pane band (`✦ Magnum Opus applied · +5 new, 7 already picked`) so the user knows the action landed
 
 ---
 
@@ -722,3 +878,17 @@ tui/
 | 2026-05-12 | DuckStation switched to AppImage install (removed from Flathub) |
 | 2026-05-12 | Duimon Mega Bezel added to Retro stage |
 | 2026-05-12 | Fixed Discover Overlay Flatpak ID casing (`discover_overlay`) |
+| 2026-05-13 | Gaming extracted from Apps into its own 5th stage with 5 groups (Retro & Emulation, Launchers & Compat, Streaming & Remote Play, Tools & Overlays, Source Ports); Apps reduced to 11 commands across 4 groups |
+| 2026-05-13 | `STAGE_SIGILS` extracted to `src/lib/stages.ts` as the single source of truth; `Stage` type gained `sigil` and `tagline` fields |
+| 2026-05-13 | Splash: cryptic glyph row replaced with labeled stage legend (`🜃 setup · 🜁 apps …`); `[+]` bullets switched to `✓` |
+| 2026-05-13 | Pick Menu stage rows now prepend the stage's alchemical sigil |
+| 2026-05-13 | Split-pane preview added to Pick Menu (right pane shows focused stage's groups / preset's commands / action blurb) and Pick Stage (focused command's full summary + the bash that'll run, focused group's items, etc.) |
+| 2026-05-13 | Group tab strip rendered above the command list when inside an Apps or Gaming group |
+| 2026-05-13 | Status bar key hierarchy: hints carry `kind: 'primary' \| 'normal' \| 'system'`; primary kbds are accent-tinted, system kbds dimmed |
+| 2026-05-13 | Install button copy returned to spec (`⚡ Install N commands`); empty state reads `⚡ pick at least one to install` (replaces the "summon spirits" interim copy) |
+| 2026-05-13 | Failure messages annotate with a dim `(simulated)` chip so prototype reviewers don't think the demo is broken |
+| 2026-05-13 | Two new presets: Retro Operator (8 commands · shaders & bezels) and Hush Mode (5 commands · a calm Deck) |
+| 2026-05-13 | New Optimise command: Nested Desktop in Game Mode (order 80) — writes `~/.local/bin/PlasmaNested.sh` |
+| 2026-05-13 | New Gaming command: Waydroid (Android container) (order 260, Launchers & Compat) — clones the SteamOS-Waydroid-Installer; `deck_only: true` |
+| 2026-05-13 | In-terminal CSS (`.t-*`, `.cursor-blink`, `.line.is-focused`, `.split*`) moved to a `<style is:global>` block — these elements are created at runtime by the page script and don't carry Astro's per-component scope attribute. Side benefit: `.t-accent` now actually renders accent-orange (was silently broken) |
+| 2026-05-13 | Technology stack switched from Node.js + @inquirer/prompts to Go + Bubble Tea + Lipgloss. `@inquirer/prompts` is built for one-prompt-at-a-time inquiry — the spec's full-screen stateful app (split panes, animated progress, state machine) maps onto Bubble Tea's update/view/model 1:1. Distribution is now a single static binary instead of nvm + Node + tsx + npm install. Mockup lives in `magus/`. |

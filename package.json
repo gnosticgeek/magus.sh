@@ -15,7 +15,10 @@
     "test": "vitest run",
     "generate-types": "wrangler types",
     "deploy": "npm run build && wrangler deploy",
-    "tui": "tsx tui/index.ts"
+    "tui": "tsx tui/index.ts",
+    "magus": "cd magus && go run .",
+    "magus:gen": "node magus/scripts/gen-commands.mjs",
+    "magus:build": "cd magus && go build -o magus ."
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.5.0",
