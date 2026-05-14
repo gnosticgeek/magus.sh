@@ -12,7 +12,7 @@ interface Props {
 	tagline: string;
 	entries: CollectionEntry<'commands'>[];
 	rise?: number;
-	variant?: 'retro';
+	variant?: 'sigil';
 }
 
 const { id, number, stageLabel, title, tagline, entries, rise = 2, variant } = Astro.props;
@@ -39,24 +39,39 @@ const groupMetaByKey: Record<string, GroupMeta> = {
 		tagline: 'Non-Steam games, Wine, Proton-GE.',
 		icon: 'lucide:gamepad-2',
 	},
-	emulation: {
-		label: 'Emulation',
-		tagline: 'Standalone emulators and RetroArch.',
+	retro: {
+		label: 'Retro & Emulation',
+		tagline: 'Cartridge dust, phosphor glow. PS1, GameCube, Wii, shaders.',
 		icon: 'lucide:joystick',
 	},
+	ports: {
+		label: 'Source Ports',
+		tagline: 'Native rebuilds of classics. (Coming soon — PR welcome.)',
+		icon: 'lucide:swords',
+	},
 	streaming: {
-		label: 'Stream & Capture',
-		tagline: 'Remote play, recording, chat.',
+		label: 'Streaming & Remote Play',
+		tagline: 'Cloud, host, client. PS Remote Play to GeForce Now.',
 		icon: 'lucide:radio-tower',
+	},
+	tools: {
+		label: 'Tools & Overlays',
+		tagline: 'Save backup, FPS overlays, performance helpers.',
+		icon: 'lucide:wrench',
 	},
 	system: {
 		label: 'System & Hygiene',
-		tagline: 'Permissions, overlays, cleanup.',
+		tagline: 'Permissions, monitoring, cleanup.',
 		icon: 'lucide:sliders-horizontal',
+	},
+	capture: {
+		label: 'Capture & Chat',
+		tagline: 'Recording, screen-share, voice overlays.',
+		icon: 'lucide:cast',
 	},
 	daily: {
 		label: 'Daily Drivers',
-		tagline: 'Browser, vault, music, chat.',
+		tagline: 'Browser, vault, music, video.',
 		icon: 'lucide:sun-medium',
 	},
 };
@@ -85,8 +100,8 @@ const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 >
 	<div class="stage-rule" aria-hidden="true"></div>
 
-	<header class:list={['stage-header mt-3 mb-4 sm:mt-4 sm:mb-5', variant === 'retro' && 'stage-header-retro']}>
-		{variant === 'retro' && (
+	<header class:list={['stage-header mt-3 mb-4 sm:mt-4 sm:mb-5', variant === 'sigil' && 'stage-header-retro']}>
+		{variant === 'sigil' && (
 			<div class="stage-number-wrap relative" aria-hidden="true">
 				<span
 					class="stage-number block font-mono leading-[0.9] text-[color:var(--color-accent)]"
@@ -183,7 +198,7 @@ const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 			transparent 100%
 		);
 	}
-	.stage-header-retro {
+	.stage-header-sigil {
 		display: grid;
 		grid-template-columns: 4rem 1fr;
 		column-gap: 1rem;
@@ -191,13 +206,13 @@ const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 		align-items: start;
 	}
 	@media (min-width: 640px) {
-		.stage-header-retro {
+		.stage-header-sigil {
 			grid-template-columns: 4.8rem 1fr;
 			column-gap: 1.25rem;
 		}
 	}
 	@media (min-width: 1024px) {
-		.stage-header-retro {
+		.stage-header-sigil {
 			grid-template-columns: 5rem 1fr;
 		}
 	}

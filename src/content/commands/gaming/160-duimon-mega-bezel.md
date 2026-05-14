@@ -1,7 +1,8 @@
 ---
 title: Duimon Mega Bezel Shaders
-category: retro
-order: 60
+category: gaming
+order: 160
+group: retro
 summary: CRT shader presets with reflections and bezels for RetroArch. Requires RetroArch and the Mega Bezel shader pack installed first.
 icon: lucide:tv-2
 commands:

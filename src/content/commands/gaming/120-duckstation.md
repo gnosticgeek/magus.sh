@@ -1,7 +1,8 @@
 ---
 title: DuckStation
-category: retro
-order: 30
+category: gaming
+order: 120
+group: retro
 summary: PS1 emulator. Per-game compatibility, sharp upscaling. Installed as an AppImage — no longer on Flathub.
 icon: lucide:joystick
 commands:

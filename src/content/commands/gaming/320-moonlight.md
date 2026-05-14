@@ -1,7 +1,7 @@
 ---
 title: Moonlight
-category: install
-order: 30
+category: gaming
+order: 320
 group: streaming
 summary: Stream games from a GPU-equipped PC to your Deck. Open-source NVIDIA GameStream client.
 icon: lucide:moon

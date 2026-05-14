@@ -1,7 +1,7 @@
 ---
 title: Cartridges
-category: install
-order: 18
+category: gaming
+order: 230
 group: launchers
 summary: One library that reads from Steam, Heroic, Lutris, emulators.
 icon: lucide:library

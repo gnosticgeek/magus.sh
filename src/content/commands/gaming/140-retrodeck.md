@@ -1,7 +1,8 @@
 ---
 title: RetroDeck
-category: retro
-order: 50
+category: gaming
+order: 140
+group: retro
 summary: Every major emulator in a single flatpak. A drop-in EmuDeck alternative.
 icon: lucide:package
 commands:

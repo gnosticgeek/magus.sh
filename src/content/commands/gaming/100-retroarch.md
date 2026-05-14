@@ -1,7 +1,8 @@
 ---
 title: RetroArch
-category: retro
-order: 10
+category: gaming
+order: 100
+group: retro
 summary: The big-tent emulator frontend. Cores for nearly every retro console.
 icon: simple-icons:retroarch
 commands:

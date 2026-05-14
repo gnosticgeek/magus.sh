@@ -13,7 +13,7 @@ export interface StageMeta {
 	tagline: string;
 	stageLabel: string;
 	rise: number;
-	variant?: 'retro';
+	variant?: 'sigil';
 }
 
 export interface PeekDetail {

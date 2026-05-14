@@ -1,7 +1,7 @@
 ---
 title: Bottles
-category: install
-order: 16
+category: gaming
+order: 220
 group: launchers
 summary: Run Windows apps in pre-tuned wine bottles.
 icon: lucide:flask-conical

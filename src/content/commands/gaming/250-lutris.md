@@ -1,7 +1,7 @@
 ---
 title: Lutris
-category: install
-order: 14
+category: gaming
+order: 250
 group: launchers
 summary: Wine, emulators, Battle.net, Origin, Ubisoft Connect.
 icon: simple-icons:lutris

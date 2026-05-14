@@ -1,7 +1,8 @@
 ---
 title: Dolphin Emulator
-category: retro
-order: 20
+category: gaming
+order: 110
+group: retro
 summary: GameCube and Wii. Buttery-smooth on the Deck.
 icon: lucide:gamepad-2
 commands:

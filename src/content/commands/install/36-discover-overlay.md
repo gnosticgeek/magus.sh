@@ -2,7 +2,7 @@
 title: Discover Overlay
 category: install
 order: 36
-group: streaming
+group: capture
 summary: A Discord voice + chat overlay that actually works in Steam games.
 icon: simple-icons:discord
 commands:

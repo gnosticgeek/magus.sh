@@ -2,7 +2,7 @@
 title: OBS Studio
 category: install
 order: 34
-group: streaming
+group: capture
 summary: Streaming and recording.
 icon: simple-icons:obsstudio
 commands:

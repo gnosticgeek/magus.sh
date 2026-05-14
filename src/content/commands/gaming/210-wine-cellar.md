@@ -1,7 +1,7 @@
 ---
 title: Wine Cellar
-category: install
-order: 12
+category: gaming
+order: 210
 group: launchers
 summary: Manage Proton-GE and Wine-GE from Game Mode. Decky alternative to ProtonUp-Qt.
 icon: lucide:wine

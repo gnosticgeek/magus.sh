@@ -1,7 +1,7 @@
 ---
 title: Sunshine
-category: install
-order: 32
+category: gaming
+order: 330
 group: streaming
 summary: Self-hosted GameStream server. The Deck-side counterpart to Moonlight.
 icon: lucide:sun

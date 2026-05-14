@@ -1,7 +1,7 @@
 ---
 title: ProtonUp-Qt
-category: install
-order: 10
+category: gaming
+order: 200
 group: launchers
 summary: Proton-GE, Wine-GE, Luxtorpeda installer.
 icon: lucide:wine

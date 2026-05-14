@@ -1,7 +1,7 @@
 ---
 title: Heroic Games Launcher
-category: install
-order: 12
+category: gaming
+order: 240
 group: launchers
 summary: Epic, GOG, Amazon Prime in one launcher.
 icon: simple-icons:heroicgameslauncher

@@ -1,8 +1,8 @@
 ---
 title: GOverlay
-category: install
-order: 46
-group: system
+category: gaming
+order: 400
+group: tools
 summary: GUI for MangoHud — FPS, frametime, sensors. Skip the config file edit.
 icon: lucide:gauge
 commands:

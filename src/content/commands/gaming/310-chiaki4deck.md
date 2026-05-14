@@ -1,7 +1,7 @@
 ---
 title: PS Remote Play
-category: install
-order: 29
+category: gaming
+order: 310
 group: streaming
 summary: Stream PS4 / PS5 over LAN or internet. Chiaki4deck — controller-mapped for Steam Deck.
 icon: lucide:cast

@@ -1,7 +1,7 @@
 ---
 title: GeForce Now
-category: install
-order: 28
+category: gaming
+order: 300
 group: streaming
 summary: Cloud-stream your Steam, Epic, and Ubisoft library. RTX 4080 tier on a handheld.
 icon: lucide:cloud

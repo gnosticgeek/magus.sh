@@ -1,17 +1,9 @@
 ---
 import { Icon } from 'astro-icon/components';
 import Base from '../layouts/Base.astro';
-import { STAGES } from '../lib/stages';
+import { STAGES, STAGE_SIGILS } from '../lib/stages';
 
 const INSTALL_CMD = 'curl -fsSL https://magus.sh/run | bash';
-
-const STAGE_SIGILS: Record<string, { char: string; name: string }> = {
-	setup: { char: '\u{1F703}', name: 'Earth' },
-	install: { char: '\u{1F701}', name: 'Air' },
-	optimise: { char: '\u{1F702}', name: 'Fire' },
-	customise: { char: '\u{1F704}', name: 'Water' },
-	retro: { char: '☉', name: 'Sun' },
-};
 ---
 
 <Base
@@ -23,7 +15,7 @@ const STAGE_SIGILS: Record<string, { char: string; name: string }> = {
 			<section class="hp-main">
 				<p class="hp-eyebrow rise rise-1">
 					<span class="hp-eyebrow-dot" aria-hidden="true"></span>
-					<span>A cantrip for SteamOS</span>
+					<span>transmute your device</span>
 					<span class="hp-eyebrow-ver">/ v0.1 alpha</span>
 				</p>
 

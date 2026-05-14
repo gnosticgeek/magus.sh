@@ -1,8 +1,8 @@
 ---
 title: Ludusavi
-category: install
-order: 48
-group: system
+category: gaming
+order: 410
+group: tools
 summary: Save game backup. Pair with cloud sync for resilience.
 icon: lucide:save
 commands:

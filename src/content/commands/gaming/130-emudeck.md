@@ -1,7 +1,8 @@
 ---
 title: EmuDeck
-category: retro
-order: 40
+category: gaming
+order: 130
+group: retro
 summary: One-shot installer that sets up a curated emulator stack with sane defaults.
 icon: lucide:wand-2
 commands:

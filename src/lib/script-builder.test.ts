@@ -36,7 +36,7 @@ describe('buildHeader', () => {
 			item({ title: 'b', cmd: 'b', category: 'setup' }),
 			item({ title: 'c', cmd: 'c', category: 'install' }),
 		]);
-		expect(header).toContain('# Stages: Install, Setup');
+		expect(header).toContain('# Stages: Apps, Setup');
 	});
 
 	it('falls back to raw category for unknown stage', () => {
@@ -77,7 +77,7 @@ describe('buildFullScript', () => {
 			"#!/usr/bin/env bash
 			# magus.sh review script
 			# 3 commands selected
-			# Stages: Setup, Install
+			# Stages: Setup, Apps
 			set -e
 
 			# === Setup ===
@@ -85,7 +85,7 @@ describe('buildFullScript', () => {
 			# --- a ---
 			echo a
 
-			# === Install ===
+			# === Apps ===
 
 			# --- b ---
 			echo b
@@ -124,7 +124,7 @@ describe('groupByStage', () => {
 		const b = item({ title: 'b', cmd: 'b', category: 'setup' });
 		const c = item({ title: 'c', cmd: 'c', category: 'install' });
 		expect(groupByStage([a, b, c])).toEqual([
-			{ stage: 'Install', items: [a, c] },
+			{ stage: 'Apps', items: [a, c] },
 			{ stage: 'Setup', items: [b] },
 		]);
 	});
