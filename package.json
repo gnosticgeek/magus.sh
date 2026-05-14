@@ -17,7 +17,7 @@
     "deploy": "npm run build && wrangler deploy",
     "tui": "tsx tui/index.ts",
     "magus": "cd magus && go run .",
-    "magus:gen": "node magus/scripts/gen-commands.mjs",
+    "magus:gen": "tsx magus/scripts/gen-commands.mts",
     "magus:build": "cd magus && go build -o magus ."
   },
   "dependencies": {

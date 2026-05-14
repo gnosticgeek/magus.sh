@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import { STAGES } from '../lib/stages';
+import { STAGES, STAGE_SIGILS, STAGE_GROUPS, PRESETS } from '../lib/stages';
 
 const all = await getCollection('commands');
 all.sort((a, b) => a.data.order - b.data.order);
@@ -10,6 +10,8 @@ const stages = STAGES.map((s) => ({
 	id: s.id,
 	num: s.num,
 	short: s.short,
+	tagline: s.tagline,
+	sigil: STAGE_SIGILS[s.id]?.char ?? '·',
 	items: all
 		.filter((e) => e.data.category === s.id)
 		.map((e) => ({
@@ -118,7 +120,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 						to <code>bash</code>?
 					</li>
 					<li>Let users name the output file, or always <code>magus.sh</code>?</li>
-					<li>Hide Retro behind a <code>--retro</code> flag by default?</li>
+					<li>Hide Gaming behind a <code>--gaming</code> flag by default?</li>
 					<li>
 						Pre-flight: detect a real Steam Deck before offering Deck-only
 						commands?
@@ -142,7 +144,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	<script
 		type="application/json"
 		id="lab-tui-data"
-		set:html={JSON.stringify({ stages })}
+		set:html={JSON.stringify({ stages, groups: STAGE_GROUPS, presets: PRESETS })}
 	></script>
 </Base>
 
@@ -153,7 +155,14 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		summary: string;
 		commands: Array<{ run: string; description: string }>;
 	};
-	type Stage = { id: string; num: string; short: string; items: Cmd[] };
+	type Stage = {
+		id: string;
+		num: string;
+		short: string;
+		tagline: string;
+		sigil: string;
+		items: Cmd[];
+	};
 	type Step = 'splash' | 'pick' | 'review' | 'write' | 'run';
 
 	const STEPS: Step[] = ['splash', 'pick', 'review', 'write', 'run'];
@@ -166,9 +175,24 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		run: 'magus@deck — done',
 	};
 
+	type CommandPattern = string;
+	type AppGroup = { id: string; name: string; patterns: CommandPattern[] };
+	type Preset = { id: string; name: string; tagline: string; patterns: CommandPattern[] };
+
+	const matchPattern = (cmdId: string, pat: CommandPattern): boolean =>
+		cmdId.includes(pat);
+
 	const dataEl = document.getElementById('lab-tui-data');
 	if (!dataEl?.textContent) throw new Error('lab-tui-data missing');
-	const { stages } = JSON.parse(dataEl.textContent) as { stages: Stage[] };
+	const {
+		stages,
+		groups: STAGE_GROUPS,
+		presets: PRESETS,
+	} = JSON.parse(dataEl.textContent) as {
+		stages: Stage[];
+		groups: Partial<Record<string, AppGroup[]>>;
+		presets: Preset[];
+	};
 
 	const flat: Array<{ stage: Stage; cmd: Cmd }> = [];
 	for (const stage of stages) {
@@ -177,38 +201,6 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 
 	type PickView = 'menu' | 'stage' | 'search' | 'installing';
 	type InstallPhase = 'prompt' | 'running' | 'failed' | 'done';
-
-	type AppGroup = { id: string; name: string; patterns: RegExp[] };
-
-	const STAGE_GROUPS: Record<string, AppGroup[]> = {
-		install: [
-			{
-				id: 'gaming',
-				name: 'Gaming',
-				patterns: [/protonup/, /wine-cellar/, /bottles/, /cartridges/, /heroic/, /lutris/],
-			},
-			{
-				id: 'streaming',
-				name: 'Streaming & Remote',
-				patterns: [/geforce-now/, /chiaki/, /moonlight/, /sunshine/, /\-obs/],
-			},
-			{
-				id: 'system',
-				name: 'System Tools',
-				patterns: [/flatseal/, /warehouse/, /mission-center/, /goverlay/, /discover-overlay/],
-			},
-			{
-				id: 'comms',
-				name: 'Browsers & Comms',
-				patterns: [/brave/, /firefox/, /vesktop/, /bitwarden/],
-			},
-			{
-				id: 'media',
-				name: 'Media',
-				patterns: [/\-vlc/, /spotify/, /ludusavi/],
-			},
-		],
-	};
 
 	const state = {
 		step: 'splash' as Step,
@@ -237,32 +229,39 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	const termBody = document.querySelector<HTMLElement>('[data-term-body]')!;
 	const termStatus = document.querySelector<HTMLElement>('[data-term-status]')!;
 
-	type Hint = { keys: string[]; label: string };
+	type Hint = {
+		keys: string[];
+		label: string;
+		kind?: 'primary' | 'normal' | 'system';
+	};
 
 	function setStatusHints(hints: Hint[]): void {
 		const html = hints
-			.map(
-				(h) =>
-					`${h.keys.map((k) => `<kbd>${k}</kbd>`).join(' ')} <span>${h.label}</span>`,
-			)
+			.map((h) => {
+				const kind = h.kind ?? 'normal';
+				const keys = h.keys
+					.map((k) => `<kbd data-kind="${kind}">${k}</kbd>`)
+					.join(' ');
+				return `<span class="hint" data-kind="${kind}">${keys} <span>${h.label}</span></span>`;
+			})
 			.join(`<span class="sep">·</span>`);
 		termStatus.innerHTML = html;
 	}
 
 	function refreshHints(): void {
 		const stepHints: Hint[] = [{ keys: ['←', '→'], label: 'step' }];
-		const resetHint: Hint = { keys: ['r'], label: 'reset' };
+		const resetHint: Hint = { keys: ['r'], label: 'reset', kind: 'system' };
 		if (state.step === 'splash') {
 			setStatusHints([
 				...stepHints,
-				{ keys: ['↵'], label: 'begin' },
+				{ keys: ['↵'], label: 'begin', kind: 'primary' },
 				resetHint,
 			]);
 		} else if (state.step === 'pick' && state.pickView === 'menu') {
 			setStatusHints([
 				...stepHints,
 				{ keys: ['↑', '↓'], label: 'move' },
-				{ keys: ['↵'], label: 'open' },
+				{ keys: ['↵'], label: 'open', kind: 'primary' },
 				{ keys: ['/'], label: 'search' },
 				resetHint,
 			]);
@@ -271,18 +270,21 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				setStatusHints([{ keys: ['…'], label: 'installing' }, resetHint]);
 			} else if (state.installPhase === 'failed') {
 				setStatusHints([
-					{ keys: ['y'], label: 'retry' },
+					{ keys: ['y'], label: 'retry', kind: 'primary' },
 					{ keys: ['s'], label: 'skip' },
-					{ keys: ['q'], label: 'abort' },
+					{ keys: ['q'], label: 'abort', kind: 'system' },
 				]);
 			} else {
-				setStatusHints([{ keys: ['esc'], label: 'next stage' }, resetHint]);
+				setStatusHints([
+					{ keys: ['esc'], label: 'next stage', kind: 'primary' },
+					resetHint,
+				]);
 			}
 		} else if (state.step === 'pick' && state.pickView === 'stage') {
 			setStatusHints([
 				...stepHints,
 				{ keys: ['↑', '↓'], label: 'move' },
-				{ keys: ['␣'], label: 'toggle' },
+				{ keys: ['␣'], label: 'toggle', kind: 'primary' },
 				{ keys: ['↵'], label: 'select' },
 				{ keys: ['esc'], label: 'back' },
 				resetHint,
@@ -290,7 +292,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		} else if (state.step === 'pick' && state.pickView === 'search') {
 			setStatusHints([
 				{ keys: ['↑', '↓'], label: 'move' },
-				{ keys: ['␣'], label: 'toggle' },
+				{ keys: ['␣'], label: 'toggle', kind: 'primary' },
 				{ keys: ['↵'], label: 'select' },
 				{ keys: ['esc'], label: 'back' },
 				resetHint,
@@ -298,22 +300,22 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		} else if (state.step === 'review') {
 			setStatusHints([
 				...stepHints,
-				{ keys: ['y'], label: 'write' },
+				{ keys: ['y'], label: 'write', kind: 'primary' },
 				{ keys: ['e'], label: 'edit' },
-				{ keys: ['q'], label: 'quit' },
+				{ keys: ['q'], label: 'quit', kind: 'system' },
 				resetHint,
 			]);
 		} else if (state.step === 'write') {
 			setStatusHints([
 				...stepHints,
-				{ keys: ['↵'], label: 'continue' },
+				{ keys: ['↵'], label: 'continue', kind: 'primary' },
 				resetHint,
 			]);
 		} else if (state.step === 'run') {
 			if (state.installPhase === 'prompt') {
 				setStatusHints([
 					...stepHints,
-					{ keys: ['y'], label: 'run now' },
+					{ keys: ['y'], label: 'run now', kind: 'primary' },
 					{ keys: ['n'], label: 'paste later' },
 					resetHint,
 				]);
@@ -321,14 +323,14 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				setStatusHints([{ keys: ['…'], label: 'installing' }, resetHint]);
 			} else if (state.installPhase === 'failed') {
 				setStatusHints([
-					{ keys: ['y'], label: 'retry' },
+					{ keys: ['y'], label: 'retry', kind: 'primary' },
 					{ keys: ['s'], label: 'skip' },
-					{ keys: ['q'], label: 'abort' },
+					{ keys: ['q'], label: 'abort', kind: 'system' },
 				]);
 			} else {
 				setStatusHints([
 					...stepHints,
-					{ keys: ['↵'], label: 'back to start' },
+					{ keys: ['↵'], label: 'back to start', kind: 'primary' },
 					resetHint,
 				]);
 			}
@@ -398,53 +400,68 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	function renderSplash(): void {
-		screens.splash.innerHTML = renderLines([
-			``,
-			`          <span class="t-accent">     ╱╲ ╱╲ ╱╲</span>`,
-			`          <span class="t-accent">    ╱  ╲╱  ╲╱  ╲</span>`,
-			`          <span class="t-accent">   │    m a g u s    │</span>`,
-			`          <span class="t-accent">    ╲  ╱╲  ╱╲  ╱</span>`,
-			`          <span class="t-accent">     ╲╱ ╲╱ ╲╱</span>`,
-			``,
-			`           <span class="t-muted">transmute your deck</span>`,
-			``,
-			`           <span class="t-dim">earth    air    fire    water    sun</span>`,
-			`           <span class="t-dim"> 🜃     🜁     🜂     🜄      ☉</span>`,
-			``,
-			`  <span class="t-muted">welcome to the ritual.</span>`,
-			`  <span class="t-muted">pick commands from five stages,</span>`,
-			`  <span class="t-muted">and we'll conjure a script.</span>`,
-			``,
-			`  <span class="t-dim">the magic is idempotent · run it many times safely</span>`,
-			`  <span class="t-dim">${flat.length} spells · ${stages.length} stages · ~10 min incantation</span>`,
-			``,
-			`  <span class="t-accent">›</span> <span class="t-muted">press</span> <span class="t-accent">[enter]</span> <span class="t-muted">to begin the ceremony</span> <span class="cursor-blink">▌</span>`,
-		]);
+		const spells = String(flat.length);
+		const stagesN = String(stages.length);
+
+		const boxBorder = (left: string, right: string): string =>
+			`<span class="t-dim">${left}${'─'.repeat(22)}${right}</span>`;
+
+		const boxRow = (label: string, value: string): string => {
+			const pad = Math.max(1, 20 - label.length - value.length);
+			const spaces = ' '.repeat(pad);
+			return (
+				`<span class="t-dim">│</span> ` +
+				`<span class="t-muted">${label}</span>` +
+				spaces +
+				`<span class="t-accent">${value}</span>` +
+				` <span class="t-dim">│</span>`
+			);
+		};
+
+		// 5-space indent · 49-char MAGUS wordmark · 5-space gap · 24-char status box
+		const indent = '     ';
+		const gap = '     ';
+		const wide = (logo: string, box: string): string =>
+			`${indent}<span class="t-accent">${logo}</span>${gap}${box}`;
+
+		const legend = stages
+			.map(
+				(s) =>
+					`<span class="t-accent">${s.sigil}</span> <span class="t-muted">${esc(s.short.toLowerCase())}</span>`,
+			)
+			.join(`<span class="t-dim"> · </span>`);
+
+		const lines: Array<{ html: string; tight?: boolean }> = [
+			{ html: '' },
+			{ html: wide('███╗   ███╗  █████╗   ██████╗  ██╗   ██╗ ███████╗', boxBorder('┌', '┐')), tight: true },
+			{ html: wide('████╗ ████║ ██╔══██╗ ██╔════╝  ██║   ██║ ██╔════╝', boxRow('magus.sh', 'v0.1')), tight: true },
+			{ html: wide('██╔████╔██║ ███████║ ██║  ███╗ ██║   ██║ ███████╗', boxRow('spells', spells)), tight: true },
+			{ html: wide('██║╚██╔╝██║ ██╔══██║ ██║   ██║ ██║   ██║ ╚════██║', boxRow('stages', stagesN)), tight: true },
+			{ html: wide('██║ ╚═╝ ██║ ██║  ██║ ╚██████╔╝ ╚██████╔╝ ███████║', boxRow('runtime', '~10 min')), tight: true },
+			{ html: wide('╚═╝     ╚═╝ ╚═╝  ╚═╝  ╚═════╝   ╚═════╝  ╚══════╝', boxBorder('└', '┘')), tight: true },
+			{ html: '' },
+			{ html: `                   <span class="t-muted">transmute your device</span>` },
+			{ html: '' },
+			{ html: `   <span class="t-dim">───</span>  ${legend}  <span class="t-dim">───</span>` },
+			{ html: '' },
+			{ html: `     <span class="t-accent">✓</span>  <span class="t-muted">idempotent — safe to run again</span>` },
+			{ html: `     <span class="t-accent">✓</span>  <span class="t-muted">no telemetry · one bash script · paste &amp; walk away</span>` },
+			{ html: '' },
+			{ html: `     <span class="t-accent">›</span> <span class="t-muted">press</span> <span class="t-accent">[enter]</span> <span class="t-muted">to begin the ceremony</span> <span class="cursor-blink">▌</span>` },
+		];
+
+		const tightStyle =
+			'white-space:pre;line-height:1;min-height:1em;display:block;padding:0 6px;margin:0 -6px';
+		const looseStyle =
+			'white-space:pre;line-height:1.6;min-height:1.6em;display:block;padding:0 6px;margin:0 -6px';
+
+		screens.splash.innerHTML = lines
+			.map(
+				(l) =>
+					`<div class="line${l.tight ? ' tight' : ''}" style="${l.tight ? tightStyle : looseStyle}">${l.html || '&nbsp;'}</div>`,
+			)
+			.join('');
 	}
-
-	type Preset = { id: string; name: string; tagline: string; patterns: RegExp[] };
-
-	const PRESETS: Preset[] = [
-		{
-			id: 'magnum-opus',
-			name: 'Magnum Opus',
-			tagline: 'the full proven kit',
-			patterns: [
-				/set-sudo-password/,
-				/install-dependencies/,
-				/protonup-qt/,
-				/heroic/,
-				/install-cryoutilities/,
-				/wifi-powersave/,
-				/tablet-mode/,
-				/decky-install/,
-				/decky-cssloader/,
-				/decky-steamgriddb/,
-				/flatseal/,
-				/brave/,
-			],
-		},
-	];
 
 	type MenuRow =
 		| { kind: 'stage'; stage: Stage }
@@ -484,7 +501,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			const group = groups.find((g) => g.id === state.currentGroupId);
 			if (group) {
 				items = stage.items.filter((cmd) =>
-					group.patterns.some((rx) => rx.test(cmd.id)),
+					group.patterns.some((p) => matchPattern(cmd.id, p)),
 				);
 			}
 		}
@@ -506,16 +523,250 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		return stage ? stageRowsFor(stage).length : 0;
 	}
 
+	function presetMatches(preset: Preset): Cmd[] {
+		const seen = new Set<string>();
+		const out: Cmd[] = [];
+		for (const p of preset.patterns) {
+			for (const f of flat) {
+				if (matchPattern(f.cmd.id, p) && !seen.has(f.cmd.id)) {
+					seen.add(f.cmd.id);
+					out.push(f.cmd);
+				}
+			}
+		}
+		return out;
+	}
+
+	function previewBlock(title: string, lines: string[]): Array<{ html: string }> {
+		const out: Array<{ html: string }> = [];
+		out.push({
+			html: `<span class="t-dim">── ${esc(title)} ${'─'.repeat(Math.max(2, 28 - title.length))}</span>`,
+		});
+		out.push({ html: '' });
+		for (const l of lines) out.push({ html: l });
+		return out;
+	}
+
+	function previewForMenuRow(row: MenuRow): Array<{ html: string }> {
+		if (row.kind === 'stage') {
+			const stage = row.stage;
+			const total = stage.items.length;
+			const picked = stage.items.filter((c) => state.picked.has(c.id)).length;
+			const groups = STAGE_GROUPS[stage.id];
+			const lines: string[] = [];
+			lines.push(
+				`<span class="t-accent">${stage.sigil}</span>  <span class="t-bright">${stage.num} ${esc(stage.short)}</span>`,
+			);
+			lines.push(`<span class="t-muted">${esc(stage.tagline)}</span>`);
+			lines.push('');
+			if (groups) {
+				lines.push(`<span class="t-dim">includes</span>`);
+				for (const g of groups) {
+					const gItems = stage.items.filter((c) =>
+						g.patterns.some((p) => matchPattern(c.id, p)),
+					);
+					const gPicked = gItems.filter((c) => state.picked.has(c.id)).length;
+					const count =
+						gPicked > 0
+							? `<span class="t-accent">${gPicked}/${gItems.length}</span>`
+							: `<span class="t-dim">${gItems.length}</span>`;
+					lines.push(
+						`  <span class="t-text">${esc(g.name)}</span>  ${count}`,
+					);
+				}
+			} else {
+				lines.push(`<span class="t-dim">commands</span>`);
+				for (const c of stage.items.slice(0, 8)) {
+					const isPicked = state.picked.has(c.id);
+					const mark = isPicked
+						? `<span class="t-accent">◉</span>`
+						: `<span class="t-dim">◯</span>`;
+					lines.push(`  ${mark} <span class="t-muted">${esc(c.title)}</span>`);
+				}
+				if (stage.items.length > 8) {
+					lines.push(
+						`  <span class="t-dim">… +${stage.items.length - 8} more</span>`,
+					);
+				}
+			}
+			lines.push('');
+			lines.push(
+				`<span class="t-dim">${picked}/${total} picked · ~${Math.max(2, Math.round(total * 1.4))} min if all</span>`,
+			);
+			return previewBlock('stage', lines);
+		}
+		if (row.kind === 'preset') {
+			const matched = presetMatches(row.preset);
+			const lines: string[] = [];
+			lines.push(
+				`<span class="t-accent">✦</span>  <span class="t-bright">${esc(row.preset.name)}</span>`,
+			);
+			lines.push(`<span class="t-muted">${esc(row.preset.tagline)}</span>`);
+			lines.push('');
+			lines.push(
+				`<span class="t-dim">applies ${matched.length} commands</span>`,
+			);
+			for (const c of matched.slice(0, 12)) {
+				lines.push(`  <span class="t-accent">+</span> <span class="t-muted">${esc(c.title)}</span>`);
+			}
+			if (matched.length > 12) {
+				lines.push(
+					`  <span class="t-dim">… +${matched.length - 12} more</span>`,
+				);
+			}
+			lines.push('');
+			lines.push(`<span class="t-dim">enter to apply · won't deselect anything</span>`);
+			return previewBlock('preset', lines);
+		}
+		// action row
+		if (row.id === 'review') {
+			const lines: string[] = [];
+			lines.push(`<span class="t-bright">Review my picks</span>`);
+			lines.push(
+				`<span class="t-muted">cross-stage summary, then write a script.</span>`,
+			);
+			lines.push('');
+			lines.push(
+				`<span class="t-dim">${state.picked.size} commands queued so far</span>`,
+			);
+			return previewBlock('review', lines);
+		}
+		const quitLines = [
+			`<span class="t-bright">Quit</span>`,
+			`<span class="t-muted">clears picks and returns to splash.</span>`,
+		];
+		return previewBlock('quit', quitLines);
+	}
+
+	function previewForStageRow(
+		row: StageRow,
+		stage: Stage,
+	): Array<{ html: string }> {
+		if (row.kind === 'item') {
+			const lines: string[] = [];
+			const isPicked = state.picked.has(row.cmd.id);
+			const box = isPicked
+				? `<span class="t-accent">◉</span>`
+				: `<span class="t-dim">◯</span>`;
+			lines.push(`${box}  <span class="t-bright">${esc(row.cmd.title)}</span>`);
+			if (row.cmd.summary) {
+				lines.push(`<span class="t-muted">${esc(row.cmd.summary)}</span>`);
+			}
+			lines.push('');
+			const runs = row.cmd.commands.slice(0, 3);
+			if (runs.length > 0) {
+				lines.push(`<span class="t-dim">will run</span>`);
+				for (const c of runs) {
+					lines.push(`  <span class="t-accent">$</span> <span class="t-text">${esc(c.run)}</span>`);
+				}
+				if (row.cmd.commands.length > runs.length) {
+					lines.push(
+						`  <span class="t-dim">… +${row.cmd.commands.length - runs.length} more</span>`,
+					);
+				}
+			}
+			lines.push('');
+			lines.push(
+				`<span class="t-dim">space toggles · enter also toggles</span>`,
+			);
+			return previewBlock(stage.short.toLowerCase(), lines);
+		}
+		if (row.kind === 'group') {
+			const items = stage.items.filter((c) =>
+				row.group.patterns.some((p) => matchPattern(c.id, p)),
+			);
+			const picked = items.filter((c) => state.picked.has(c.id)).length;
+			const lines: string[] = [];
+			lines.push(`<span class="t-bright">${esc(row.group.name)}</span>`);
+			lines.push(
+				`<span class="t-muted">${items.length} commands · ${picked} picked</span>`,
+			);
+			lines.push('');
+			for (const c of items.slice(0, 10)) {
+				const isPicked = state.picked.has(c.id);
+				const mark = isPicked
+					? `<span class="t-accent">◉</span>`
+					: `<span class="t-dim">◯</span>`;
+				lines.push(`  ${mark} <span class="t-muted">${esc(c.title)}</span>`);
+			}
+			if (items.length > 10) {
+				lines.push(`  <span class="t-dim">… +${items.length - 10} more</span>`);
+			}
+			return previewBlock('group', lines);
+		}
+		if (row.kind === 'install') {
+			const stagePicked = stage.items.filter((c) => state.picked.has(c.id));
+			const lines: string[] = [];
+			if (stagePicked.length === 0) {
+				lines.push(`<span class="t-warn">nothing picked yet</span>`);
+				lines.push(
+					`<span class="t-muted">space toggles a command. enter on a row also works.</span>`,
+				);
+			} else {
+				lines.push(
+					`<span class="t-accent">⚡</span>  <span class="t-bright">${stagePicked.length} command${stagePicked.length === 1 ? '' : 's'} ready</span>`,
+				);
+				lines.push(
+					`<span class="t-muted">est. ~${Math.max(1, Math.round(stagePicked.length * 0.8))} min · ${stage.short.toLowerCase()} stage only</span>`,
+				);
+				lines.push('');
+				for (const c of stagePicked.slice(0, 10)) {
+					lines.push(`  <span class="t-accent">✓</span> <span class="t-muted">${esc(c.title)}</span>`);
+				}
+				if (stagePicked.length > 10) {
+					lines.push(
+						`  <span class="t-dim">… +${stagePicked.length - 10} more</span>`,
+					);
+				}
+			}
+			return previewBlock('install', lines);
+		}
+		if (row.kind === 'select-all') {
+			const allSelected = stage.items.every((c) => state.picked.has(c.id));
+			const lines = [
+				`<span class="t-bright">${allSelected ? 'Deselect all in this stage' : 'Select all in this stage'}</span>`,
+				`<span class="t-muted">toggles every command in ${esc(stage.short)} (${stage.items.length} total).</span>`,
+			];
+			return previewBlock('shortcut', lines);
+		}
+		if (row.kind === 'back-group') {
+			return previewBlock('back', [
+				`<span class="t-bright">← back to ${esc(stage.short)}</span>`,
+				`<span class="t-muted">return to the group list. picks stay.</span>`,
+			]);
+		}
+		return previewBlock('back', [
+			`<span class="t-bright">← back to stages</span>`,
+			`<span class="t-muted">return to the stage menu. picks carry across.</span>`,
+		]);
+	}
+
 	function paintLines(
 		target: HTMLElement,
 		lines: Array<{ html: string; focused?: boolean }>,
+		preview?: Array<{ html: string }>,
 	): void {
-		target.innerHTML = lines
+		const leftHtml = lines
 			.map(
 				(l) =>
 					`<div class="line${l.focused ? ' is-focused' : ''}">${l.html || '&nbsp;'}</div>`,
 			)
 			.join('');
+		if (preview && preview.length > 0) {
+			const rightHtml = preview
+				.map(
+					(l) =>
+						`<div class="line">${l.html || '&nbsp;'}</div>`,
+				)
+				.join('');
+			target.innerHTML =
+				`<div class="split">` +
+				`<div class="split-left">${leftHtml}</div>` +
+				`<div class="split-right">${rightHtml}</div>` +
+				`</div>`;
+		} else {
+			target.innerHTML = leftHtml;
+		}
 		const focusedEl = target.querySelector<HTMLElement>('.is-focused');
 		if (focusedEl) {
 			focusedEl.scrollIntoView({ block: 'nearest', behavior: 'auto' });
@@ -584,7 +835,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			if (state.installPhase === 'failed') {
 				lines.push(`  <span class="t-warn">✗</span> <span class="t-text">${esc(current.cmd.title)}</span>`);
 				lines.push('');
-				lines.push(`  <span class="t-warn">error</span> <span class="t-dim">·</span> <span class="t-muted">connection timed out — could not reach download server</span>`);
+				lines.push(`  <span class="t-warn">error</span> <span class="t-dim">·</span> <span class="t-muted">connection timed out — could not reach download server</span> <span class="t-dim">(simulated)</span>`);
 				lines.push(`  <span class="t-dim">exit code 1</span>`);
 				lines.push('');
 				lines.push(`  <span class="t-accent">[y]</span> <span class="t-text">retry</span>   <span class="t-accent">[s]</span> <span class="t-muted">skip</span>   <span class="t-accent">[q]</span> <span class="t-muted">abort</span>`);
@@ -687,9 +938,12 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				const picked = row.stage.items.filter((c) =>
 					state.picked.has(c.id),
 				).length;
+				const sigilHtml = focused
+					? `<span class="t-accent">${row.stage.sigil}</span>`
+					: `<span class="t-dim">${row.stage.sigil}</span>`;
 				const labelText = `${row.stage.num}  ${row.stage.short}`;
 				const labelPadded =
-					labelText + ' '.repeat(Math.max(2, 22 - labelText.length));
+					labelText + ' '.repeat(Math.max(2, 20 - labelText.length));
 				const labelHtml = focused
 					? `<span class="t-bright">${labelPadded}</span>`
 					: `<span class="t-text">${labelPadded}</span>`;
@@ -704,21 +958,19 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 					: picked === total && total > 0
 						? ` <span class="t-accent">✓</span>`
 						: ``;
-				out.push({ html: `${cur}  ${labelHtml}${countHtml}${tick}`, focused });
+				out.push({
+					html: `${cur} ${sigilHtml}  ${labelHtml}${countHtml}${tick}`,
+					focused,
+				});
 			} else if (row.kind === 'preset') {
-				const matchCount = PRESETS[0]
-					? row.preset.patterns.reduce(
-							(n, rx) => n + flat.filter((f) => rx.test(f.cmd.id)).length,
-							0,
-						)
-					: 0;
+				const matchCount = presetMatches(row.preset).length;
 				const nameHtml = focused
 					? `<span class="t-accent">✦</span> <span class="t-bright">${esc(row.preset.name)}</span>`
 					: `<span class="t-dim">✦</span> <span class="t-muted">${esc(row.preset.name)}</span>`;
 				const tagHtml = focused
 					? `<span class="t-muted"> · ${esc(row.preset.tagline)}</span>`
 					: `<span class="t-dim"> · ${esc(row.preset.tagline)}</span>`;
-				const countHtml = `<span class="t-dim">  ${matchCount} commands</span>`;
+				const countHtml = `<span class="t-dim">  ${matchCount}</span>`;
 				out.push({ html: `${cur}  ${nameHtml}${tagHtml}${countHtml}`, focused });
 			} else {
 				const reviewN = state.picked.size;
@@ -736,7 +988,9 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			html: `<span class="t-dim">${state.picked.size} of ${flat.length} commands selected total</span>`,
 		});
 
-		paintLines(screens.pick, out);
+		const focusedRow = rows[state.cursor];
+		const preview = focusedRow ? previewForMenuRow(focusedRow) : undefined;
+		paintLines(screens.pick, out, preview);
 	}
 
 	function renderStage(): void {
@@ -759,6 +1013,18 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		out.push({
 			html: `<span class="t-accent">?</span> <span class="t-bright">${heading}</span> <span class="t-muted">(space toggle · enter open)</span>`,
 		});
+		const stageGroups = STAGE_GROUPS[stage.id];
+		if (state.currentGroupId && stageGroups) {
+			const tabs = stageGroups
+				.map((g) => {
+					const isCurrent = g.id === state.currentGroupId;
+					return isCurrent
+						? `<span class="t-accent">[${esc(g.name)}]</span>`
+						: `<span class="t-dim">${esc(g.name)}</span>`;
+				})
+				.join(`<span class="t-dim">  </span>`);
+			out.push({ html: `  ${tabs}` });
+		}
 		out.push({ html: '' });
 
 		rows.forEach((row, i) => {
@@ -783,7 +1049,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				out.push({ html: `${cur}   ${selectText}`, focused });
 			} else if (row.kind === 'group') {
 				const groupItems = stage.items.filter((cmd) =>
-					row.group.patterns.some((rx) => rx.test(cmd.id)),
+					row.group.patterns.some((p) => matchPattern(cmd.id, p)),
 				);
 				const groupPicked = groupItems.filter((c) => state.picked.has(c.id)).length;
 				const labelText = esc(row.group.name);
@@ -802,11 +1068,12 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				out.push({ html: `<span class="t-dim">  ────</span>` });
 				const stagePicked = stage.items.filter((c) => state.picked.has(c.id)).length;
 				const hasItems = stagePicked > 0;
+				const noun = stagePicked === 1 ? 'command' : 'commands';
 				const installHtml = focused && hasItems
-					? `<span class="t-accent">⚡</span> <span class="t-bright">Install ${stagePicked} command${stagePicked !== 1 ? 's' : ''}</span>`
+					? `<span class="t-accent">⚡</span> <span class="t-bright">Install ${stagePicked} ${noun}</span>`
 					: hasItems
-						? `<span class="t-dim">⚡</span> <span class="t-muted">Install ${stagePicked} command${stagePicked !== 1 ? 's' : ''}</span>`
-						: `<span class="t-dim">⚡ nothing selected to install</span>`;
+						? `<span class="t-dim">⚡</span> <span class="t-muted">Install ${stagePicked} ${noun}</span>`
+						: `<span class="t-dim">⚡ pick at least one to install</span>`;
 				out.push({ html: `${cur}   ${installHtml}`, focused: focused && hasItems });
 			} else if (row.kind === 'back-group') {
 				out.push({ html: `<span class="t-dim">  ────</span>` });
@@ -823,23 +1090,15 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			}
 		});
 
-		const focusedRow = rows[state.cursor];
-		out.push({ html: '' });
-		if (focusedRow?.kind === 'item' && focusedRow.cmd.summary) {
-			out.push({
-				html: `<span class="t-dim">›</span> <span class="t-muted">${esc(focusedRow.cmd.summary)}</span>`,
-			});
-		} else {
-			out.push({ html: '' });
-		}
-
 		const stagePicked = stage.items.filter((c) => state.picked.has(c.id)).length;
 		out.push({ html: '' });
 		out.push({
 			html: `<span class="t-dim">${stagePicked} of ${stage.items.length} selected in this stage</span>`,
 		});
 
-		paintLines(screens.pick, out);
+		const focusedRow = rows[state.cursor];
+		const preview = focusedRow ? previewForStageRow(focusedRow, stage) : undefined;
+		paintLines(screens.pick, out, preview);
 	}
 
 	function renderReview(): void {
@@ -1029,7 +1288,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			);
 			lines.push('');
 			lines.push(
-				`  <span class="t-warn">error</span> <span class="t-dim">·</span> <span class="t-muted">connection timed out — could not reach download server</span>`,
+				`  <span class="t-warn">error</span> <span class="t-dim">·</span> <span class="t-muted">connection timed out — could not reach download server</span> <span class="t-dim">(simulated)</span>`,
 			);
 			lines.push(`  <span class="t-dim">exit code 1</span>`);
 			lines.push('');
@@ -1271,9 +1530,9 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				refreshHints();
 				renderPick();
 			} else if (row.kind === 'preset') {
-				for (const rx of row.preset.patterns) {
+				for (const p of row.preset.patterns) {
 					for (const f of flat) {
-						if (rx.test(f.cmd.id)) state.picked.add(f.cmd.id);
+						if (matchPattern(f.cmd.id, p)) state.picked.add(f.cmd.id);
 					}
 				}
 				renderPick();
@@ -1356,9 +1615,9 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	function seedDefaults(): void {
-		const want = [/set-sudo-password/, /install-dependencies/, /protonup-qt/, /heroic/];
+		const want = ['set-sudo-password', 'install-dependencies', 'protonup-qt', 'heroic'];
 		for (const f of flat) {
-			if (want.some((rx) => rx.test(f.cmd.id))) state.picked.add(f.cmd.id);
+			if (want.some((p) => matchPattern(f.cmd.id, p))) state.picked.add(f.cmd.id);
 		}
 	}
 
@@ -1612,6 +1871,87 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	setStep('splash');
 </script>
 
+<style is:global>
+	/* ------ in-terminal rendering (must be global — these elements are
+	   created at runtime by the script above and don't carry Astro's
+	   per-component scope attribute) -------------------------------- */
+	.screen .line {
+		display: block;
+		white-space: pre;
+		min-height: 1.6em;
+		padding: 0 6px;
+		margin: 0 -6px;
+		border-radius: 4px;
+	}
+	.screen .line.is-focused {
+		background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+	}
+	.screen .split {
+		display: grid;
+		grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+		gap: 0;
+		align-items: start;
+	}
+	.screen .split-left {
+		min-width: 0;
+		padding-right: 18px;
+	}
+	.screen .split-right {
+		min-width: 0;
+		padding-left: 18px;
+		border-left: 1px dashed
+			color-mix(in oklab, var(--color-border) 70%, transparent);
+		opacity: 0.96;
+	}
+	.screen .split-right .line {
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+	@media (max-width: 720px) {
+		.screen .split {
+			grid-template-columns: 1fr;
+		}
+		.screen .split-right {
+			display: none;
+		}
+	}
+
+	.t-bright {
+		color: var(--color-text);
+		font-weight: 500;
+	}
+	.t-text {
+		color: var(--color-text);
+	}
+	.t-muted {
+		color: var(--color-text-muted);
+	}
+	.t-dim {
+		color: var(--color-text-dim);
+	}
+	.t-accent {
+		color: var(--color-accent);
+	}
+	.t-warn {
+		color: var(--color-warn);
+	}
+	.cursor-blink {
+		display: inline-block;
+		color: var(--color-accent);
+		animation: lab-blink 1.05s steps(2) infinite;
+	}
+	@keyframes lab-blink {
+		50% {
+			opacity: 0;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cursor-blink {
+			animation: none;
+		}
+	}
+</style>
+
 <style>
 	/* ------ shell -------------------------------------------------- */
 	.lab {
@@ -1812,17 +2152,6 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	.screen[hidden] {
 		display: none;
 	}
-	.screen .line {
-		display: block;
-		white-space: pre;
-		min-height: 1.6em;
-		padding: 0 6px;
-		margin: 0 -6px;
-		border-radius: 4px;
-	}
-	.screen .line.is-focused {
-		background: color-mix(in oklab, var(--color-accent) 12%, transparent);
-	}
 
 	.term-status {
 		display: flex;
@@ -1837,7 +2166,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		letter-spacing: 0.04em;
 		flex-wrap: wrap;
 	}
-	.term-status kbd {
+	.term-status :global(kbd) {
 		display: inline-block;
 		padding: 1px 6px;
 		border-radius: 4px;
@@ -1849,46 +2178,32 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		line-height: 1.4;
 		margin: 0 1px;
 	}
-	.term-status .sep {
+	.term-status :global(kbd[data-kind='primary']) {
+		border-color: color-mix(
+			in oklab,
+			var(--color-accent) 60%,
+			var(--color-border)
+		);
+		background: color-mix(
+			in oklab,
+			var(--color-accent) 18%,
+			var(--color-surface)
+		);
+		color: var(--color-text);
+	}
+	.term-status :global(.hint[data-kind='primary']) {
+		color: var(--color-text);
+	}
+	.term-status :global(kbd[data-kind='system']) {
+		opacity: 0.55;
+	}
+	.term-status :global(.hint[data-kind='system']) {
+		opacity: 0.7;
+	}
+	.term-status :global(.sep) {
 		color: var(--color-text-dim);
 		opacity: 0.6;
 		margin: 0 4px;
-	}
-
-	/* ------ in-terminal colour palette ----------------------------- */
-	.t-bright {
-		color: var(--color-text);
-		font-weight: 500;
-	}
-	.t-text {
-		color: var(--color-text);
-	}
-	.t-muted {
-		color: var(--color-text-muted);
-	}
-	.t-dim {
-		color: var(--color-text-dim);
-	}
-	.t-accent {
-		color: var(--color-accent);
-	}
-	.t-warn {
-		color: var(--color-warn);
-	}
-	.cursor-blink {
-		display: inline-block;
-		color: var(--color-accent);
-		animation: lab-blink 1.05s steps(2) infinite;
-	}
-	@keyframes lab-blink {
-		50% {
-			opacity: 0;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.cursor-blink {
-			animation: none;
-		}
 	}
 
 	/* ------ flow rail ---------------------------------------------- */
