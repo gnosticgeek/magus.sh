@@ -18,6 +18,8 @@ const stages = STAGES.map((s) => ({
 			id: e.id,
 			title: e.data.title,
 			summary: e.data.summary ?? '',
+			danger: e.data.danger ?? 'low',
+			deckOnly: e.data.deck_only ?? false,
 			commands: (e.data.commands ?? []).map((c) => ({
 				run: c.run,
 				description: c.description ?? '',
@@ -69,6 +71,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 						<div class="screen" data-screen="review" hidden></div>
 						<div class="screen" data-screen="write" hidden></div>
 						<div class="screen" data-screen="run" hidden></div>
+						<div class="term-help" data-term-help hidden></div>
 					</div>
 
 					<div class="term-status" data-term-status>
@@ -107,25 +110,50 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			</section>
 
 			<aside class="lab-notes" aria-label="Design notes">
-				<h2 class="notes-title">Open questions</h2>
-				<ul class="notes-list">
-					<li>Should <kbd>/</kbd> open a fuzzy search across all stages from the menu?</li>
+				<div class="state-card" aria-label="Current prototype state">
+					<h2 class="notes-title">Live readout</h2>
+					<dl class="state-grid">
+						<div>
+							<dt>screen</dt>
+							<dd data-readout-step>splash</dd>
+						</div>
+						<div>
+							<dt>picked</dt>
+							<dd><span data-readout-picked>0</span> / {totalCount}</dd>
+						</div>
+						<div>
+							<dt>runtime</dt>
+							<dd data-readout-runtime>~0 min</dd>
+						</div>
+						<div>
+							<dt>next key</dt>
+							<dd data-readout-action>enter</dd>
+						</div>
+					</dl>
+				</div>
+
+				<h2 class="notes-title">Decision queue</h2>
+				<ul class="decision-list">
 					<li>
-						"Done — write the script" — go straight to write, or always pass
-						through review first?
+						<span class="decision-tag">Prototype</span>
+						<strong>Search is global from menu, scoped inside a stage.</strong>
+						<small><kbd>/</kbd> opens it; this should map directly to Bubble Tea.</small>
 					</li>
-					<li>Visible "← back" row, or just <kbd>esc</kbd>/<kbd>b</kbd>?</li>
 					<li>
-						Write to <code>/tmp</code>, <code>$HOME</code>, or pipe straight
-						to <code>bash</code>?
+						<span class="decision-tag">Settle</span>
+						<strong>Review before write.</strong>
+						<small>Presets can add many commands, so the review gate stays useful.</small>
 					</li>
-					<li>Let users name the output file, or always <code>magus.sh</code>?</li>
-					<li>Hide Gaming behind a <code>--gaming</code> flag by default?</li>
 					<li>
-						Pre-flight: detect a real Steam Deck before offering Deck-only
-						commands?
+						<span class="decision-tag">Risk</span>
+						<strong>Pre-flight Deck checks belong before Run.</strong>
+						<small>Waydroid and other Deck-only commands should be annotated, not hidden.</small>
 					</li>
-					<li>What's the equivalent of "press <kbd>?</kbd> for help"?</li>
+					<li>
+						<span class="decision-tag">Ship</span>
+						<strong>Help is in-frame.</strong>
+						<small>Press <kbd>?</kbd> anywhere; <kbd>esc</kbd> closes the overlay.</small>
+					</li>
 				</ul>
 
 				<h2 class="notes-title">Already decided</h2>
@@ -133,7 +161,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 					<li>Menu-driven by stage, not one long checkbox list.</li>
 					<li>Each stage screen has a visible <code>← back</code> row.</li>
 					<li><kbd>space</kbd> toggles · <kbd>enter</kbd> activates the focused row.</li>
-					<li>Built on <code>@inquirer/prompts</code> · scaffold in <code>tui/</code>.</li>
+					<li>Built with Bubble Tea/Lipgloss · scaffold in <code>magus/</code>.</li>
 					<li>Outputs an idempotent bash script.</li>
 					<li>{totalCount} commands across {stages.length} stages today.</li>
 				</ul>
@@ -153,6 +181,8 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		id: string;
 		title: string;
 		summary: string;
+		danger: 'low' | 'medium' | 'high';
+		deckOnly: boolean;
 		commands: Array<{ run: string; description: string }>;
 	};
 	type Stage = {
@@ -217,6 +247,8 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		installPhase: 'prompt' as InstallPhase,
 		installIndex: 0,
 		installLog: [] as Array<{ title: string; result: 'done' | 'skipped' }>,
+		notice: null as string | null,
+		helpOpen: false,
 	};
 
 	const screens = Object.fromEntries(
@@ -226,8 +258,12 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		]),
 	) as Record<Step, HTMLElement>;
 
-	const termBody = document.querySelector<HTMLElement>('[data-term-body]')!;
 	const termStatus = document.querySelector<HTMLElement>('[data-term-status]')!;
+	const helpPanel = document.querySelector<HTMLElement>('[data-term-help]')!;
+	const readoutStep = document.querySelector<HTMLElement>('[data-readout-step]')!;
+	const readoutPicked = document.querySelector<HTMLElement>('[data-readout-picked]')!;
+	const readoutRuntime = document.querySelector<HTMLElement>('[data-readout-runtime]')!;
+	const readoutAction = document.querySelector<HTMLElement>('[data-readout-action]')!;
 
 	type Hint = {
 		keys: string[];
@@ -249,12 +285,21 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	function refreshHints(): void {
+		updateReadout();
 		const stepHints: Hint[] = [{ keys: ['←', '→'], label: 'step' }];
 		const resetHint: Hint = { keys: ['r'], label: 'reset', kind: 'system' };
+		if (state.helpOpen) {
+			setStatusHints([
+				{ keys: ['?', 'esc'], label: 'close help', kind: 'primary' },
+				resetHint,
+			]);
+			return;
+		}
 		if (state.step === 'splash') {
 			setStatusHints([
 				...stepHints,
 				{ keys: ['↵'], label: 'begin', kind: 'primary' },
+				{ keys: ['?'], label: 'help' },
 				resetHint,
 			]);
 		} else if (state.step === 'pick' && state.pickView === 'menu') {
@@ -263,6 +308,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				{ keys: ['↑', '↓'], label: 'move' },
 				{ keys: ['↵'], label: 'open', kind: 'primary' },
 				{ keys: ['/'], label: 'search' },
+				{ keys: ['?'], label: 'help' },
 				resetHint,
 			]);
 		} else if (state.step === 'pick' && state.pickView === 'installing') {
@@ -287,6 +333,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				{ keys: ['␣'], label: 'toggle', kind: 'primary' },
 				{ keys: ['↵'], label: 'select' },
 				{ keys: ['esc'], label: 'back' },
+				{ keys: ['?'], label: 'help' },
 				resetHint,
 			]);
 		} else if (state.step === 'pick' && state.pickView === 'search') {
@@ -295,6 +342,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				{ keys: ['␣'], label: 'toggle', kind: 'primary' },
 				{ keys: ['↵'], label: 'select' },
 				{ keys: ['esc'], label: 'back' },
+				{ keys: ['?'], label: 'help' },
 				resetHint,
 			]);
 		} else if (state.step === 'review') {
@@ -303,12 +351,14 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				{ keys: ['y'], label: 'write', kind: 'primary' },
 				{ keys: ['e'], label: 'edit' },
 				{ keys: ['q'], label: 'quit', kind: 'system' },
+				{ keys: ['?'], label: 'help' },
 				resetHint,
 			]);
 		} else if (state.step === 'write') {
 			setStatusHints([
 				...stepHints,
 				{ keys: ['↵'], label: 'continue', kind: 'primary' },
+				{ keys: ['?'], label: 'help' },
 				resetHint,
 			]);
 		} else if (state.step === 'run') {
@@ -317,6 +367,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 					...stepHints,
 					{ keys: ['y'], label: 'run now', kind: 'primary' },
 					{ keys: ['n'], label: 'paste later' },
+					{ keys: ['?'], label: 'help' },
 					resetHint,
 				]);
 			} else if (state.installPhase === 'running') {
@@ -331,6 +382,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				setStatusHints([
 					...stepHints,
 					{ keys: ['↵'], label: 'back to start', kind: 'primary' },
+					{ keys: ['?'], label: 'help' },
 					resetHint,
 				]);
 			}
@@ -341,6 +393,153 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		lines
 			.map((html) => `<div class="line">${html || '&nbsp;'}</div>`)
 			.join('');
+
+	let noticeTimer = 0;
+	const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+	function clipText(s: string, width: number): string {
+		if (s.length <= width) return s.padEnd(width);
+		return `${s.slice(0, Math.max(0, width - 1))}…`;
+	}
+
+	function riskLabel(cmd: Cmd): string {
+		if (cmd.danger === 'high') return 'HIGH';
+		if (cmd.danger === 'medium') return 'MED';
+		return 'LOW';
+	}
+
+	function riskClass(cmd: Cmd): string {
+		if (cmd.danger === 'high') return 't-warn';
+		if (cmd.danger === 'medium') return 't-accent';
+		return 't-dim';
+	}
+
+	function commandEta(cmd: Cmd): string {
+		const run = cmd.commands.map((c) => c.run).join('\n');
+		if (run.includes('curl') || run.includes('git clone')) return '02m';
+		if (run.includes('flatpak install')) return '01m';
+		return '<1m';
+	}
+
+	function progressPanel(args: {
+		title: string;
+		done: number;
+		total: number;
+		current?: { stage?: Stage; cmd: Cmd };
+		log: Array<{ title: string; result: 'done' | 'skipped' }>;
+		failed?: boolean;
+	}): string {
+		const pct = args.total > 0 ? Math.round((args.done / args.total) * 100) : 0;
+		const barLen = 28;
+		const filled = Math.round((pct / 100) * barLen);
+		const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled);
+		const frame = SPINNER_FRAMES[(args.done + state.installIndex) % SPINNER_FRAMES.length];
+		const elapsed = `${String(Math.floor((args.done * 9 + state.installIndex * 3) / 60)).padStart(2, '0')}:${String((args.done * 9 + state.installIndex * 3) % 60).padStart(2, '0')}`;
+		const remaining = Math.max(0, args.total - args.done);
+		const eta = `${String(Math.max(0, Math.ceil(remaining * 0.4))).padStart(2, '0')}:00`;
+		const currentTitle = args.current?.cmd.title ?? 'finalising';
+		const currentStage = args.current?.stage?.short ?? 'run';
+		const logRows = args.log.slice(-6)
+			.map((entry) => {
+				const icon = entry.result === 'done'
+					? `<span class="t-accent">✓</span>`
+					: `<span class="t-dim">—</span>`;
+				const title = entry.result === 'skipped'
+					? `<span class="t-dim">${esc(entry.title)}</span>`
+					: `<span class="t-muted">${esc(entry.title)}</span>`;
+				return `<div class="progress-log-row">${icon}<span>${title}</span></div>`;
+			})
+			.join('');
+		const failure = args.failed
+			? `<div class="progress-failure">
+					<div><span class="t-warn">error</span> <span class="t-dim">connection timed out</span> <span class="t-dim">(simulated)</span></div>
+					<div><span class="t-accent">[y]</span> retry   <span class="t-accent">[s]</span> skip this command   <span class="t-accent">[q]</span> abort</div>
+				</div>`
+			: '';
+		return `
+			<div class="progress-panel">
+				<div class="progress-head">
+					<span class="spinner-glyph">${frame}</span>
+					<span class="t-bright">${esc(args.title)}</span>
+					<span class="progress-percent">${pct}%</span>
+				</div>
+				<div class="progress-meter"><span style="width:${pct}%"></span></div>
+				<div class="progress-bar-line"><span class="t-dim">[</span><span class="t-accent">${bar}</span><span class="t-dim">]</span> <span class="t-dim">${args.done}/${args.total}</span></div>
+				<div class="progress-meta">
+					<span>elapsed <span class="t-text">${elapsed}</span></span>
+					<span>eta <span class="t-text">${eta}</span></span>
+					<span>tick <span class="t-text">tea.Tick</span></span>
+				</div>
+				<div class="progress-current">
+					<span class="t-dim">${esc(currentStage)}</span>
+					<span class="t-accent">›</span>
+					<span class="${args.failed ? 't-warn' : 't-text'}">${esc(currentTitle)}</span>
+					${args.failed ? '' : '<span class="cursor-blink">▌</span>'}
+				</div>
+				<div class="progress-log">${logRows || '<span class="t-dim">waiting for first command…</span>'}</div>
+				${failure}
+			</div>`;
+	}
+
+	function updateReadout(): void {
+		const picked = state.picked.size;
+		const runtime = picked === 0 ? '~0 min' : `~${Math.max(2, Math.round(picked * 1.4))} min`;
+		const view =
+			state.step === 'pick'
+				? state.pickView === 'stage'
+					? 'pick / stage'
+					: `pick / ${state.pickView}`
+				: state.step;
+		let action = 'enter';
+		if (state.helpOpen) action = 'esc';
+		else if (state.step === 'pick' && state.pickView === 'stage') action = 'space';
+		else if (state.step === 'pick' && state.pickView === 'search') action = 'type';
+		else if (state.step === 'review') action = 'y';
+		else if (state.step === 'run') action = state.installPhase === 'prompt' ? 'y' : 'enter';
+		readoutStep.textContent = view;
+		readoutPicked.textContent = String(picked);
+		readoutRuntime.textContent = runtime;
+		readoutAction.textContent = action;
+	}
+
+	function renderHelpPanel(): void {
+		if (!state.helpOpen) {
+			helpPanel.hidden = true;
+			helpPanel.innerHTML = '';
+			return;
+		}
+		const context =
+			state.step === 'pick'
+				? state.pickView === 'stage'
+					? 'Pick Stage'
+					: state.pickView === 'search'
+						? 'Search'
+						: 'Pick Menu'
+				: state.step[0]!.toUpperCase() + state.step.slice(1);
+		const lines = [
+			`<span class="t-accent">?</span> <span class="t-bright">${context} help</span>`,
+			'',
+			`  <span class="t-accent">↑ ↓</span> <span class="t-muted">move focus</span>`,
+			`  <span class="t-accent">enter</span> <span class="t-muted">activate focused row</span>`,
+			`  <span class="t-accent">space</span> <span class="t-muted">toggle a command when visible</span>`,
+			`  <span class="t-accent">/</span> <span class="t-muted">search all commands, scoped by stage when opened there</span>`,
+			`  <span class="t-accent">esc</span> <span class="t-muted">close help or go back</span>`,
+			`  <span class="t-accent">r</span> <span class="t-muted">reset prototype state</span>`,
+			'',
+			`<span class="t-dim">Prototype rule: every key shown here should map to a real Bubble Tea command.</span>`,
+		];
+		helpPanel.innerHTML = renderLines(lines);
+		helpPanel.hidden = false;
+	}
+
+	function setNotice(message: string): void {
+		state.notice = message;
+		window.clearTimeout(noticeTimer);
+		noticeTimer = window.setTimeout(() => {
+			state.notice = null;
+			if (state.step === 'pick' && state.pickView === 'menu') renderPick();
+		}, 2600);
+	}
 
 	const flowItems = Array.from(
 		document.querySelectorAll<HTMLElement>('.flow-item'),
@@ -397,6 +596,8 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		if (state.step === 'pick') renderPick();
 		if (state.step === 'review') renderReview();
 		if (state.step === 'run') renderRun();
+		renderHelpPanel();
+		updateReadout();
 	}
 
 	function renderSplash(): void {
@@ -778,6 +979,8 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		else if (state.pickView === 'menu') renderMenu();
 		else if (state.pickView === 'installing') renderStageInstall();
 		else renderStage();
+		renderHelpPanel();
+		updateReadout();
 	}
 
 	function renderStageInstall(): void {
@@ -811,45 +1014,15 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			return;
 		}
 
-		const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-		const barLen = 22;
-		const filled = Math.round((pct / 100) * barLen);
-		const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled);
-		lines.push(
-			`<span class="t-accent">installing</span> <span class="t-dim">${done}/${total}</span>  <span class="t-dim">[</span><span class="t-accent">${bar}</span><span class="t-dim">]</span> <span class="t-dim">${pct}%</span>`,
-		);
-		lines.push('');
-
-		for (const entry of state.installLog) {
-			const icon = entry.result === 'done'
-				? `<span class="t-accent">✓</span>`
-				: `<span class="t-dim">—</span>`;
-			const title = entry.result === 'skipped'
-				? `<span class="t-dim">${esc(entry.title)}</span>`
-				: `<span class="t-muted">${esc(entry.title)}</span>`;
-			lines.push(`  ${icon} ${title}`);
-		}
-
 		const current = stagePicks[state.installLog.length];
-		if (current) {
-			if (state.installPhase === 'failed') {
-				lines.push(`  <span class="t-warn">✗</span> <span class="t-text">${esc(current.cmd.title)}</span>`);
-				lines.push('');
-				lines.push(`  <span class="t-warn">error</span> <span class="t-dim">·</span> <span class="t-muted">connection timed out — could not reach download server</span> <span class="t-dim">(simulated)</span>`);
-				lines.push(`  <span class="t-dim">exit code 1</span>`);
-				lines.push('');
-				lines.push(`  <span class="t-accent">[y]</span> <span class="t-text">retry</span>   <span class="t-accent">[s]</span> <span class="t-muted">skip</span>   <span class="t-accent">[q]</span> <span class="t-muted">abort</span>`);
-			} else {
-				lines.push(`  <span class="t-accent">›</span> <span class="t-text">${esc(current.cmd.title)}</span> <span class="cursor-blink">▌</span>`);
-				const remaining = total - done - 1;
-				if (remaining > 0) {
-					lines.push('');
-					lines.push(`  <span class="t-dim">${remaining} more queued</span>`);
-				}
-			}
-		}
-
-		screens.pick.innerHTML = renderLines(lines);
+		screens.pick.innerHTML = progressPanel({
+			title: `${stage?.short ?? 'stage'} install`,
+			done,
+			total,
+			current,
+			log: state.installLog,
+			failed: state.installPhase === 'failed',
+		});
 	}
 
 	function updateSearch(query: string): void {
@@ -920,6 +1093,11 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		out.push({
 			html: `<span class="t-accent">?</span> <span class="t-bright">Where to next?</span> <span class="t-muted">(↑ ↓ move · enter open)</span>`,
 		});
+		if (state.notice) {
+			out.push({
+				html: `<span class="t-band">${esc(state.notice)}</span>`,
+			});
+		}
 		out.push({ html: '' });
 
 		rows.forEach((row, i) => {
@@ -1116,41 +1294,93 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		}
 
 		const mins = Math.max(2, Math.round(picked.length * 1.4));
+		const deckOnly = picked.filter((f) => f.cmd.deckOnly).length;
+		const elevated = picked.filter((f) => f.cmd.danger !== 'low').length;
+		const focusIndex = Math.max(
+			0,
+			picked.findIndex((f) => f.cmd.danger !== 'low' || f.cmd.deckOnly),
+		);
 		lines.push(
-			`<span class="t-bright">${picked.length} commands ready</span> <span class="t-muted">· est. ~${mins} min</span>`,
+			`<span class="t-bright">Review table</span> <span class="t-muted">· bubbles/table mock · ${picked.length} rows · est. ~${mins} min</span>`,
+		);
+		lines.push(
+			`<span class="t-dim">risk</span> <span class="t-text">${elevated}</span> <span class="t-dim">elevated</span>   <span class="t-dim">deck-only</span> <span class="t-text">${deckOnly}</span>   <span class="t-dim">script</span> <span class="t-text">/tmp/magus.sh</span>`,
 		);
 		lines.push('');
-
-		const byStage = new Map<string, Array<{ stage: Stage; cmd: Cmd }>>();
-		for (const f of picked) {
-			const arr = byStage.get(f.stage.id) ?? [];
-			arr.push(f);
-			byStage.set(f.stage.id, arr);
-		}
-		for (const stage of stages) {
-			const items = byStage.get(stage.id);
-			if (!items?.length) continue;
-			lines.push(
-				`  <span class="t-dim">${stage.num}</span> <span class="t-text">${esc(stage.short)}</span>`,
-			);
-			for (const f of items) {
-				lines.push(
-					`     <span class="t-accent">✓</span> <span class="t-text">${esc(f.cmd.title)}</span>`,
-				);
-			}
-			lines.push('');
-		}
-
-		lines.push(`<span class="t-dim">―</span>`);
-		lines.push('');
+		const tableRows = picked
+			.map((f, i) => {
+				const isFocused = i === focusIndex;
+				const marker = isFocused
+					? `<span class="t-accent">❯</span>`
+					: `<span class="t-dim"> </span>`;
+				const stage = `<span class="t-dim">${esc(f.stage.num)}</span> <span class="t-muted">${esc(clipText(f.stage.short, 9))}</span>`;
+				const title = `<span class="${isFocused ? 't-bright' : 't-text'}">${esc(clipText(f.cmd.title, 28))}</span>`;
+				const risk = `<span class="${riskClass(f.cmd)}">${riskLabel(f.cmd)}</span>`;
+				const deck = f.cmd.deckOnly
+					? `<span class="t-accent">deck</span>`
+					: `<span class="t-dim">any</span>`;
+				const eta = `<span class="t-dim">${commandEta(f.cmd)}</span>`;
+				return `<div class="review-row${isFocused ? ' is-focused' : ''}">
+					<span>${marker}</span>
+					<span>${stage}</span>
+					<span>${title}</span>
+					<span>${risk}</span>
+					<span>${deck}</span>
+					<span>${eta}</span>
+				</div>`;
+			})
+			.join('');
+		const table =
+			`<div class="review-table">
+				<div class="review-row review-head">
+					<span></span>
+					<span>stage</span>
+					<span>command</span>
+					<span>risk</span>
+					<span>device</span>
+					<span>est</span>
+				</div>
+				${tableRows}
+			</div>`;
 		lines.push(
 			`  <span class="t-accent">[y]</span> <span class="t-text">write to disk</span>     <span class="t-accent">[e]</span> <span class="t-muted">edit picks</span>     <span class="t-accent">[q]</span> <span class="t-muted">quit</span>`,
 		);
 
-		screens.review.innerHTML = renderLines(lines);
+		screens.review.innerHTML = renderLines(lines.slice(0, 3)) + table + renderLines(lines.slice(3));
 	}
 
 	let writeRunId = 0;
+	function tintShellLine(line: string): string {
+		const safe = esc(line);
+		if (!line) return '&nbsp;';
+		if (line.startsWith('#!')) return `<span class="t-muted">${safe}</span>`;
+		if (line.startsWith('#')) return `<span class="t-dim">${safe}</span>`;
+		if (line.startsWith('set ')) {
+			return safe.replace('set', '<span class="t-accent">set</span>');
+		}
+		if (line.startsWith('echo ')) {
+			return safe.replace('echo', '<span class="t-accent">echo</span>');
+		}
+		return `<span class="t-text">${safe}</span>`;
+	}
+
+	function scriptLinesFor(picked: Array<{ stage: Stage; cmd: Cmd }>, visibleCommands: number): string[] {
+		const lines = [
+			'#!/usr/bin/env bash',
+			'set -euo pipefail',
+			'',
+			`# magus.sh — ${picked.length} selected commands`,
+			'',
+		];
+		for (const f of picked.slice(0, visibleCommands)) {
+			lines.push(`# ${f.stage.short}: ${f.cmd.title}`);
+			const first = f.cmd.commands[0];
+			lines.push(first ? first.run : `echo "skip ${f.cmd.title}"`);
+			lines.push('');
+		}
+		return lines;
+	}
+
 	async function runWriteAnimation(): Promise<void> {
 		const myRun = ++writeRunId;
 		const target = screens.write;
@@ -1158,46 +1388,44 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		const picked = flat.filter((f) => state.picked.has(f.cmd.id));
 		const sizeKb = Math.max(0.4, picked.length * 0.18).toFixed(1);
 
-		type Line = { kind: 'step' | 'blank' | 'done'; left?: string; right?: string; delay: number };
-		const sequence: Line[] = [
-			{ kind: 'step', left: 'rendering magus.sh', right: `done (${sizeKb} KB)`, delay: 480 },
-			{ kind: 'step', left: 'writing /tmp/magus.sh', right: 'done', delay: 480 },
-			{ kind: 'step', left: 'chmod +x', right: 'done', delay: 380 },
-			{ kind: 'blank', delay: 220 },
-			{ kind: 'done', delay: 0 },
-		];
+		const renderFrame = (visibleCommands: number, done = false): void => {
+			const code = scriptLinesFor(picked, visibleCommands);
+			const codeHtml = code
+				.map(
+					(line, i) =>
+						`<div class="script-line"><span class="script-gutter">${String(i + 1).padStart(2, '0')}</span><span>${tintShellLine(line)}</span></div>`,
+				)
+				.join('');
+			const more = picked.length > visibleCommands
+				? `<div class="script-more">… ${picked.length - visibleCommands} commands waiting to be rendered</div>`
+				: '';
+			const status = done
+				? `<span class="t-accent">saved</span> <span class="t-dim">/tmp/magus.sh · chmod +x · ${sizeKb} KB</span>`
+				: `<span class="t-accent">writing</span> <span class="t-dim">/tmp/magus.sh · streaming selected commands</span> <span class="cursor-blink">▌</span>`;
+			target.innerHTML =
+				renderLines([
+					`<span class="t-bright">Assembling magus.sh</span>`,
+					status,
+					'',
+				]) +
+				`<div class="script-box">${codeHtml}${more}</div>` +
+				renderLines([
+					'',
+					done
+						? `  <span class="t-accent">›</span> <span class="t-muted">press</span> <span class="t-accent">[enter]</span> <span class="t-muted">to continue</span> <span class="cursor-blink">▌</span>`
+						: `<span class="t-dim">reviewing order, comments, and executable permissions</span>`,
+				]);
+		};
 
-		const COL = 36;
-		const buf: string[] = [];
+		const steps = Math.max(1, Math.min(picked.length, 6));
 		target.innerHTML = '';
-		for (const ln of sequence) {
+		for (let visible = 1; visible <= steps; visible++) {
 			if (myRun !== writeRunId) return;
-			if (ln.kind === 'blank') {
-				buf.push('');
-			} else if (ln.kind === 'done') {
-				buf.push(
-					`  <span class="t-muted">saved to:</span> <span class="t-accent">/tmp/magus.sh</span>`,
-				);
-				buf.push('');
-				buf.push(
-					`  <span class="t-dim">${picked.length} commands · ${sizeKb} KB · idempotent</span>`,
-				);
-				buf.push('');
-				buf.push(
-					`  <span class="t-accent">›</span> <span class="t-muted">press</span> <span class="t-accent">[enter]</span> <span class="t-muted">to continue</span> <span class="cursor-blink">▌</span>`,
-				);
-			} else {
-				const left = ln.left ?? '';
-				const right = ln.right ?? '';
-				const dotCount = Math.max(3, COL - left.length);
-				const dots = ' ' + '.'.repeat(dotCount) + ' ';
-				buf.push(
-					`<span class="t-dim">→</span> <span class="t-text">${esc(left)}</span><span class="t-dim">${dots}</span><span class="t-accent">${esc(right)}</span>`,
-				);
-			}
-			target.innerHTML = renderLines(buf);
-			await new Promise((r) => setTimeout(r, ln.delay));
+			renderFrame(visible, false);
+			await new Promise((r) => setTimeout(r, 260));
 		}
+		if (myRun !== writeRunId) return;
+		renderFrame(Math.min(picked.length, 8), true);
 	}
 
 	function renderRun(): void {
@@ -1208,6 +1436,8 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		} else {
 			renderRunPrompt();
 		}
+		renderHelpPanel();
+		updateReadout();
 	}
 
 	function renderRunPrompt(): void {
@@ -1248,65 +1478,18 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	function renderInstalling(): void {
-		const lines: string[] = [];
 		const picked = flat.filter((f) => state.picked.has(f.cmd.id));
 		const done = state.installLog.length;
 		const total = picked.length;
-		const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-		const barLen = 28;
-		const filled = Math.round((pct / 100) * barLen);
-		const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled);
-
-		lines.push(
-			`<span class="t-accent">installing</span> <span class="t-dim">${done}/${total}</span>  <span class="t-dim">[</span><span class="t-accent">${bar}</span><span class="t-dim">]</span> <span class="t-dim">${pct}%</span>`,
-		);
-		lines.push('');
-
-		// Log of completed commands
-		const showLog = state.installLog.slice(-8); // last 8 to stay visible
-		for (const entry of showLog) {
-			const icon =
-				entry.result === 'done'
-					? `<span class="t-accent">✓</span>`
-					: `<span class="t-dim">—</span>`;
-			const title =
-				entry.result === 'skipped'
-					? `<span class="t-dim">${esc(entry.title)}</span>`
-					: `<span class="t-muted">${esc(entry.title)}</span>`;
-			lines.push(`  ${icon} ${title}`);
-		}
-
 		const current = picked[state.installLog.length];
-		if (!current) {
-			screens.run.innerHTML = renderLines(lines);
-			return;
-		}
-
-		if (state.installPhase === 'failed') {
-			lines.push(
-				`  <span class="t-warn">✗</span> <span class="t-text">${esc(current.cmd.title)}</span>`,
-			);
-			lines.push('');
-			lines.push(
-				`  <span class="t-warn">error</span> <span class="t-dim">·</span> <span class="t-muted">connection timed out — could not reach download server</span> <span class="t-dim">(simulated)</span>`,
-			);
-			lines.push(`  <span class="t-dim">exit code 1</span>`);
-			lines.push('');
-			lines.push(
-				`  <span class="t-accent">[y]</span> <span class="t-text">retry</span>   <span class="t-accent">[s]</span> <span class="t-muted">skip this command</span>   <span class="t-accent">[q]</span> <span class="t-muted">abort</span>`,
-			);
-		} else {
-			lines.push(
-				`  <span class="t-accent">›</span> <span class="t-text">${esc(current.cmd.title)}</span> <span class="cursor-blink">▌</span>`,
-			);
-			const remaining = total - done - 1;
-			if (remaining > 0) {
-				lines.push('');
-				lines.push(`  <span class="t-dim">${remaining} more queued</span>`);
-			}
-		}
-
-		screens.run.innerHTML = renderLines(lines);
+		screens.run.innerHTML = progressPanel({
+			title: 'Run script',
+			done,
+			total,
+			current,
+			log: state.installLog,
+			failed: state.installPhase === 'failed',
+		});
 	}
 
 	function renderInstallDone(): void {
@@ -1530,11 +1713,17 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				refreshHints();
 				renderPick();
 			} else if (row.kind === 'preset') {
-				for (const p of row.preset.patterns) {
-					for (const f of flat) {
-						if (matchPattern(f.cmd.id, p)) state.picked.add(f.cmd.id);
+				let added = 0;
+				let already = 0;
+				for (const cmd of presetMatches(row.preset)) {
+					if (state.picked.has(cmd.id)) {
+						already++;
+					} else {
+						state.picked.add(cmd.id);
+						added++;
 					}
 				}
+				setNotice(`${row.preset.name} applied · +${added} new · ${already} already picked`);
 				renderPick();
 			} else if (row.id === 'review') {
 				setStep('review');
@@ -1610,6 +1799,9 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		state.installPhase = 'prompt';
 		state.installLog = [];
 		state.installIndex = 0;
+		state.notice = null;
+		state.helpOpen = false;
+		window.clearTimeout(noticeTimer);
 		seedDefaults();
 		setStep('splash');
 	}
@@ -1629,6 +1821,22 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 
 		if (k === 'r' || k === 'R') {
 			resetAll();
+			e.preventDefault();
+			return;
+		}
+		if (k === '?') {
+			state.helpOpen = !state.helpOpen;
+			renderHelpPanel();
+			refreshHints();
+			e.preventDefault();
+			return;
+		}
+		if (state.helpOpen) {
+			if (k === 'Escape') {
+				state.helpOpen = false;
+				renderHelpPanel();
+				refreshHints();
+			}
 			e.preventDefault();
 			return;
 		}
@@ -1935,10 +2143,181 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	.t-warn {
 		color: var(--color-warn);
 	}
+	.t-band {
+		display: inline-block;
+		width: 100%;
+		padding: 2px 8px;
+		border-left: 2px solid var(--color-accent);
+		background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+		color: var(--color-text);
+	}
 	.cursor-blink {
 		display: inline-block;
 		color: var(--color-accent);
 		animation: lab-blink 1.05s steps(2) infinite;
+	}
+	.term-help {
+		position: absolute;
+		inset: 18px 22px auto;
+		z-index: 5;
+		padding: 16px 18px;
+		border: 1px solid color-mix(in oklab, var(--color-accent) 45%, var(--color-border));
+		border-radius: 8px;
+		background:
+			linear-gradient(
+				180deg,
+				color-mix(in oklab, var(--color-bg-elevated) 94%, transparent),
+				color-mix(in oklab, var(--color-bg) 94%, transparent)
+			);
+		box-shadow: 0 22px 60px -30px black;
+		backdrop-filter: blur(8px);
+	}
+	.script-box {
+		border: 1px solid color-mix(in oklab, var(--color-border) 84%, transparent);
+		background:
+			linear-gradient(
+				90deg,
+				color-mix(in oklab, var(--color-surface) 42%, transparent),
+				transparent 34%
+			),
+			color-mix(in oklab, var(--color-bg) 30%, transparent);
+		border-radius: 6px;
+		padding: 8px 0;
+		margin: 0 0 0 -2px;
+		overflow: hidden;
+	}
+	.script-line {
+		display: grid;
+		grid-template-columns: 34px minmax(0, 1fr);
+		gap: 10px;
+		padding: 0 12px;
+		white-space: pre;
+	}
+	.script-gutter,
+	.script-more {
+		color: var(--color-text-dim);
+	}
+	.script-more {
+		padding: 4px 12px 0 56px;
+		white-space: pre-wrap;
+	}
+	.review-table {
+		margin: 4px -2px 12px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 84%, transparent);
+		border-radius: 6px;
+		overflow: hidden;
+		background: color-mix(in oklab, var(--color-bg) 24%, transparent);
+	}
+	.review-row {
+		display: grid;
+		grid-template-columns: 18px 86px minmax(160px, 1fr) 52px 64px 44px;
+		gap: 10px;
+		align-items: center;
+		min-height: 1.9em;
+		padding: 0 10px;
+		border-top: 1px solid color-mix(in oklab, var(--color-border) 45%, transparent);
+		white-space: nowrap;
+	}
+	.review-row:first-child {
+		border-top: 0;
+	}
+	.review-row.is-focused {
+		background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+	}
+	.review-head {
+		font-size: 0.92em;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-text-dim);
+		background: color-mix(in oklab, var(--color-surface) 34%, transparent);
+	}
+	.progress-panel {
+		margin: 2px -2px 0;
+		padding: 14px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 84%, transparent);
+		border-radius: 6px;
+		background:
+			linear-gradient(
+				180deg,
+				color-mix(in oklab, var(--color-surface) 30%, transparent),
+				color-mix(in oklab, var(--color-bg) 18%, transparent)
+			);
+	}
+	.progress-head {
+		display: grid;
+		grid-template-columns: 24px minmax(0, 1fr) auto;
+		gap: 10px;
+		align-items: center;
+		margin-bottom: 10px;
+	}
+	.spinner-glyph {
+		color: var(--color-accent);
+		font-weight: 700;
+		text-align: center;
+	}
+	.progress-percent {
+		color: var(--color-text);
+		font-weight: 600;
+	}
+	.progress-meter {
+		height: 6px;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-border) 55%, transparent);
+		overflow: hidden;
+	}
+	.progress-meter span {
+		display: block;
+		height: 100%;
+		border-radius: inherit;
+		background: var(--color-accent);
+		box-shadow: 0 0 14px color-mix(in oklab, var(--color-accent) 42%, transparent);
+		transition: width 0.2s ease;
+	}
+	.progress-bar-line {
+		margin: 8px 0 0;
+		white-space: pre;
+	}
+	.progress-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 14px;
+		margin: 9px 0 12px;
+		color: var(--color-text-dim);
+	}
+	.progress-current {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 7px 9px;
+		border-left: 2px solid var(--color-accent);
+		background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+		white-space: pre-wrap;
+	}
+	.progress-log {
+		display: grid;
+		gap: 2px;
+		margin-top: 10px;
+	}
+	.progress-log-row {
+		display: grid;
+		grid-template-columns: 18px minmax(0, 1fr);
+		gap: 8px;
+	}
+	.progress-failure {
+		margin-top: 12px;
+		padding: 9px 10px;
+		border: 1px solid color-mix(in oklab, var(--color-warn) 44%, var(--color-border));
+		border-radius: 4px;
+		background: color-mix(in oklab, var(--color-warn) 9%, transparent);
+		color: var(--color-text);
+	}
+	@media (max-width: 720px) {
+		.review-row {
+			grid-template-columns: 14px 52px minmax(88px, 1fr) 38px 40px 30px;
+			gap: 5px;
+			padding-inline: 7px;
+			font-size: 0.92em;
+		}
 	}
 	@keyframes lab-blink {
 		50% {
@@ -2295,8 +2674,86 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		margin: 0 0 10px;
 		font-weight: 500;
 	}
+	.state-card {
+		padding: 14px;
+		margin-bottom: 28px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 82%, transparent);
+		border-radius: 8px;
+		background:
+			linear-gradient(
+				180deg,
+				color-mix(in oklab, var(--color-bg-elevated) 72%, transparent),
+				color-mix(in oklab, var(--color-bg) 42%, transparent)
+			);
+	}
+	.state-card .notes-title {
+		margin-bottom: 12px;
+	}
+	.state-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 12px 14px;
+		margin: 0;
+	}
+	.state-grid div {
+		min-width: 0;
+	}
+	.state-grid dt {
+		margin: 0 0 3px;
+		font-family: var(--font-mono);
+		font-size: 9px;
+		text-transform: uppercase;
+		letter-spacing: 0.16em;
+		color: var(--color-text-dim);
+	}
+	.state-grid dd {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		color: var(--color-text);
+		overflow-wrap: anywhere;
+	}
 	.notes-title + .notes-list {
 		margin-top: 0;
+	}
+	.decision-list {
+		list-style: none;
+		margin: 0 0 28px;
+		padding: 0;
+	}
+	.decision-list li {
+		padding: 12px 0;
+		border-top: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
+	}
+	.decision-list li:first-child {
+		border-top: 0;
+	}
+	.decision-tag {
+		display: inline-block;
+		margin-bottom: 6px;
+		padding: 1px 6px;
+		border-radius: 3px;
+		background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+		color: var(--color-accent);
+		font-family: var(--font-mono);
+		font-size: 9px;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+	}
+	.decision-list strong {
+		display: block;
+		font-size: 0.88rem;
+		line-height: 1.35;
+		color: var(--color-text);
+		font-weight: 500;
+	}
+	.decision-list small {
+		display: block;
+		margin-top: 4px;
+		font-size: 0.78rem;
+		line-height: 1.45;
+		color: var(--color-text-dim);
+		text-wrap: pretty;
 	}
 	.notes-list {
 		list-style: none;
@@ -2326,7 +2783,8 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		background: var(--color-surface);
 		color: var(--color-text);
 	}
-	.notes-list kbd {
+	.notes-list kbd,
+	.decision-list kbd {
 		display: inline-block;
 		padding: 0 5px;
 		border-radius: 3px;

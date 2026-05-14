@@ -1,14 +1,16 @@
 # magus.sh TUI Specification
 
-**Status:** Draft (validated via interactive prototype at `/tui`, Go implementation in `magus/`)  
-**Last Updated:** 2026-05-13  
+**Status:** Build-ready contract (validated via interactive prototype at `/tui`, Go implementation in `magus/`)  
+**Last Updated:** 2026-05-14  
 **Target:** Static Go binary using [Bubble Tea](https://github.com/charmbracelet/bubbletea) + Lipgloss + Bubbles
 
 ---
 
 ## Overview
 
-The magus.sh TUI is a five-stage terminal application that guides users through selecting and installing SteamOS setup commands. Two flows are available:
+The magus.sh TUI is a five-stage terminal application that guides users through selecting and installing SteamOS setup commands. The Astro `/tui` page is the visual source of truth; the production implementation lives in `magus/` as a static Go binary.
+
+Two flows are supported:
 
 **Wizard path (primary):** Install stage-by-stage as you go.
 ```
@@ -22,15 +24,38 @@ splash → pick menu → review → write → run
 
 Both paths share the same pick state — picks accumulate across stages and are only cleared on reset.
 
+### Build Readiness
+
+The specification is now clear enough to build against. The remaining work is implementation and parity testing, not product discovery.
+
+**Locked decisions:**
+- Static Go binary; no Node runtime in the shipped TUI.
+- Bubble Tea owns the state machine, keyboard input, window sizing, alt-screen, timers, and quit/reset behavior.
+- Lipgloss owns terminal layout, borders, color, text weight, and responsive width decisions.
+- Bubbles should be used where it reduces bespoke terminal logic: `help`, `key`, `progress`, `spinner`, and `table` are in scope for v1.
+- `/tmp/magus.sh` is the only output path for v1.
+- Review is always shown before writing the script.
+- Presets only add picks; they never deselect.
+- Deck-only commands stay visible, annotated as `deck`, and should be blocked or warned by pre-flight checks later.
+
+**Not in v1 unless explicitly pulled forward:**
+- Custom output path / file picker.
+- Persistent pick history.
+- Undo stack.
+- Tag/risk filtering.
+- Group-hop shortcuts (`[` / `]`).
+
 ---
 
 ## Visual Design
 
 ### Terminal Dimensions
-- **Viewport:** 80 columns × 24 rows (standard terminal)
-- **Window chrome:** macOS-style (red/yellow/green dots, draggable title bar)
-- **Font:** Monospace (Geist Mono, JetBrains Mono, or system fallback)
-- **Height cap:** Content area capped at 32 rem with vertical scrolling
+- **Design reference viewport:** 80 columns × 24 rows.
+- **Runtime viewport:** dynamic. Bubble Tea must handle `tea.WindowSizeMsg` and re-render without losing focus or pick state.
+- **Minimum usable size:** 72 columns × 20 rows. Below that, preserve core controls and hide decorative copy before hiding rows.
+- **Prototype chrome:** the Astro page uses macOS-style dots and an 80 × 24 label to frame the mockup. The production TUI runs in Bubble Tea alt-screen without window chrome.
+- **Font:** terminal monospace. The web prototype uses Geist Mono / JetBrains Mono to approximate the target.
+- **Scrolling:** list-like views should keep the focused row visible. Long review/run content may use Bubbles `viewport` if it outgrows the terminal.
 
 ### Color Palette
 
@@ -73,9 +98,36 @@ The Pick Menu and Pick Stage views render two columns inside the terminal body:
 - **Left (~52% of width):** the row list — stages, presets, action rows, or commands
 - **Right (~48% of width):** a *preview pane* that updates as you move the cursor
 
-The split is implemented by wrapping rendered output in `<div class="split">` with a CSS-grid two-column layout, and a thin dashed left border on the right pane. The preview block always opens with a small section header — `── stage ──`, `── preset ──`, `── apps ──`, `── shortcut ──`, `── back ──`, `── quit ──`, `── review ──`, `── group ──`, or `── install ──` — so the user can tell what kind of row they're looking at.
+The web prototype implements the split with CSS grid. The Go implementation should render the same structure with Lipgloss `JoinHorizontal`, calculated widths, and a dim vertical separator. The preview block always opens with a small section header — `── stage ──`, `── preset ──`, `── apps ──`, `── shortcut ──`, `── back ──`, `── quit ──`, `── review ──`, `── group ──`, or `── install ──` — so the user can tell what kind of row they're looking at.
 
 The Splash, Pick Search, Pick Installing, Review, Write, and Run screens render single-column.
+
+### Review Table Layout
+
+Review uses a Bubbles `table`-style presentation, not grouped bullet lists. Columns:
+
+| Column | Purpose |
+|--------|---------|
+| cursor | `❯` on the focused/most important row |
+| stage | `NN Short` |
+| command | Truncated command title |
+| risk | `LOW`, `MED`, `HIGH` from command `danger` metadata |
+| device | `any` or `deck` from `deck_only` |
+| est | Per-command rough estimate |
+
+The first highlighted row should be the first elevated-risk or deck-only item; if none exist, highlight the first row. This makes Review a pre-flight checklist rather than only a receipt.
+
+### Progress / Spinner Layout
+
+Pick Installing and Run Installing share the same Bubbles `progress` + `spinner` visual model:
+
+- Spinner glyph at the left of the progress heading.
+- Percent at the right of the heading.
+- Filled progress meter plus textual `█`/`░` bar for terminal clarity.
+- Metadata row: elapsed, ETA, and timer/tick state.
+- Current command row: stage, chevron, title, cursor.
+- Recent log: last 6 completed/skipped commands.
+- Failure panel: error message plus retry/skip/abort keys.
 
 ### Status Bar — Key Hierarchy
 
@@ -85,7 +137,19 @@ Hint keys at the bottom of the terminal are typed as `'primary' | 'normal' | 'sy
 - **normal** — supporting navigation (`← →`, `↑ ↓`, `esc`, `/`, `e edit`). Default styling.
 - **system** — destructive / escape hatches (`r reset`, `q abort`, `q quit`). Reduced opacity, never primary.
 
-`Hint` carries an optional `kind` field; the renderer maps it to a `data-kind` attribute on each `<kbd>`. Each `kind` should appear at most once per status bar.
+`Hint` carries an optional `kind` field. In the web prototype it maps to `data-kind`; in Go it maps to Lipgloss styles. Multiple normal hints are fine; keep primary and system hints visually distinct.
+
+### Help Overlay
+
+`?` opens an in-frame help overlay on every non-blocked screen. `esc` or `?` closes it. The overlay is context-sensitive:
+
+- Pick Menu: movement, open, search, reset.
+- Pick Stage: movement, toggle, select, back, search.
+- Search: typing, backspace, movement, toggle, escape.
+- Review: write, edit, quit.
+- Write / Run: continue, run now, paste later, retry/skip/abort when applicable.
+
+In Go, model this with Bubbles `help` + `key.Binding` where practical. The status bar remains the short help surface; `?` is the expanded help surface.
 
 ### Separators & Structure
 
@@ -119,6 +183,8 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 |-----|--------|---------|
 | `←` / `→` | Previous/next step | Any screen |
 | `r` / `R` | Reset (return to splash, clear picks) | Any screen |
+| `?` | Toggle expanded help overlay | Any non-blocked screen |
+| `esc` | Close expanded help overlay | Help overlay open |
 
 ### Keyboard Shortcuts (Per-View)
 
@@ -175,7 +241,7 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 #### Pick Installing — Done
 | Key | Action |
 |-----|--------|
-| `esc` | Return to stage menu |
+| `esc` / `enter` | Return to stage menu |
 
 #### Review Screen
 | Key | Action |
@@ -202,6 +268,11 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 | `y` / `Y` | Retry failed command |
 | `s` / `S` | Skip failed command |
 | `q` / `Q` | Abort install |
+
+#### Run Screen — Done
+| Key | Action |
+|-----|--------|
+| `enter` | Return to splash |
 
 ---
 
@@ -340,7 +411,7 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
   Capture & Chat  System Tools  [Browsers & Comms]  Media
 ```
 
-The second line is the **group tab strip**: every group in the current stage rendered inline, the active group bracketed and accent-coloured. It's a visual breadcrumb only — there is no keyboard shortcut to hop between groups; users escape to the group list and re-enter. (Future: bind `[` / `]` for direct hop.)
+The second line is the **group tab strip**: every group in the current stage rendered inline, the active group bracketed and accent-coloured. It's a visual breadcrumb only — there is no keyboard shortcut to hop between groups in v1; users escape to the group list and re-enter. Direct `[` / `]` group hopping is explicitly out of scope for v1.
 
 **Rows:**
 1. Commands (sorted by order):
@@ -386,28 +457,31 @@ The single-line summary that used to sit above this footer is gone — its conte
 
 **Purpose:** Animate per-stage installation with live feedback.
 
-**Running state:**
+**Running state:** use the shared progress/spinner panel.
 ```
-installing 2/5  [████████░░░░░░░░░░░░░░] 40%
+⠹ Apps install                                      40%
+[███████████░░░░░░░░░░░░░░░░░] 2/5
+elapsed 00:21   eta 02:00   tick tea.Tick
 
-  ✓ ProtonUp-Qt
-  ✓ Heroic Games Launcher
-  › Bottles ▌
-    3 more queued
+Apps › Bottles ▌
+
+✓ ProtonUp-Qt
+✓ Heroic Games Launcher
 ```
 
 **Failed state:**
 ```
-installing 2/5  [████████░░░░░░░░░░░░░░] 40%
+⠹ Apps install                                      40%
+[███████████░░░░░░░░░░░░░░░░░] 2/5
+elapsed 00:21   eta 02:00   tick tea.Tick
 
-  ✓ ProtonUp-Qt
-  ✓ Heroic Games Launcher
-  ✗ Bottles
+Apps › Bottles
 
-  error · connection timed out — could not reach download server (simulated)
-  exit code 1
+✓ ProtonUp-Qt
+✓ Heroic Games Launcher
 
-  [y] retry   [s] skip   [q] abort
+error connection timed out (simulated)
+[y] retry   [s] skip this command   [q] abort
 ```
 
 The trailing `(simulated)` chip is rendered in dim text. It clarifies that the failure is a deterministic prototype demo (triggered at index 2 when `picked.length ≥ 4`), not a real network error — reviewers were assuming the prototype was broken. Strip it out when the TUI runs against a real installer.
@@ -427,16 +501,17 @@ press [esc] to continue to next stage
 ```
 
 **Behavior:**
-- Each command simulates ~800ms of install time
-- Progress bar: `█` filled, `░` unfilled, 22 chars wide
+- Each command simulates ~250–700ms of install time in the prototype; the real installer should tick from actual process state where possible.
+- Use Bubbles `spinner` and `progress` for the production render. The textual `█`/`░` bar is retained for terminals where the styled meter is hard to read.
+- Progress bar: `█` filled, `░` unfilled, 28 chars wide in the design reference.
 - `installedStageIds` set is updated when install completes (stage shows ⚡ in menu)
-- Abort (`q`) returns to stage view without marking stage as installed
+- Abort (`q`) returns to the stage without marking it as installed. The prototype may fake completion for demo continuity; the production build should preserve the stricter behavior.
 
 ---
 
 ### Review
 
-**Purpose:** Cross-stage summary of all picks before writing a script.
+**Purpose:** Cross-stage pre-flight table of all picks before writing a script.
 
 **Header (if no picks):**
 ```
@@ -447,26 +522,31 @@ press [←] to go back, or [r] to restart.
 
 **Header (with picks):**
 ```
-{N} commands ready · est. ~{mins} min
+Review table · bubbles/table mock · {N} rows · est. ~{mins} min
+risk {K} elevated   deck-only {D}   script /tmp/magus.sh
 ```
 
-**Body (grouped by stage):**
+**Body:** table, not grouped bullets.
 ```
-  02 Apps
-     ✓ Heroic Games Launcher
-     ✓ ProtonUp-Qt
-
-  03 Optimise
-     ✓ CryoUtilities
+  stage        command                       risk  device  est
+  01 Setup     Set a sudo password           LOW   any     <1m
+  01 Setup     Install Dependencies          LOW   any     02m
+❯ 03 Optimise  Btrfs /home conversion        HIGH  deck    02m
 ```
 
 **Footer:**
 ```
-―
 [y] write to disk     [e] edit picks     [q] quit
 ```
 
-**Time Estimate:** `max(2, round(picked.length * 1.4))` minutes
+**Rules:**
+- The table uses command metadata: `danger` → risk column, `deck_only` → device column.
+- Elevated-risk count is commands where `danger !== 'low'`.
+- Deck-only count is commands where `deck_only === true`.
+- The focused row is the first command with elevated risk or deck-only metadata; otherwise the first picked command.
+- Command names truncate to fit the active terminal width. Do not hide `risk`, `device`, or `est` unless the terminal is below the minimum usable width.
+- Time estimate: `max(2, round(picked.length * 1.4))` minutes.
+- Per-command estimate is heuristic: network/git commands ≈ `02m`, Flatpak installs ≈ `01m`, local config commands ≈ `<1m`.
 
 ---
 
@@ -474,27 +554,46 @@ press [←] to go back, or [r] to restart.
 
 **Purpose:** Animate script generation and file I/O.
 
-**Sequence (with delays):**
-1. `→ rendering magus.sh ................ done (X.X KB)` — 480ms
-2. `→ writing /tmp/magus.sh ............. done` — 480ms
-3. `→ chmod +x .......................... done` — 380ms
-4. Blank line — 220ms
-5. Done:
-   ```
-   saved to: /tmp/magus.sh
+**Visual:** live script assembly window with line numbers and syntax tinting. This replaced the earlier dot-padded progress list because reviewers need to understand what the app is writing.
 
-   N commands · X.X KB · idempotent
+**Running state:**
+```
+Assembling magus.sh
+writing /tmp/magus.sh · streaming selected commands ▌
 
-   › press [enter] to continue ▌
-   ```
+01 #!/usr/bin/env bash
+02 set -euo pipefail
+03
+04 # magus.sh — 12 selected commands
+05
+06 # Setup: Set a sudo password
+07 passwd
+
+… 6 commands waiting to be rendered
+
+reviewing order, comments, and executable permissions
+```
+
+**Done state:**
+```
+Assembling magus.sh
+saved /tmp/magus.sh · chmod +x · X.X KB
+
+01 #!/usr/bin/env bash
+02 set -euo pipefail
+...
+
+› press [enter] to continue ▌
+```
 
 **Script Size Estimate:** `max(0.4, picked.length * 0.18).toFixed(1)` KB
 
 **File Output:**
 - Path: `/tmp/magus.sh`
-- Header: `#!/usr/bin/env bash` + `# magus.sh — selected commands`
+- Header: `#!/usr/bin/env bash`, `set -euo pipefail`, and `# magus.sh — N selected commands`
 - Per-command: comment with title/summary, then `run` lines
 - Ordering: by stage order, then by command order
+- Permissions: `chmod +x /tmp/magus.sh` before Run
 
 ---
 
@@ -523,10 +622,41 @@ bash_command_here
 
 **Running / failed / done states:** Same UI pattern as Pick Installing (see above), applied to the full picked set across all stages.
 
+**Running state example:**
+```
+⠦ Run script                                      25%
+[███████░░░░░░░░░░░░░░░░░░░░░] 3/12
+elapsed 00:36   eta 04:00   tick tea.Tick
+
+Apps › Brave ▌
+
+✓ Set a sudo password
+✓ Install Dependencies
+✓ Flatseal
+```
+
+**Failure example:**
+```
+⠦ Run script                                      25%
+[███████░░░░░░░░░░░░░░░░░░░░░] 3/12
+elapsed 00:36   eta 04:00   tick tea.Tick
+
+Apps › Brave
+
+✓ Set a sudo password
+✓ Install Dependencies
+✓ Flatseal
+
+error connection timed out (simulated)
+[y] retry   [s] skip this command   [q] abort
+```
+
 **Behavior:**
 - `y`: Simulate executing `/tmp/magus.sh`
 - `n`: Exit; script remains at `/tmp/magus.sh`
 - Script preview shows first 4 commands
+- Failure is deterministic in the prototype at index 3 when `picked.length ≥ 4`; production should report actual process exit state.
+- Done state ends with restart guidance and `enter` returns to splash.
 
 ---
 
@@ -539,6 +669,8 @@ type Cmd = {
   id: string;              // e.g., "setup/01-set-sudo-password"
   title: string;           // Display name
   summary?: string;        // One-line description
+  danger: 'low' | 'medium' | 'high';
+  deckOnly: boolean;       // Frontmatter deck_only, converted to camelCase in prototype
   commands: Array<{
     run: string;           // Bash command to execute
     description?: string;  // Inline comment for script
@@ -567,7 +699,7 @@ type Stage = {
 type AppGroup = {
   id: string;          // e.g., "retro"
   name: string;        // Display name, e.g., "Retro & Emulation"
-  patterns: RegExp[];  // Matched against cmd.id to assign commands to group
+  patterns: string[];  // Substring-matched against cmd.id to assign commands to group
 };
 ```
 
@@ -580,7 +712,7 @@ type Preset = {
   id: string;          // e.g., "magnum-opus"
   name: string;        // Display name
   tagline: string;     // Short description shown in menu
-  patterns: RegExp[];  // Matched against cmd.id to select commands
+  patterns: string[];  // Substring-matched against cmd.id to select commands
 };
 ```
 
@@ -632,8 +764,12 @@ type PickState = {
   installPhase: InstallPhase;
   installIndex: number;                // Current command index during install
   installLog: Array<{ title: string; result: 'done' | 'skipped' }>;
+  notice: string | null;               // Preset-applied confirmation band
+  helpOpen: boolean;                   // Expanded help overlay
 };
 ```
+
+The Go model uses equivalent fields in `magus/main.go`; names may be idiomatic Go (`DeckOnly`, `InstallPhase`, `RunPhase`) but should preserve the same state boundaries.
 
 ---
 
@@ -645,6 +781,7 @@ type PickState = {
 - Picks are cleared only on reset (`r` key or Quit action)
 - All stages can be visited in any order
 - Presets apply immediately on enter; they OR into the existing pick set (no deselect)
+- Preset application shows a short confirmation band: `Magnum Opus applied · +8 new · 4 already picked`
 
 ### Install Wizard
 
@@ -684,6 +821,14 @@ type PickState = {
 - Review is accessible regardless of pick count (shows warning if empty)
 - Install button is disabled if no picks in that stage
 - Write step always succeeds (no validation)
+- Review must surface `danger` and `deck_only` metadata before the user writes/runs the script
+
+### Metadata Rules
+
+- `danger` defaults to `low` when omitted.
+- `deck_only` defaults to `false` when omitted.
+- Deck-only commands remain selectable on non-Deck environments in the prototype. Production should add pre-flight detection before execution; until then, annotate clearly in Review.
+- High-risk commands should never be hidden by presets or grouping; they should be visible in Review with `HIGH`.
 
 ---
 
@@ -695,7 +840,7 @@ type PickState = {
 | Order | Command | Notes |
 |-------|---------|-------|
 | 10 | Set a sudo password | Prerequisite for anything that touches `/etc`, `/var`, or kernel modules. |
-| 20 | Install Dependencies | nvm + Node.js 22 + tsx + @inquirer/prompts, installs to `~/.nvm` (survives SteamOS updates). The TUI itself runs on this stack. |
+| 20 | Install Dependencies | Installs the prebuilt `magus` Linux binary into `~/.local/bin`. No Node, tsx, npm install, or runtime bootstrap in the shipped TUI. |
 
 ### Apps (02) — 11 commands across 4 groups · sigil 🜁
 Managed via `STAGE_GROUPS['install']`. All Flatpak IDs verified against Flathub. Notable:
@@ -726,7 +871,7 @@ Mostly small `kwriteconfig5` / `qdbus` invocations and `/etc` drop-ins.
 | 40 | Double-click to open | KDE single-click → double-click. |
 | 50 | Disable Baloo (file indexer) | Stops background indexing on `~`. |
 | 60 | Persistent Wi-Fi power save | Drops a NetworkManager `conf.d` snippet. |
-| 70 | Btrfs `/home` conversion | Filesystem migration; high-impact, marked `danger: medium`. |
+| 70 | Btrfs `/home` conversion | Filesystem migration; high-impact, marked `danger: high`, `deck_only: true`. |
 | 80 | Nested Desktop in Game Mode | Writes `~/.local/bin/PlasmaNested.sh` (davidedmundson script). User finishes by adding it as a non-Steam game once. |
 
 ### Customise (04) — 7 commands · sigil 🜄
@@ -785,7 +930,7 @@ Managed via `STAGE_GROUPS['gaming']`. Flatpak-first where Flathub coverage exist
 - Full name shown in stage/group view
 
 ### Network / External State
-- Pre-flight checks: detect Steam Deck before offering Deck-only commands (future)
+- Pre-flight checks: detect Steam Deck before executing Deck-only commands (future). Do not hide Deck-only commands in selection; annotate them in Review.
 - Script output: `/tmp/magus.sh`
 
 ### Performance
@@ -796,12 +941,27 @@ Managed via `STAGE_GROUPS['gaming']`. Flatpak-first where Flathub coverage exist
 
 ## Implementation Notes
 
+### Build Acceptance Checklist
+
+The Go build is considered aligned with the prototype when these pass:
+
+- `magus` starts in alt-screen, respects terminal resize, and exits cleanly with `ctrl+c`.
+- `enter` from Splash lands on Pick Menu with seeded/default picks only if the implementation intentionally keeps prototype defaults; production may start empty.
+- Pick Menu, Pick Stage, Search, Review, Write, Run, and both install flows match the keyboard tables above.
+- Split-pane preview content changes as the cursor moves.
+- Presets report added vs already-picked counts.
+- Review renders as a table with `risk`, `device`, and `est` columns.
+- Write streams a visible script assembly preview and writes `/tmp/magus.sh`.
+- Run and stage install use the shared progress/spinner panel and expose retry/skip/abort on failure.
+- Reset clears picks, installed-stage state, notices, logs, help overlay, and in-flight timers.
+- `magus/scripts/gen-commands.mts` regenerates `magus/commands.json`; the Go binary embeds that file with `//go:embed`.
+
 ### Technology Stack
 - **Runtime:** Statically-linked Go binary — no runtime, no package manager, no `$PATH` surgery
 - **UI library:** [Bubble Tea](https://github.com/charmbracelet/bubbletea) (Elm-style update/view/model) + [Lipgloss](https://github.com/charmbracelet/lipgloss) (styles) + [Bubbles](https://github.com/charmbracelet/bubbles) (progress/spinner primitives)
 - **Scaffold:** `magus/` directory
 - **Distribution:** prebuilt `linux/amd64` binary from GitHub releases; ~5 MB, drops into `~/.local/bin/magus` and survives SteamOS immutable updates
-- **Data:** `magus/commands.json` is embedded at compile time via `//go:embed`; regenerated from `src/content/commands/**/*.md` by `magus/scripts/gen-commands.mjs`
+- **Data:** `magus/commands.json` is embedded at compile time via `//go:embed`; regenerated from `src/content/commands/**/*.md` by `magus/scripts/gen-commands.mts`
 
 ### File Structure
 ```
@@ -809,7 +969,7 @@ magus/
 ├── go.mod               # module: magus
 ├── commands.json        # generated catalogue, embedded via //go:embed
 ├── scripts/
-│   └── gen-commands.mjs # walks markdown frontmatter → commands.json
+│   └── gen-commands.mts # walks markdown frontmatter → commands.json
 ├── data.go              # Catalogue + Cmd/Stage/Group/Preset + lookups
 ├── styles.go            # lipgloss palette + status-bar key hierarchy
 ├── main.go              # Model, Update, View dispatcher
@@ -818,9 +978,9 @@ magus/
 ├── stage.go             # pick stage (groups + commands + select-all)
 ├── search.go            # fuzzy search across catalogue
 ├── install.go           # per-stage install animation
-├── review.go            # cross-stage review
-├── write.go             # script-write animation
-└── run.go               # final-run prompt + execution
+├── review.go            # cross-stage table review
+├── write.go             # script assembly animation
+└── run.go               # final-run prompt + progress execution
 ```
 
 The Astro `/tui` page remains the visual design source of truth — both
@@ -833,18 +993,20 @@ implementations consume the same content collection and `STAGE_SIGILS`.
 4. Visual regression tests (ASCII output comparison)
 
 ### Future Enhancements
-1. **`?` help overlay** — context-sensitive keyboard shortcut reference
+1. ~~**`?` help overlay** — context-sensitive keyboard shortcut reference~~ ✓ prototyped 2026-05-14; build with Bubbles `help` / `key`
 2. **Undo last action** — pop last toggle from a history stack
 3. **History tracking** — remember user's last selections across runs
 4. ~~**Smart preview pane** — show command details as you navigate~~ ✓ shipped 2026-05-13 (split layout in Pick Menu and Pick Stage)
 5. **Command filtering** — filter by tag or danger level
-6. **Pre-flight checks** — detect real Steam Deck, skip Deck-only commands otherwise (relevant to `deck_only: true` items like Waydroid)
+6. **Pre-flight checks** — detect real Steam Deck before executing Deck-only commands (relevant to `deck_only: true` items like Waydroid and Btrfs conversion)
 7. **Custom output path** — let user choose script destination
 8. **Group hop shortcuts** — `[` / `]` to cycle through the group tab strip without bouncing back to the group list
 9. **Live syntax-tinted Run preview** — line numbers in a gutter, fade-out instead of `… +N more`, comments dim / `bash`-keywords accent / `$` calls bright
-10. **Live script-assembly Write screen** — stream the generated `magus.sh` into a small code window as it "writes," replacing the dot-padded animation
-11. **In-frame status bar** — pull the keyboard-hint rail inside the terminal chrome (vim/btop convention) so the prototype stops reading like dev-tools chrome
-12. **Preset-applied confirmation** — brief in-pane band (`✦ Magnum Opus applied · +5 new, 7 already picked`) so the user knows the action landed
+10. ~~**Live script-assembly Write screen** — stream the generated `magus.sh` into a small code window as it "writes," replacing the dot-padded animation~~ ✓ prototyped 2026-05-14
+11. ~~**In-frame status bar** — pull the keyboard-hint rail inside the terminal chrome (vim/btop convention) so the prototype stops reading like dev-tools chrome~~ ✓ shipped in current prototype
+12. ~~**Preset-applied confirmation** — brief in-pane band (`✦ Magnum Opus applied · +5 new, 7 already picked`) so the user knows the action landed~~ ✓ prototyped 2026-05-14
+13. ~~**Review table** — risk/device/estimate table before write~~ ✓ prototyped 2026-05-14; build with Bubbles `table`
+14. ~~**Shared progress/spinner panel** — richer per-stage and final-run install feedback~~ ✓ prototyped 2026-05-14; build with Bubbles `progress` + `spinner`
 
 ---
 
@@ -892,3 +1054,8 @@ implementations consume the same content collection and `STAGE_SIGILS`.
 | 2026-05-13 | New Gaming command: Waydroid (Android container) (order 260, Launchers & Compat) — clones the SteamOS-Waydroid-Installer; `deck_only: true` |
 | 2026-05-13 | In-terminal CSS (`.t-*`, `.cursor-blink`, `.line.is-focused`, `.split*`) moved to a `<style is:global>` block — these elements are created at runtime by the page script and don't carry Astro's per-component scope attribute. Side benefit: `.t-accent` now actually renders accent-orange (was silently broken) |
 | 2026-05-13 | Technology stack switched from Node.js + @inquirer/prompts to Go + Bubble Tea + Lipgloss. `@inquirer/prompts` is built for one-prompt-at-a-time inquiry — the spec's full-screen stateful app (split panes, animated progress, state machine) maps onto Bubble Tea's update/view/model 1:1. Distribution is now a single static binary instead of nvm + Node + tsx + npm install. Mockup lives in `magus/`. |
+| 2026-05-14 | Spec promoted from draft to build-ready contract; added locked decisions, non-v1 scope, and build acceptance checklist. |
+| 2026-05-14 | Review changed from grouped bullet summary to Bubbles `table` contract with risk/device/estimate columns backed by `danger` and `deck_only` metadata. |
+| 2026-05-14 | Pick Installing and Run Installing now share a Bubbles `progress` + `spinner` panel with elapsed/ETA metadata, current command, recent log, and failure actions. |
+| 2026-05-14 | Write screen changed to live script assembly preview with line numbers and syntax tinting. |
+| 2026-05-14 | Help overlay and preset-applied confirmation moved out of future enhancements into v1 prototype requirements. |
