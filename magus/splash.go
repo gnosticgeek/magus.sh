@@ -33,7 +33,7 @@ func (m Model) viewSplash() string {
 
 	header := lipgloss.JoinHorizontal(lipgloss.Top, left, right)
 
-	tagline := sMuted.Italic(true).Render("transmute your device")
+	tagline := sMuted.Italic(true).Render("your device, transmuted in ten minutes")
 
 	// Stage legend pulls sigils from the catalogue so we never drift.
 	legendParts := make([]string, 0, len(m.cat.Stages)*2)
@@ -47,8 +47,8 @@ func (m Model) viewSplash() string {
 	legend := sDim.Render("── ") + lipgloss.JoinHorizontal(lipgloss.Center, legendParts...) + sDim.Render(" ──")
 
 	bullets := []string{
-		sAccent.Render("✓") + sText.Render(" idempotent — safe to run again"),
-		sAccent.Render("✓") + sText.Render(" no telemetry · one bash script · paste & walk away"),
+		sAccent.Render("✓") + sText.Render(" repeatable — safe to run again"),
+		sAccent.Render("✓") + sText.Render(" no telemetry · one script · paste, pick, run"),
 	}
 
 	cta := sBright.Render("press ") + sAccent.Render("[enter]") + sBright.Render(" to begin the ceremony")

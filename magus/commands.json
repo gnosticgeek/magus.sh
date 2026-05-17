@@ -4,7 +4,7 @@
       "id": "setup",
       "num": "01",
       "short": "Setup",
-      "tagline": "Sudo and Decky basics.",
+      "tagline": "Sudo, dependencies, and Decky foundations.",
       "sigil": "🜃",
       "groups": [],
       "items": [
@@ -44,7 +44,7 @@
       "id": "install",
       "num": "02",
       "short": "Apps",
-      "tagline": "Launchers, browsers, streaming, utilities.",
+      "tagline": "Browsers, launchers, media, and desktop tools.",
       "sigil": "🜁",
       "groups": [
         {
@@ -292,7 +292,7 @@
       "id": "optimise",
       "num": "03",
       "short": "Optimise",
-      "tagline": "Performance and Plasma tweaks.",
+      "tagline": "Performance, battery, and Plasma comfort.",
       "sigil": "🜂",
       "groups": [],
       "items": [
@@ -429,7 +429,7 @@
       "id": "customise",
       "num": "04",
       "short": "Customise",
-      "tagline": "Plugins, art, polish.",
+      "tagline": "Decky plugins, artwork, and interface polish.",
       "sigil": "🜄",
       "groups": [],
       "items": [
@@ -592,7 +592,7 @@
       "id": "gaming",
       "num": "05",
       "short": "Gaming",
-      "tagline": "Launchers, emulators, streams. Source ports welcome.",
+      "tagline": "Emulators, launchers, streaming, and source ports.",
       "sigil": "☉",
       "groups": [
         {
@@ -1424,7 +1424,7 @@
     {
       "id": "magnum-opus",
       "name": "Magnum Opus",
-      "tagline": "the full proven kit",
+      "tagline": "the full transmutation",
       "commandIds": [
         "setup/01-set-sudo-password",
         "setup/02-install-dependencies",
@@ -1443,7 +1443,7 @@
     {
       "id": "retro-operator",
       "name": "Retro Operator",
-      "tagline": "shaders & bezels",
+      "tagline": "emulators, shaders, bezels",
       "commandIds": [
         "setup/01-set-sudo-password",
         "setup/02-install-dependencies",
@@ -1458,7 +1458,7 @@
     {
       "id": "hush-mode",
       "name": "Hush Mode",
-      "tagline": "a calm Deck",
+      "tagline": "quieter defaults",
       "commandIds": [
         "setup/01-set-sudo-password",
         "install/40-flatseal",

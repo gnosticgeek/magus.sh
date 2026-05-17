@@ -34,7 +34,37 @@ const iconName = data.icon ?? categoryFallbackIcon[data.category];
 const sectionKey = data.group ?? data.category;
 const requiresDecky = data.group === 'decky' && !data.tags?.includes('prerequisite');
 
-const hasFooter = data.deck_only || data.danger || (data.reversible && data.undo);
+const needsSudo = /\b(sudo|passwd)\b/.test(combinedCommand);
+const externalScript = /\b(curl|wget)\b/i.test(combinedCommand) &&
+	/(\|\s*(bash|sh)\b|github(?:usercontent)?\.com|gitlab\.com)/i.test(combinedCommand);
+const trustBadges = [
+	data.idempotent && {
+		label: 'safe rerun',
+		tone: 'safe',
+	},
+	data.reversible && data.undo && {
+		label: 'reversible',
+		tone: 'neutral',
+	},
+	data.deck_only && {
+		label: 'Deck only',
+		tone: 'neutral',
+	},
+	needsSudo && {
+		label: 'needs sudo',
+		tone: 'warn',
+	},
+	externalScript && {
+		label: 'external script',
+		tone: 'warn',
+	},
+	data.danger && {
+		label: `${data.danger} risk`,
+		tone: data.danger,
+	},
+].filter(Boolean) as { label: string; tone: string }[];
+
+const hasFooter = trustBadges.length > 0 || (data.reversible && data.undo);
 
 const peekData: PeekDetail = {
 	title: data.title,
@@ -140,18 +170,21 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 		hasFooter && (
 			<footer class="flex items-center justify-between gap-2 border-t border-[color:var(--color-border)]/60 px-3.5 py-1.5">
 				<div class="flex flex-wrap gap-1">
-					{data.deck_only && (
-						<span class="rounded border border-[color:var(--color-border)] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-[color:var(--color-text-muted)]">
-							Deck only
-						</span>
-					)}
-					{data.danger && (
+					{trustBadges.map((badge) => (
 						<span
-							class={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${dangerStyles[data.danger]}`}
+							class:list={[
+								'trust-badge rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide',
+								badge.tone === 'safe' && 'trust-badge-safe',
+								badge.tone === 'neutral' && 'trust-badge-neutral',
+								badge.tone === 'warn' && 'trust-badge-warn',
+								badge.tone === 'low' && dangerStyles.low,
+								badge.tone === 'medium' && dangerStyles.medium,
+								badge.tone === 'high' && dangerStyles.high,
+							]}
 						>
-							{data.danger} risk
+							{badge.label}
 						</span>
-					)}
+					))}
 				</div>
 				{data.reversible && data.undo && (
 					<button
@@ -234,6 +267,20 @@ const searchHaystack = [data.title, data.summary, ...(data.tags ?? [])]
 	}
 	:global(.view-cmd-glyph:active) {
 		transform: scale(0.92);
+	}
+	:global(.trust-badge-neutral) {
+		color: var(--color-text-muted);
+		border-color: var(--color-border);
+	}
+	:global(.trust-badge-safe) {
+		color: var(--color-accent);
+		border-color: color-mix(in oklab, var(--color-accent) 38%, var(--color-border));
+		background: color-mix(in oklab, var(--color-accent) 7%, transparent);
+	}
+	:global(.trust-badge-warn) {
+		color: var(--color-warn);
+		border-color: color-mix(in oklab, var(--color-warn) 42%, var(--color-border));
+		background: color-mix(in oklab, var(--color-warn) 7%, transparent);
 	}
 
 	/* illuminated capital — appears when selected, a decorative drop-cap

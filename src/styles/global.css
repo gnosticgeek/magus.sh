@@ -440,6 +440,14 @@ body::after {
 	flex-shrink: 0;
 	animation: pulse 1.6s ease-in-out infinite;
 }
+.selection-bar[data-state="empty"] {
+	opacity: 0.82;
+}
+.selection-bar[data-state="empty"] .dot {
+	background: var(--color-text-dim);
+	box-shadow: none;
+	animation: none;
+}
 .selection-bar .selection-text {
 	display: flex;
 	flex-direction: column;
@@ -510,11 +518,26 @@ body::after {
 		opacity 0.2s,
 		transform 0.08s;
 }
+.selection-bar[data-state="empty"] button.copy-action {
+	background: color-mix(in oklab, var(--color-surface) 82%, transparent);
+	color: var(--color-text-dim);
+	border-color: var(--color-border);
+	cursor: default;
+}
+.selection-bar[data-state="empty"] [data-action="clear"] {
+	display: none;
+}
 @media (hover: hover) and (pointer: fine) {
 	.selection-bar button.copy-action:hover {
 		background: var(--color-accent-dim);
 		border-color: var(--color-accent-dim);
 		transform: translateY(-1px);
+	}
+	.selection-bar[data-state="empty"] button.copy-action:hover {
+		background: color-mix(in oklab, var(--color-surface) 82%, transparent);
+		border-color: var(--color-border);
+		color: var(--color-text-dim);
+		transform: none;
 	}
 }
 .selection-bar button.copy-action.copied {

@@ -284,9 +284,9 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 
 **Content:**
 - Block-letter `MAGUS` wordmark on the left, info box on the right (`magus.sh v0.1`, `spells N`, `stages 5`, `runtime ~10 min`)
-- Tagline: `transmute your device`
+- Tagline: `your device, transmuted in ten minutes`
 - **Stage legend** (replaces the cryptic glyph row): `── 🜃 setup · 🜁 apps · 🜂 optimise · 🜄 customise · ☉ gaming ──` — pairs each sigil with the stage name once on splash, then the menu rows reuse the sigils as a learned shorthand. Built dynamically from `STAGE_SIGILS` so it stays in sync.
-- Two `✓` bullet lines: `idempotent — safe to run again`, `no telemetry · one bash script · paste & walk away`
+- Two `✓` bullet lines: `repeatable — safe to run again`, `no telemetry · one script · paste, pick, run`
 - Call-to-action: `press [enter] to begin the ceremony`
 
 **No cursor, no movement.**
@@ -315,9 +315,9 @@ splash ──[enter]──> pick(menu) ──[enter stage]──> pick(stage)
 2. **Separator:** `────`
 
 3. **Preset rows** — curated bundles. The menu currently ships three:
-   - `✦ Magnum Opus · the full proven kit  12`
-   - `✦ Retro Operator · shaders & bezels  8`
-   - `✦ Hush Mode · a calm Deck            5`
+   - `✦ Magnum Opus · the full transmutation      12`
+   - `✦ Retro Operator · emulators, shaders, bezels  8`
+   - `✦ Hush Mode · quieter defaults              5`
    - Trailing number is the de-duplicated count of commands the preset would apply.
    - Entering a preset instantly marks all matching commands as picked. Presets *only add*; they never deselect.
    - `✦` icon dim when unfocused, accent when focused.
@@ -720,9 +720,9 @@ type Preset = {
 
 | Preset | Tagline | Commands |
 |--------|---------|----------|
-| Magnum Opus | the full proven kit | Set Sudo Password, Install Dependencies, ProtonUp-Qt, Heroic, CryoUtilities, Wi-Fi Powersave, Tablet Mode, Decky Loader, CSS Loader, SteamGridDB, Flatseal, Brave (12) |
-| Retro Operator | shaders & bezels | Set Sudo Password, Install Dependencies, RetroArch, Dolphin, DuckStation, RetroDECK, Duimon Mega Bezel, ProtonUp-Qt (8) |
-| Hush Mode | a calm Deck | Set Sudo Password, Wi-Fi Powersave, Tablet Mode, Flatseal, Brave (5) |
+| Magnum Opus | the full transmutation | Set Sudo Password, Install Dependencies, ProtonUp-Qt, Heroic, CryoUtilities, Wi-Fi Powersave, Tablet Mode, Decky Loader, CSS Loader, SteamGridDB, Flatseal, Brave (12) |
+| Retro Operator | emulators, shaders, bezels | Set Sudo Password, Install Dependencies, RetroArch, Dolphin, DuckStation, RetroDECK, Duimon Mega Bezel, ProtonUp-Qt (8) |
+| Hush Mode | quieter defaults | Set Sudo Password, Wi-Fi Powersave, Tablet Mode, Flatseal, Brave (5) |
 
 The de-duplicated match count for each preset is computed by the `presetMatches(preset): Cmd[]` helper — patterns may overlap without inflating the displayed count.
 
@@ -1049,7 +1049,7 @@ implementations consume the same content collection and `STAGE_SIGILS`.
 | 2026-05-13 | Status bar key hierarchy: hints carry `kind: 'primary' \| 'normal' \| 'system'`; primary kbds are accent-tinted, system kbds dimmed |
 | 2026-05-13 | Install button copy returned to spec (`⚡ Install N commands`); empty state reads `⚡ pick at least one to install` (replaces the "summon spirits" interim copy) |
 | 2026-05-13 | Failure messages annotate with a dim `(simulated)` chip so prototype reviewers don't think the demo is broken |
-| 2026-05-13 | Two new presets: Retro Operator (8 commands · shaders & bezels) and Hush Mode (5 commands · a calm Deck) |
+| 2026-05-13 | Two new presets: Retro Operator (8 commands · emulators, shaders, bezels) and Hush Mode (5 commands · quieter defaults) |
 | 2026-05-13 | New Optimise command: Nested Desktop in Game Mode (order 80) — writes `~/.local/bin/PlasmaNested.sh` |
 | 2026-05-13 | New Gaming command: Waydroid (Android container) (order 260, Launchers & Compat) — clones the SteamOS-Waydroid-Installer; `deck_only: true` |
 | 2026-05-13 | In-terminal CSS (`.t-*`, `.cursor-blink`, `.line.is-focused`, `.split*`) moved to a `<style is:global>` block — these elements are created at runtime by the page script and don't carry Astro's per-component scope attribute. Side benefit: `.t-accent` now actually renders accent-orange (was silently broken) |

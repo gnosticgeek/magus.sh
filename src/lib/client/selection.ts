@@ -61,6 +61,9 @@ export const initSelection = () => {
 	const sectionToggles = Array.from(
 		document.querySelectorAll<HTMLButtonElement>('.section-select'),
 	);
+	const presetButtons = Array.from(
+		document.querySelectorAll<HTMLButtonElement>('[data-preset-patterns]'),
+	);
 
 	const cardsBySection = bucketBy(cards, (c) => c.dataset.section ?? '');
 	const cardsByStage = bucketBy(cards, (c) => c.dataset.category ?? '');
@@ -71,14 +74,15 @@ export const initSelection = () => {
 	const render = () => {
 		const count = selected.size;
 		countEl.textContent = String(count);
-		bar.classList.toggle('visible', count > 0);
+		bar.classList.add('visible');
+		bar.dataset.state = count === 0 ? 'empty' : 'active';
 		copyBtn.disabled = count === 0;
 		copyLabel.textContent =
 			count === 0
-				? 'Script'
+				? 'Build script'
 				: count === 1
-					? 'Script · 1'
-					: `Script · ${count}`;
+					? 'Build script · 1'
+					: `Build script · ${count}`;
 
 		stageTabs.forEach((tab) => {
 			const stage = tab.dataset.stageTabId ?? '';
@@ -107,6 +111,19 @@ export const initSelection = () => {
 			if (label) {
 				label.textContent = state === 'all' ? 'clear all' : 'select all';
 			}
+		});
+
+		presetButtons.forEach((btn) => {
+			const patterns = (btn.dataset.presetPatterns ?? '')
+				.split('|')
+				.map((p) => p.trim())
+				.filter(Boolean);
+			const presetCards = cards.filter((card) =>
+				patterns.some((pattern) => (card.dataset.id ?? '').includes(pattern)),
+			);
+			const checked =
+				presetCards.length > 0 && presetCards.every((card) => card.checked);
+			btn.dataset.applied = checked ? 'true' : 'false';
 		});
 	};
 
@@ -147,6 +164,25 @@ export const initSelection = () => {
 			const inSection = cardsBySection.get(sectionId) ?? [];
 			const allChecked = inSection.every((c) => c.checked);
 			inSection.forEach((c) => setCard(c, !allChecked));
+			render();
+			persist(selected.keys());
+		});
+	});
+
+	presetButtons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const patterns = (btn.dataset.presetPatterns ?? '')
+				.split('|')
+				.map((p) => p.trim())
+				.filter(Boolean);
+			if (patterns.length === 0) return;
+
+			for (const card of cards) {
+				const id = card.dataset.id ?? '';
+				if (patterns.some((pattern) => id.includes(pattern))) {
+					setCard(card, true);
+				}
+			}
 			render();
 			persist(selected.keys());
 		});

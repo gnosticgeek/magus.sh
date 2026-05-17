@@ -5,7 +5,7 @@ export const STAGES = [
 		label: 'one',
 		short: 'Setup',
 		title: 'Setup',
-		tagline: 'Sudo and Decky basics.',
+		tagline: 'Sudo, dependencies, and Decky foundations.',
 		stageLabel: 'stage_01',
 		rise: 2,
 	},
@@ -15,7 +15,7 @@ export const STAGES = [
 		label: 'two',
 		short: 'Apps',
 		title: 'Apps & Tools',
-		tagline: 'Launchers, browsers, streaming, utilities.',
+		tagline: 'Browsers, launchers, media, and desktop tools.',
 		stageLabel: 'stage_02',
 		rise: 3,
 	},
@@ -25,7 +25,7 @@ export const STAGES = [
 		label: 'three',
 		short: 'Optimise',
 		title: 'Optimise',
-		tagline: 'Performance and Plasma tweaks.',
+		tagline: 'Performance, battery, and Plasma comfort.',
 		stageLabel: 'stage_03',
 		rise: 4,
 	},
@@ -35,7 +35,7 @@ export const STAGES = [
 		label: 'four',
 		short: 'Customise',
 		title: 'Customise',
-		tagline: 'Plugins, art, polish.',
+		tagline: 'Decky plugins, artwork, and interface polish.',
 		stageLabel: 'stage_04',
 		rise: 5,
 	},
@@ -45,7 +45,7 @@ export const STAGES = [
 		label: 'five',
 		short: 'Gaming',
 		title: 'Gaming',
-		tagline: 'Launchers, emulators, streams. Source ports welcome.',
+		tagline: 'Emulators, launchers, streaming, and source ports.',
 		stageLabel: 'stage_05',
 		rise: 5,
 		variant: 'sigil',
@@ -199,7 +199,7 @@ export const PRESETS: Preset[] = [
 	{
 		id: 'magnum-opus',
 		name: 'Magnum Opus',
-		tagline: 'the full proven kit',
+		tagline: 'the full transmutation',
 		patterns: [
 			'set-sudo-password',
 			'install-dependencies',
@@ -218,7 +218,7 @@ export const PRESETS: Preset[] = [
 	{
 		id: 'retro-operator',
 		name: 'Retro Operator',
-		tagline: 'shaders & bezels',
+		tagline: 'emulators, shaders, bezels',
 		patterns: [
 			'set-sudo-password',
 			'install-dependencies',
@@ -233,7 +233,7 @@ export const PRESETS: Preset[] = [
 	{
 		id: 'hush-mode',
 		name: 'Hush Mode',
-		tagline: 'a calm Deck',
+		tagline: 'quieter defaults',
 		patterns: [
 			'set-sudo-password',
 			'wifi-powersave',
