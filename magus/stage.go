@@ -316,6 +316,12 @@ func previewItem(m Model, st *Stage, c *Cmd, w int) string {
 		first := firstLine(run)
 		lines = append(lines, "  "+sDim.Render("$ ")+sText.Render(truncate(first, w-4)))
 	}
+	if c.Upstream != nil && c.Upstream.Name != "" {
+		lines = append(lines, "", sText.Render("source"), "  "+sMuted.Render(truncate(c.Upstream.Name, w-2)))
+		if c.Upstream.URL != "" {
+			lines = append(lines, "  "+sDim.Render(truncate(c.Upstream.URL, w-2)))
+		}
+	}
 	lines = append(lines, "", sDim.Render("space toggles · enter also toggles"))
 	return strings.Join(lines, "\n")
 }

@@ -15,6 +15,7 @@
           "summary": "Required for `sudo`. SteamOS ships without one — set it before anything else.",
           "order": 10,
           "groupId": null,
+          "upstream": null,
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -28,6 +29,7 @@
           "summary": "Installs nvm and Node.js 22 to ~/. Required for the magus TUI — safe on SteamOS's immutable file system.",
           "order": 20,
           "groupId": null,
+          "upstream": null,
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -64,12 +66,33 @@
       ],
       "items": [
         {
+          "id": "install/34-distrobox",
+          "slug": "34-distrobox",
+          "title": "Distrobox",
+          "summary": "User-space Linux containers for development tools without unlocking SteamOS.",
+          "order": 34,
+          "groupId": "system",
+          "upstream": {
+            "name": "89luca89/distrobox",
+            "url": "https://github.com/89luca89/distrobox"
+          },
+          "danger": "medium",
+          "deckOnly": false,
+          "run": [
+            "curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sh -s -- --prefix \"$HOME/.local\""
+          ]
+        },
+        {
           "id": "install/70-obs",
           "slug": "70-obs",
           "title": "OBS Studio",
           "summary": "Streaming and recording.",
           "order": 34,
           "groupId": "capture",
+          "upstream": {
+            "name": "OBS Studio",
+            "url": "https://obsproject.com"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -83,6 +106,10 @@
           "summary": "A Discord voice + chat overlay that actually works in Steam games.",
           "order": 36,
           "groupId": "capture",
+          "upstream": {
+            "name": "Discover Overlay",
+            "url": "https://github.com/trigg/Discover"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -96,6 +123,10 @@
           "summary": "Flatpak permissions GUI.",
           "order": 40,
           "groupId": "system",
+          "upstream": {
+            "name": "Flatseal",
+            "url": "https://github.com/tchx84/Flatseal"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -109,6 +140,10 @@
           "summary": "Flatpak management GUI. Mass-uninstall, audit user data, snapshot installs.",
           "order": 42,
           "groupId": "system",
+          "upstream": {
+            "name": "Warehouse",
+            "url": "https://github.com/flattool/warehouse"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -122,10 +157,31 @@
           "summary": "Pretty, native system monitor. CPU, GPU, RAM, drives, processes.",
           "order": 44,
           "groupId": "system",
+          "upstream": {
+            "name": "Mission Center",
+            "url": "https://missioncenter.io"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
             "flatpak install -y flathub io.missioncenter.MissionCenter"
+          ]
+        },
+        {
+          "id": "install/56-protontricks",
+          "slug": "56-protontricks",
+          "title": "Protontricks",
+          "summary": "Winetricks-style helper for changing individual Steam Proton prefixes.",
+          "order": 56,
+          "groupId": "system",
+          "upstream": {
+            "name": "Protontricks",
+            "url": "https://github.com/Matoking/protontricks"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub com.github.Matoking.protontricks"
           ]
         },
         {
@@ -135,6 +191,10 @@
           "summary": "Chromium browser with ad/tracker blocking.",
           "order": 60,
           "groupId": "comms",
+          "upstream": {
+            "name": "Brave",
+            "url": "https://brave.com"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -148,6 +208,10 @@
           "summary": "Mozilla browser.",
           "order": 62,
           "groupId": "comms",
+          "upstream": {
+            "name": "Firefox",
+            "url": "https://www.mozilla.org/firefox/"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -161,6 +225,10 @@
           "summary": "Open-source password vault.",
           "order": 64,
           "groupId": "comms",
+          "upstream": {
+            "name": "Bitwarden",
+            "url": "https://bitwarden.com"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -174,6 +242,10 @@
           "summary": "Music. Add as non-Steam game for Game Mode.",
           "order": 66,
           "groupId": "media",
+          "upstream": {
+            "name": "Spotify",
+            "url": "https://www.spotify.com"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -187,6 +259,10 @@
           "summary": "Lightweight Discord with Vencord baked in. Better screen-share on Linux.",
           "order": 68,
           "groupId": "comms",
+          "upstream": {
+            "name": "Vesktop",
+            "url": "https://github.com/Vencord/Vesktop"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -200,6 +276,10 @@
           "summary": "Plays anything you throw at it. The forever-default.",
           "order": 70,
           "groupId": "media",
+          "upstream": {
+            "name": "VLC",
+            "url": "https://www.videolan.org/vlc/"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -223,6 +303,10 @@
           "summary": "Swap, swappiness, huge pages — one tool. Click \"Recommended\" after install.",
           "order": 10,
           "groupId": null,
+          "upstream": {
+            "name": "CryoByte33/steam-deck-utilities",
+            "url": "https://github.com/CryoByte33/steam-deck-utilities"
+          },
           "danger": "low",
           "deckOnly": true,
           "run": [
@@ -236,6 +320,7 @@
           "summary": "Switches Plasma to its touch-friendly layout. Use `auto` to let it decide.",
           "order": 20,
           "groupId": null,
+          "upstream": null,
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -249,6 +334,7 @@
           "summary": "Bumps cursor size to 32 px. Easier to track with thumbs in desktop mode.",
           "order": 30,
           "groupId": null,
+          "upstream": null,
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -262,6 +348,7 @@
           "summary": "Switches off KDE's single-click activation. The behaviour everyone else uses.",
           "order": 40,
           "groupId": null,
+          "upstream": null,
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -275,6 +362,10 @@
           "summary": "KDE's file indexer can pin CPU for hours after a fresh install. Disabling reclaims desktop-mode battery and quiets the fans.",
           "order": 50,
           "groupId": null,
+          "upstream": {
+            "name": "Baloo (ArchWiki)",
+            "url": "https://wiki.archlinux.org/title/Baloo"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -288,6 +379,10 @@
           "summary": "Lower background drain by letting the radio idle between frames. Sticks in desktop mode; Game Mode is known to re-enable management after sleep/wake.",
           "order": 60,
           "groupId": null,
+          "upstream": {
+            "name": "SteamOS Wi-Fi power management (issue tracker)",
+            "url": "https://github.com/ValveSoftware/SteamOS/issues/1696"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -301,6 +396,10 @@
           "summary": "Convert /home to Btrfs for transparent compression. Big storage wins on 64 GB Decks. Survives system updates.",
           "order": 70,
           "groupId": null,
+          "upstream": {
+            "name": "popsUlfr/steamos-btrfs",
+            "url": "https://github.com/popsUlfr/steamos-btrfs"
+          },
           "danger": "high",
           "deckOnly": true,
           "run": [
@@ -314,6 +413,10 @@
           "summary": "A pocketable Plasma session inside Game Mode. Skip the full \"Switch to Desktop\" dance — pop a 1280×800 KDE window over your library when you just need to tweak something.",
           "order": 80,
           "groupId": null,
+          "upstream": {
+            "name": "davidedmundson/PlasmaNested gist",
+            "url": "https://gist.github.com/davidedmundson/8e1732b2c8b539fd3e6ab41a65bcab74"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -337,6 +440,10 @@
           "summary": "The plugin runtime. Same script as Setup — safe to re-run, idempotent.",
           "order": 1,
           "groupId": null,
+          "upstream": {
+            "name": "SteamDeckHomebrew/decky-loader",
+            "url": "https://github.com/SteamDeckHomebrew/decky-loader"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -350,6 +457,10 @@
           "summary": "Custom themes for SteamOS — fonts, colours, layouts. Has its own installer.",
           "order": 2,
           "groupId": null,
+          "upstream": {
+            "name": "suchmememanyskill/SDH-CssLoader",
+            "url": "https://github.com/suchmememanyskill/SDH-CssLoader"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -363,6 +474,10 @@
           "summary": "Replace ugly default artwork on non-Steam shortcuts and EmuDeck entries.",
           "order": 3,
           "groupId": null,
+          "upstream": {
+            "name": "SteamGridDB/decky-steamgriddb",
+            "url": "https://github.com/SteamGridDB/decky-steamgriddb"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -376,6 +491,10 @@
           "summary": "Shows the ProtonDB rating next to every game in the library.",
           "order": 4,
           "groupId": null,
+          "upstream": {
+            "name": "sersorrel/decky-protondb-badges",
+            "url": "https://github.com/sersorrel/decky-protondb-badges"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -389,6 +508,10 @@
           "summary": "How Long to Beat estimates on every game page. Useful for handheld sessions.",
           "order": 5,
           "groupId": null,
+          "upstream": {
+            "name": "OMGDuke/HLTB-for-Deck",
+            "url": "https://github.com/OMGDuke/HLTB-for-Deck"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -402,6 +525,10 @@
           "summary": "Per-session tracker that covers non-Steam games Steam ignores.",
           "order": 6,
           "groupId": null,
+          "upstream": {
+            "name": "FrogTheFrog/decky-playtime",
+            "url": "https://github.com/FrogTheFrog/decky-playtime"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -415,10 +542,48 @@
           "summary": "Background Flatpak updates without dropping to desktop mode.",
           "order": 7,
           "groupId": null,
+          "upstream": {
+            "name": "jurassicplayer/decky-autoflatpaks",
+            "url": "https://github.com/jurassicplayer/decky-autoflatpaks"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
             "mkdir -p ~/homebrew/plugins\nASSET=$(curl -fsSL https://api.github.com/repos/jurassicplayer/decky-autoflatpaks/releases/latest | grep -oE '\"browser_download_url\": *\"[^\"]+\\.tar\\.gz\"' | head -1 | cut -d'\"' -f4)\ncurl -fL \"$ASSET\" -o /tmp/autoflatpaks.tar.gz\nsudo systemctl stop plugin_loader.service\ntar -xzf /tmp/autoflatpaks.tar.gz -C ~/homebrew/plugins/\nsudo chown -R deck:deck ~/homebrew/plugins/\nsudo systemctl start plugin_loader.service\n"
+          ]
+        },
+        {
+          "id": "customise/08-decky-autosuspend",
+          "slug": "08-decky-autosuspend",
+          "title": "Decky AutoSuspend",
+          "summary": "Battery threshold alerts and automatic suspend for low power situations.",
+          "order": 8,
+          "groupId": null,
+          "upstream": {
+            "name": "jurassicplayer/decky-autosuspend",
+            "url": "https://github.com/jurassicplayer/decky-autosuspend"
+          },
+          "danger": "low",
+          "deckOnly": true,
+          "run": [
+            "mkdir -p ~/homebrew/plugins\nTMP=$(mktemp -d)\ncurl -fL https://github.com/jurassicplayer/decky-autosuspend/releases/latest/download/decky-autosuspend.zip -o \"$TMP/decky-autosuspend.zip\"\nunzip -q \"$TMP/decky-autosuspend.zip\" -d \"$TMP\"\nsudo systemctl stop plugin_loader.service\nrm -rf ~/homebrew/plugins/decky-autosuspend\nmv \"$TMP/decky-autosuspend\" ~/homebrew/plugins/decky-autosuspend\nsudo chown -R deck:deck ~/homebrew/plugins/decky-autosuspend\nsudo systemctl start plugin_loader.service\nrm -rf \"$TMP\"\n"
+          ]
+        },
+        {
+          "id": "customise/09-decky-simpledeckytdp",
+          "slug": "09-decky-simpledeckytdp",
+          "title": "SimpleDeckyTDP",
+          "summary": "Decky plugin for per-game TDP, power governor, CPU boost, and GPU controls.",
+          "order": 9,
+          "groupId": null,
+          "upstream": {
+            "name": "aarron-lee/SimpleDeckyTDP",
+            "url": "https://github.com/aarron-lee/SimpleDeckyTDP"
+          },
+          "danger": "medium",
+          "deckOnly": true,
+          "run": [
+            "curl -L https://github.com/aarron-lee/SimpleDeckyTDP/raw/main/install.sh | sh"
           ]
         }
       ]
@@ -459,10 +624,82 @@
           "summary": "The big-tent emulator frontend. Cores for nearly every retro console.",
           "order": 100,
           "groupId": "retro",
+          "upstream": {
+            "name": "RetroArch",
+            "url": "https://www.retroarch.com"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
             "flatpak install -y flathub org.libretro.RetroArch"
+          ]
+        },
+        {
+          "id": "gaming/102-pcsx2",
+          "slug": "102-pcsx2",
+          "title": "PCSX2",
+          "summary": "PlayStation 2 emulator. Requires your own dumped PS2 BIOS.",
+          "order": 102,
+          "groupId": "retro",
+          "upstream": {
+            "name": "PCSX2",
+            "url": "https://pcsx2.net"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub net.pcsx2.PCSX2"
+          ]
+        },
+        {
+          "id": "gaming/104-rpcs3",
+          "slug": "104-rpcs3",
+          "title": "RPCS3",
+          "summary": "PlayStation 3 emulator and debugger. Requires official PS3 firmware.",
+          "order": 104,
+          "groupId": "retro",
+          "upstream": {
+            "name": "RPCS3",
+            "url": "https://rpcs3.net"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub net.rpcs3.RPCS3"
+          ]
+        },
+        {
+          "id": "gaming/106-steam-rom-manager",
+          "slug": "106-steam-rom-manager",
+          "title": "Steam ROM Manager",
+          "summary": "Adds ROMs and emulator entries to Steam with artwork and collections.",
+          "order": 106,
+          "groupId": "retro",
+          "upstream": {
+            "name": "Steam ROM Manager",
+            "url": "https://steamgriddb.github.io/steam-rom-manager"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub com.steamgriddb.steam-rom-manager"
+          ]
+        },
+        {
+          "id": "gaming/108-shadps4",
+          "slug": "108-shadps4",
+          "title": "shadPS4",
+          "summary": "Early PlayStation 4 emulator for compatible titles and homebrew.",
+          "order": 108,
+          "groupId": "retro",
+          "upstream": {
+            "name": "shadPS4",
+            "url": "https://shadps4.net"
+          },
+          "danger": "medium",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub net.shadps4.shadPS4"
           ]
         },
         {
@@ -472,10 +709,82 @@
           "summary": "GameCube and Wii. Buttery-smooth on the Deck.",
           "order": 110,
           "groupId": "retro",
+          "upstream": {
+            "name": "Dolphin Emulator",
+            "url": "https://dolphin-emu.org"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
             "flatpak install -y flathub org.DolphinEmu.dolphin-emu"
+          ]
+        },
+        {
+          "id": "gaming/112-ppsspp",
+          "slug": "112-ppsspp",
+          "title": "PPSSPP",
+          "summary": "PSP emulator with high resolution rendering and save-state support.",
+          "order": 112,
+          "groupId": "retro",
+          "upstream": {
+            "name": "PPSSPP",
+            "url": "https://www.ppsspp.org"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub org.ppsspp.PPSSPP"
+          ]
+        },
+        {
+          "id": "gaming/114-bsnes",
+          "slug": "114-bsnes",
+          "title": "bsnes",
+          "summary": "Accurate SNES emulator with HD Mode 7 and strong shader support.",
+          "order": 114,
+          "groupId": "retro",
+          "upstream": {
+            "name": "bsnes",
+            "url": "https://github.com/bsnes-emu/bsnes"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub dev.bsnes.bsnes"
+          ]
+        },
+        {
+          "id": "gaming/116-desmume",
+          "slug": "116-desmume",
+          "title": "DeSmuME",
+          "summary": "Nintendo DS emulator with a long compatibility history.",
+          "order": 116,
+          "groupId": "retro",
+          "upstream": {
+            "name": "DeSmuME",
+            "url": "http://desmume.org"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub org.desmume.DeSmuME"
+          ]
+        },
+        {
+          "id": "gaming/118-melonds",
+          "slug": "118-melonds",
+          "title": "melonDS",
+          "summary": "Nintendo DS emulator with local multiplayer and accuracy-focused emulation.",
+          "order": 118,
+          "groupId": "retro",
+          "upstream": {
+            "name": "melonDS",
+            "url": "https://melonds.kuribo64.net"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub net.kuribo64.melonDS"
           ]
         },
         {
@@ -485,11 +794,83 @@
           "summary": "PS1 emulator. Per-game compatibility, sharp upscaling. Installed as an AppImage — no longer on Flathub.",
           "order": 120,
           "groupId": "retro",
+          "upstream": {
+            "name": "DuckStation",
+            "url": "https://github.com/stenzek/duckstation"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
             "mkdir -p ~/Applications",
             "curl -L \"https://github.com/stenzek/duckstation/releases/latest/download/duckstation-qt-x64-appimage-build.AppImage\" \\\n  -o ~/Applications/DuckStation.AppImage\nchmod +x ~/Applications/DuckStation.AppImage\n"
+          ]
+        },
+        {
+          "id": "gaming/122-cemu",
+          "slug": "122-cemu",
+          "title": "Cemu",
+          "summary": "Wii U emulator with broad compatibility and graphics pack support.",
+          "order": 122,
+          "groupId": "retro",
+          "upstream": {
+            "name": "Cemu",
+            "url": "https://cemu.info"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub info.cemu.Cemu"
+          ]
+        },
+        {
+          "id": "gaming/124-xemu",
+          "slug": "124-xemu",
+          "title": "xemu",
+          "summary": "Original Xbox emulator with local controller and resolution scaling support.",
+          "order": 124,
+          "groupId": "retro",
+          "upstream": {
+            "name": "xemu",
+            "url": "https://xemu.app"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub app.xemu.xemu"
+          ]
+        },
+        {
+          "id": "gaming/126-mame",
+          "slug": "126-mame",
+          "title": "MAME",
+          "summary": "Arcade and computer preservation emulator for MAME ROM sets.",
+          "order": 126,
+          "groupId": "retro",
+          "upstream": {
+            "name": "MAME",
+            "url": "https://www.mamedev.org"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub org.mamedev.MAME"
+          ]
+        },
+        {
+          "id": "gaming/128-flycast",
+          "slug": "128-flycast",
+          "title": "Flycast",
+          "summary": "Dreamcast, Naomi, and Atomiswave emulator.",
+          "order": 128,
+          "groupId": "retro",
+          "upstream": {
+            "name": "Flycast",
+            "url": "https://flyinghead.github.io/flycast-builds/"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub org.flycast.Flycast"
           ]
         },
         {
@@ -499,6 +880,10 @@
           "summary": "One-shot installer that sets up a curated emulator stack with sane defaults.",
           "order": 130,
           "groupId": "retro",
+          "upstream": {
+            "name": "EmuDeck",
+            "url": "https://www.emudeck.com"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -512,6 +897,10 @@
           "summary": "Every major emulator in a single flatpak. A drop-in EmuDeck alternative.",
           "order": 140,
           "groupId": "retro",
+          "upstream": {
+            "name": "RetroDeck",
+            "url": "https://retrodeck.net"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -525,6 +914,10 @@
           "summary": "HSM's reflection shader for RetroArch — CRT scanlines, glass reflections, and bezel art. Foundation for the Duimon preset pack below.",
           "order": 150,
           "groupId": "retro",
+          "upstream": {
+            "name": "HyperspaceMadness/Mega_Bezel",
+            "url": "https://github.com/HyperspaceMadness/Mega_Bezel"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -538,10 +931,31 @@
           "summary": "CRT shader presets with reflections and bezels for RetroArch. Requires RetroArch and the Mega Bezel shader pack installed first.",
           "order": 160,
           "groupId": "retro",
+          "upstream": {
+            "name": "Duimon Mega Bezel",
+            "url": "https://github.com/Duimon/Duimon-Mega-Bezel"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
             "mkdir -p ~/.var/app/org.libretro.RetroArch/config/retroarch/shaders/Mega_Bezel_Packs\ncd ~/.var/app/org.libretro.RetroArch/config/retroarch/shaders/Mega_Bezel_Packs\ngit clone https://github.com/Duimon/Duimon-Mega-Bezel\n"
+          ]
+        },
+        {
+          "id": "gaming/190-boilr",
+          "slug": "190-boilr",
+          "title": "BoilR",
+          "summary": "Finds games from other launchers and adds them to Steam with SteamGridDB art.",
+          "order": 190,
+          "groupId": "tools",
+          "upstream": {
+            "name": "PhilipK/BoilR",
+            "url": "https://github.com/PhilipK/BoilR"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub io.github.philipk.boilr"
           ]
         },
         {
@@ -551,6 +965,10 @@
           "summary": "Proton-GE, Wine-GE, Luxtorpeda installer.",
           "order": 200,
           "groupId": "launchers",
+          "upstream": {
+            "name": "ProtonUp-Qt",
+            "url": "https://github.com/DavidoTek/ProtonUp-Qt"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -564,6 +982,10 @@
           "summary": "Manage Proton-GE and Wine-GE from Game Mode. Decky alternative to ProtonUp-Qt.",
           "order": 210,
           "groupId": "launchers",
+          "upstream": {
+            "name": "FlashyReese/decky-wine-cellar",
+            "url": "https://github.com/FlashyReese/decky-wine-cellar"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -577,6 +999,10 @@
           "summary": "Run Windows apps in pre-tuned wine bottles.",
           "order": 220,
           "groupId": "launchers",
+          "upstream": {
+            "name": "Bottles",
+            "url": "https://usebottles.com"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -590,6 +1016,10 @@
           "summary": "One library that reads from Steam, Heroic, Lutris, emulators.",
           "order": 230,
           "groupId": "launchers",
+          "upstream": {
+            "name": "Cartridges",
+            "url": "https://github.com/kra-mo/cartridges"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -603,6 +1033,10 @@
           "summary": "Epic, GOG, Amazon Prime in one launcher.",
           "order": 240,
           "groupId": "launchers",
+          "upstream": {
+            "name": "Heroic Games Launcher",
+            "url": "https://heroicgameslauncher.com"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -616,6 +1050,10 @@
           "summary": "Wine, emulators, Battle.net, Origin, Ubisoft Connect.",
           "order": 250,
           "groupId": "launchers",
+          "upstream": {
+            "name": "Lutris",
+            "url": "https://lutris.net"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -629,10 +1067,82 @@
           "summary": "Run Android apps and games inside a Wayland container. Useful for the handful of titles that never came to PC — gacha launchers, mobile-only ports, that one casual game your friends still play.",
           "order": 260,
           "groupId": "launchers",
+          "upstream": {
+            "name": "ryanrudolfoba/SteamOS-Waydroid-Installer",
+            "url": "https://github.com/ryanrudolfoba/SteamOS-Waydroid-Installer"
+          },
           "danger": "medium",
           "deckOnly": true,
           "run": [
             "if [ -d ~/SteamOS-Waydroid-Installer ]; then\n  git -C ~/SteamOS-Waydroid-Installer pull --ff-only\nelse\n  git clone --depth 1 https://github.com/ryanrudolfoba/SteamOS-Waydroid-Installer ~/SteamOS-Waydroid-Installer\nfi\n"
+          ]
+        },
+        {
+          "id": "gaming/270-nonsteamlaunchers",
+          "slug": "270-nonsteamlaunchers",
+          "title": "NonSteamLaunchers",
+          "summary": "Installs popular Windows launchers and adds them to Steam automatically.",
+          "order": 270,
+          "groupId": "launchers",
+          "upstream": {
+            "name": "moraroy/NonSteamLaunchers-On-Steam-Deck",
+            "url": "https://github.com/moraroy/NonSteamLaunchers-On-Steam-Deck"
+          },
+          "danger": "medium",
+          "deckOnly": false,
+          "run": [
+            "/bin/bash -c 'curl -Ls https://raw.githubusercontent.com/moraroy/NonSteamLaunchers-On-Steam-Deck/main/NonSteamLaunchers.sh | nohup /bin/bash -s --'"
+          ]
+        },
+        {
+          "id": "gaming/280-minigalaxy",
+          "slug": "280-minigalaxy",
+          "title": "Minigalaxy",
+          "summary": "Lightweight client for downloading and playing GOG Linux games.",
+          "order": 280,
+          "groupId": "launchers",
+          "upstream": {
+            "name": "Minigalaxy",
+            "url": "https://github.com/sharkwouter/minigalaxy"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub io.github.sharkwouter.Minigalaxy"
+          ]
+        },
+        {
+          "id": "gaming/290-prism-launcher",
+          "slug": "290-prism-launcher",
+          "title": "Prism Launcher",
+          "summary": "Minecraft launcher with modpack and instance management.",
+          "order": 290,
+          "groupId": "launchers",
+          "upstream": {
+            "name": "Prism Launcher",
+            "url": "https://prismlauncher.org"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub org.prismlauncher.PrismLauncher"
+          ]
+        },
+        {
+          "id": "gaming/295-itch",
+          "slug": "295-itch",
+          "title": "itch",
+          "summary": "Client for itch.io indie games, jams, tools, and prototypes.",
+          "order": 295,
+          "groupId": "launchers",
+          "upstream": {
+            "name": "itch",
+            "url": "https://itch.io/app"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub io.itch.itch"
           ]
         },
         {
@@ -642,6 +1152,10 @@
           "summary": "Cloud-stream your Steam, Epic, and Ubisoft library. RTX 4080 tier on a handheld.",
           "order": 300,
           "groupId": "streaming",
+          "upstream": {
+            "name": "hmlendea/geforcenow-electron",
+            "url": "https://github.com/hmlendea/geforcenow-electron"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -655,6 +1169,10 @@
           "summary": "Stream PS4 / PS5 over LAN or internet. Chiaki4deck — controller-mapped for Steam Deck.",
           "order": 310,
           "groupId": "streaming",
+          "upstream": {
+            "name": "streetpea/chiaki4deck",
+            "url": "https://github.com/streetpea/chiaki4deck"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -668,6 +1186,10 @@
           "summary": "Stream games from a GPU-equipped PC to your Deck. Open-source NVIDIA GameStream client.",
           "order": 320,
           "groupId": "streaming",
+          "upstream": {
+            "name": "Moonlight",
+            "url": "https://moonlight-stream.org"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -681,10 +1203,82 @@
           "summary": "Self-hosted GameStream server. The Deck-side counterpart to Moonlight.",
           "order": 330,
           "groupId": "streaming",
+          "upstream": {
+            "name": "Sunshine",
+            "url": "https://app.lizardbyte.dev/Sunshine"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
             "flatpak install -y flathub dev.lizardbyte.app.Sunshine"
+          ]
+        },
+        {
+          "id": "gaming/340-localsend",
+          "slug": "340-localsend",
+          "title": "LocalSend",
+          "summary": "Share files with nearby devices over your local network, no cloud account needed.",
+          "order": 340,
+          "groupId": "streaming",
+          "upstream": {
+            "name": "LocalSend",
+            "url": "https://localsend.org"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub org.localsend.localsend_app"
+          ]
+        },
+        {
+          "id": "gaming/350-steam-link",
+          "slug": "350-steam-link",
+          "title": "Steam Link",
+          "summary": "Stream games from another computer running Steam on your local network.",
+          "order": 350,
+          "groupId": "streaming",
+          "upstream": {
+            "name": "Steam Link",
+            "url": "https://store.steampowered.com/steamlink/about/"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub com.valvesoftware.SteamLink"
+          ]
+        },
+        {
+          "id": "gaming/360-greenlight",
+          "slug": "360-greenlight",
+          "title": "Greenlight",
+          "summary": "Open-source Xbox Cloud and Xbox home streaming client.",
+          "order": 360,
+          "groupId": "streaming",
+          "upstream": {
+            "name": "unknownskl/greenlight",
+            "url": "https://github.com/unknownskl/greenlight"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub io.github.unknownskl.greenlight"
+          ]
+        },
+        {
+          "id": "gaming/370-parsec",
+          "slug": "370-parsec",
+          "title": "Parsec",
+          "summary": "Low-latency remote desktop and co-op streaming client.",
+          "order": 370,
+          "groupId": "streaming",
+          "upstream": {
+            "name": "Parsec",
+            "url": "https://parsec.app"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub com.parsecgaming.parsec"
           ]
         },
         {
@@ -694,6 +1288,10 @@
           "summary": "GUI for MangoHud — FPS, frametime, sensors. Skip the config file edit.",
           "order": 400,
           "groupId": "tools",
+          "upstream": {
+            "name": "GOverlay",
+            "url": "https://github.com/benjamimgois/goverlay"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -707,10 +1305,65 @@
           "summary": "Save game backup. Pair with cloud sync for resilience.",
           "order": 410,
           "groupId": "tools",
+          "upstream": {
+            "name": "Ludusavi",
+            "url": "https://github.com/mtkennerly/ludusavi"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
             "flatpak install -y flathub com.github.mtkennerly.ludusavi"
+          ]
+        },
+        {
+          "id": "gaming/420-syncthing-gtk",
+          "slug": "420-syncthing-gtk",
+          "title": "Syncthing GTK",
+          "summary": "Desktop GUI for Syncthing continuous file sync between devices.",
+          "order": 420,
+          "groupId": "tools",
+          "upstream": {
+            "name": "Syncthing GTK",
+            "url": "https://github.com/syncthing/syncthing-gtk"
+          },
+          "danger": "low",
+          "deckOnly": false,
+          "run": [
+            "flatpak install -y flathub me.kozec.syncthingtk"
+          ]
+        },
+        {
+          "id": "gaming/430-shortix",
+          "slug": "430-shortix",
+          "title": "Shortix",
+          "summary": "Human-readable symlinks for Proton prefixes and shader cache folders.",
+          "order": 430,
+          "groupId": "tools",
+          "upstream": {
+            "name": "Jannomag/shortix",
+            "url": "https://github.com/Jannomag/shortix"
+          },
+          "danger": "medium",
+          "deckOnly": true,
+          "run": [
+            "TMP=$(mktemp -d)\ngit clone --depth 1 https://github.com/Jannomag/shortix \"$TMP/shortix\"\nmkdir -p /home/deck/Shortix /home/deck/.config/systemd/user\ncp \"$TMP/shortix/shortix.sh\" /home/deck/Shortix/\ncp \"$TMP/shortix/remove_prefix.sh\" /home/deck/Shortix/\ncp \"$TMP/shortix/shortix.service\" /home/deck/.config/systemd/user/\nsystemctl --user daemon-reload\nsystemctl --user enable --now shortix.service\nrm -rf \"$TMP\"\n"
+          ]
+        },
+        {
+          "id": "gaming/440-shader-cache-killer",
+          "slug": "440-shader-cache-killer",
+          "title": "Shader Cache Killer",
+          "summary": "Steam Deck script for clearing or moving shader cache and compatdata.",
+          "order": 440,
+          "groupId": "tools",
+          "upstream": {
+            "name": "scawp/Steam-Deck.Shader-Cache-Killer",
+            "url": "https://github.com/scawp/Steam-Deck.Shader-Cache-Killer"
+          },
+          "danger": "high",
+          "deckOnly": true,
+          "run": [
+            "curl -sSL https://raw.githubusercontent.com/scawp/Steam-Deck.Shader-Cache-Killer/main/curl_install.sh | bash"
           ]
         },
         {
@@ -720,6 +1373,10 @@
           "summary": "Modern source port of Doom, Doom II, Heretic, Hexen, Strife. Point it at your WADs and play.",
           "order": 500,
           "groupId": "ports",
+          "upstream": {
+            "name": "GZDoom",
+            "url": "https://zdoom.org"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -733,6 +1390,10 @@
           "summary": "Open-source Morrowind engine. Modern resolution, longer view distance, better mod support than the original.",
           "order": 510,
           "groupId": "ports",
+          "upstream": {
+            "name": "OpenMW",
+            "url": "https://openmw.org"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
@@ -746,6 +1407,10 @@
           "summary": "Diablo 1 + Hellfire, rebuilt. Widescreen, controller support, bug fixes, no DRM scaffolding.",
           "order": 520,
           "groupId": "ports",
+          "upstream": {
+            "name": "DevilutionX",
+            "url": "https://github.com/diasurgical/devilutionX"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [

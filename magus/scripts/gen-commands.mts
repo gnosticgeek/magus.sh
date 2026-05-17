@@ -60,6 +60,7 @@ for (const path of paths) {
 		summary: data.summary ?? '',
 		order: typeof data.order === 'number' ? data.order : 999,
 		groupId: groupFor(stageId, id),
+		upstream: data.upstream ?? null,
 		danger: data.danger ?? 'low',
 		deckOnly: data.deck_only ?? false,
 		run: (data.commands ?? [])

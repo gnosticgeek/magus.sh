@@ -11,15 +11,22 @@ var commandsJSON []byte
 
 // Cmd is a single installable spell.
 type Cmd struct {
-	ID       string   `json:"id"`
-	Slug     string   `json:"slug"`
-	Title    string   `json:"title"`
-	Summary  string   `json:"summary"`
-	Order    int      `json:"order"`
-	GroupID  string   `json:"groupId"`
-	Danger   string   `json:"danger"`
-	DeckOnly bool     `json:"deckOnly"`
-	Run      []string `json:"run"`
+	ID       string    `json:"id"`
+	Slug     string    `json:"slug"`
+	Title    string    `json:"title"`
+	Summary  string    `json:"summary"`
+	Order    int       `json:"order"`
+	GroupID  string    `json:"groupId"`
+	Upstream *Upstream `json:"upstream"`
+	Danger   string    `json:"danger"`
+	DeckOnly bool      `json:"deckOnly"`
+	Run      []string  `json:"run"`
+}
+
+// Upstream is the source project or package registry entry for a command.
+type Upstream struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 // Group is a logical bundle of commands within a stage.

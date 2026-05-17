@@ -59,6 +59,7 @@ async function main(): Promise<void> {
 	for (const d of selected) {
 		process.stdout.write(`# ${d.title}\n`);
 		if (d.summary) process.stdout.write(`# ${d.summary}\n`);
+		if (d.upstream) process.stdout.write(`# Source: ${d.upstream.name} — ${d.upstream.url}\n`);
 		for (const cmd of d.commands) {
 			if (cmd.description) process.stdout.write(`# ${cmd.description}\n`);
 			process.stdout.write(`${cmd.run}\n`);
