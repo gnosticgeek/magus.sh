@@ -16,6 +16,8 @@ const {
 	canonical,
 } = Astro.props;
 
+const GITHUB_URL = 'https://github.com/gnosticgeek/magus.sh';
+
 const nonDefaultThemes = THEME_IDS.filter((t) => t !== DEFAULT_THEME);
 const canonicalHref =
 	canonical ?? new URL(Astro.url.pathname, Astro.site ?? 'https://magus.sh').toString();
@@ -68,13 +70,13 @@ const canonicalHref =
 		</script>
 	</head>
 	<body class="font-sans">
-		<Navbar githubUrl="https://github.com" />
+		<Navbar githubUrl={GITHUB_URL} />
 		<main id="main" tabindex="-1">
 			<slot />
 		</main>
 		<Footer
 			version="v0.1 alpha"
-			githubUrl="https://github.com"
+			githubUrl={GITHUB_URL}
 			lastUpdated="2026-05-11"
 			status="alpha"
 		/>

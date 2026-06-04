@@ -718,6 +718,11 @@ const isBlock = (s: string): boolean => s.includes('\n');
 	}
 	.sec {
 		scroll-margin-top: 84px;
+		/* grid items default to min-width: auto, which refuses to shrink below
+		   a child's min-content — a long no-wrap command then blows the whole
+		   page wide (and the copy buttons off-screen) instead of letting the
+		   code box scroll. min-width: 0 lets the .cmd-term scroll container engage. */
+		min-width: 0;
 	}
 	.sec-head {
 		display: flex;
@@ -753,11 +758,13 @@ const isBlock = (s: string): boolean => s.includes('\n');
 	.sec-cards {
 		display: grid;
 		gap: 14px;
+		min-width: 0;
 	}
 
 	/* ----- command card -------------------------------------------- */
 	.cmd {
 		position: relative;
+		min-width: 0;
 		border: 1px solid var(--color-border);
 		border-radius: 14px;
 		background: color-mix(in oklab, var(--color-bg-elevated) 70%, transparent);

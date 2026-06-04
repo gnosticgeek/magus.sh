@@ -93,7 +93,12 @@
 	</div>
 </dialog>
 
-<style>
+<!-- is:global is required: the .script-chunk* nodes below are built at runtime
+     via createElement in the client script, so they never receive Astro's
+     scoped data-astro-cid attribute. A plain scoped <style> would compile to
+     `.script-chunk-line[data-astro-cid-…]` selectors that match nothing,
+     leaving the assembled script (the site's core output) unstyled. -->
+<style is:global>
 	.script-chunks {
 		display: flex;
 		flex-direction: column;

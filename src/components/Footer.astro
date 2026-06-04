@@ -169,5 +169,12 @@ const {
 		.site-footer-inner {
 			gap: 0.5rem 0.875rem;
 		}
+		/* let the status line wrap instead of clipping the last-sync date
+		   against the body's overflow-x: clip on narrow phones */
+		.site-footer-brand,
+		.site-footer-meta {
+			flex-wrap: wrap;
+			white-space: normal;
+		}
 	}
 </style>
