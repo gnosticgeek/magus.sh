@@ -52,13 +52,13 @@ const presetCards = PRESETS.map((preset) => ({
 						<small>Ready now</small>
 					</span>
 				</a>
-				<span class="device-mode-card is-soon" aria-disabled="true">
+				<a class="device-mode-card" href="/mac">
 					<Icon name="simple-icons:apple" class="device-mode-icon" />
 					<span>
 						<strong>Mac</strong>
-						<small>Coming soon</small>
+						<small>Beta</small>
 					</span>
-				</span>
+				</a>
 			</div>
 
 			<ol class="setup-flow" aria-label="Setup flow">
@@ -339,16 +339,14 @@ const presetCards = PRESETS.map((preset) => ({
 		background: var(--color-accent);
 		box-shadow: 0 0 12px var(--color-accent);
 	}
-	.device-mode-card.is-soon {
-		opacity: 0.58;
+	.device-mode-card:not(.is-active):hover {
+		border-color: color-mix(in oklab, var(--color-accent) 50%, var(--color-border));
+		background: color-mix(in oklab, var(--color-accent) 7%, transparent);
 	}
 	.device-mode-icon {
 		width: 18px;
 		height: 18px;
 		color: var(--color-accent);
-	}
-	.device-mode-card.is-soon .device-mode-icon {
-		color: var(--color-text-dim);
 	}
 	.device-mode-card strong,
 	.device-mode-card small {

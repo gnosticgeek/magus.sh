@@ -55,16 +55,16 @@ const INSTALL_CMD = 'curl -fsSL https://magus.sh/run | bash';
 						<span class="hp-device-pill">Ready</span>
 					</a>
 
-					<div class="hp-device hp-device-soon" aria-disabled="true">
+					<a class="hp-device hp-device-beta" href="/mac">
 						<span class="hp-device-icon" aria-hidden="true">
 							<Icon name="simple-icons:apple" />
 						</span>
 						<span class="hp-device-body">
 							<span class="hp-device-name">Mac</span>
-							<span class="hp-device-copy">Coming soon</span>
+							<span class="hp-device-copy">Beta</span>
 						</span>
-						<span class="hp-device-pill">macOS</span>
-					</div>
+						<span class="hp-device-pill">Beta</span>
+					</a>
 				</div>
 
 				<ol class="hp-flow" aria-label="How it works">
@@ -455,6 +455,25 @@ const INSTALL_CMD = 'curl -fsSL https://magus.sh/run | bash';
 	}
 	.hp-device-ready:hover::before {
 		opacity: 1;
+	}
+	/* beta: live but work-in-progress — accent-tinted, no ✓ checkmark */
+	.hp-device-beta {
+		border-color: color-mix(in oklab, var(--color-accent) 30%, var(--color-border));
+	}
+	.hp-device-beta:hover {
+		border-color: color-mix(in oklab, var(--color-accent) 60%, var(--color-border));
+		transform: translateY(-2px);
+	}
+	.hp-device-beta:hover::before {
+		opacity: 1;
+	}
+	.hp-device-beta .hp-device-copy {
+		color: var(--color-accent);
+	}
+	.hp-device-beta .hp-device-pill {
+		color: var(--color-accent);
+		border-color: color-mix(in oklab, var(--color-accent) 42%, var(--color-border));
+		background: color-mix(in oklab, var(--color-accent) 8%, transparent);
 	}
 	.hp-device:focus-visible {
 		outline: 2px solid var(--color-accent);

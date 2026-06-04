@@ -1,0 +1,1170 @@
+---
+import { Icon } from 'astro-icon/components';
+import Base from '../layouts/Base.astro';
+
+type Include = { name: string; desc: string };
+type Card = {
+	id: string;
+	name: string;
+	tag?: string;
+	summary?: string;
+	run?: string;
+	upstream?: { name: string; url: string };
+	manual?: string;
+	note?: string;
+	includes?: Include[];
+};
+type Section = {
+	num: string;
+	id: string;
+	title: string;
+	tagline: string;
+	cards: Card[];
+};
+
+/* Distilled from a fresh-build guide refined over years. Data lives inline so the
+   page stays a standalone scaffold; this array is the seam toward a content
+   collection once the Mac model settles. Commands are taken from the guide as
+   written — multi-step lists are merged into a single copy-one-paste command. */
+const SECTIONS: Section[] = [
+	{
+		num: '01',
+		id: 'homebrew',
+		title: 'Homebrew',
+		tagline: 'The foundation everything else installs through.',
+		cards: [
+			{
+				id: 'homebrew',
+				name: 'Homebrew',
+				tag: 'package manager',
+				summary:
+					'The missing package manager for macOS. Run it once — every command below leans on it.',
+				run: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+				upstream: { name: 'brew.sh', url: 'https://brew.sh' },
+			},
+		],
+	},
+	{
+		num: '02',
+		id: 'defaults',
+		title: 'macOS defaults',
+		tagline: 'Opinionated system tuning, set in one paste.',
+		cards: [
+			{
+				id: 'sensible-defaults',
+				name: 'Sensible defaults',
+				tag: 'system',
+				summary:
+					'Finder extensions, path + status bars, list view, tap-to-click, three-finger drag, faster key repeat, and no Dock recents.',
+				run: `# Finder
+defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+defaults write com.apple.finder ShowPathbar -bool true
+defaults write com.apple.finder ShowStatusBar -bool true
+defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
+# Trackpad
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
+# Keyboard — faster key repeat
+defaults write NSGlobalDomain KeyRepeat -int 2
+defaults write NSGlobalDomain InitialKeyRepeat -int 15
+# Dock
+defaults write com.apple.dock show-recents -bool false
+# Apply
+killall Finder Dock`,
+				note: 'Opinionated — skim it before you run it. Re-running just re-sets the same values, so it is safe to repeat.',
+			},
+		],
+	},
+	{
+		num: '03',
+		id: 'utilities',
+		title: 'Core utilities',
+		tagline: 'The small tools that make macOS feel like yours.',
+		cards: [
+			{
+				id: 'core-utilities',
+				name: 'Core utilities',
+				tag: 'cask',
+				summary: 'One paste for the daily-driver utility layer.',
+				run: 'brew install --cask monarch rectangle shottr ghostty dockdoor copyclip imageoptim',
+				includes: [
+					{ name: 'Monarch', desc: 'Launcher & command palette — bind to ⌘Space.' },
+					{ name: 'Rectangle', desc: 'Keyboard window snapping.' },
+					{ name: 'Shottr', desc: 'Screenshots & annotation.' },
+					{ name: 'Ghostty', desc: 'Primary terminal — configured in §08.' },
+					{ name: 'DockDoor', desc: 'Dock previews & window switching.' },
+					{ name: 'CopyClip', desc: 'Clipboard history, no subscription.' },
+					{ name: 'ImageOptim', desc: 'Lossless image compression before upload.' },
+				],
+				note: 'DockDoor needs Accessibility + Screen Recording permissions on first launch.',
+			},
+			{
+				id: 'command-x',
+				name: 'Command X',
+				tag: 'manual',
+				summary:
+					'Real ⌘X / ⌘V file moves in Finder. After installing, enable it under System Settings → Privacy & Security → Extensions → Finder.',
+				manual: 'https://sindresorhus.com/command-x',
+			},
+			{
+				id: 'substage',
+				name: 'Substage',
+				tag: 'manual',
+				summary:
+					'Natural-language shell for conversions, compression, batch ops, and archives. Always review the command it proposes before running it.',
+				manual: 'https://selkie.design/substage/',
+			},
+		],
+	},
+	{
+		num: '04',
+		id: 'apps',
+		title: 'Applications',
+		tagline: 'Creative, comms, and the privacy layer.',
+		cards: [
+			{
+				id: 'desktop-apps',
+				name: 'Desktop apps',
+				tag: 'cask',
+				summary: 'The everyday app set, in one command.',
+				run: 'brew install --cask notion iina spotify chatgpt visual-studio-code pixelmator-pro protonvpn',
+				includes: [
+					{ name: 'Notion', desc: 'Notes & docs.' },
+					{ name: 'IINA', desc: 'Native media player.' },
+					{ name: 'Spotify', desc: 'Music.' },
+					{ name: 'ChatGPT', desc: 'Desktop assistant.' },
+					{ name: 'VS Code', desc: 'Editor.' },
+					{ name: 'Pixelmator Pro', desc: 'Image editing.' },
+					{ name: 'ProtonVPN', desc: 'Auto-connect on untrusted networks.' },
+				],
+			},
+			{
+				id: 'app-store',
+				name: 'From the App Store',
+				tag: 'app store',
+				summary: 'Sign in and install the Apple creative apps.',
+				includes: [
+					{ name: 'GarageBand', desc: 'Music.' },
+					{ name: 'Keynote', desc: 'Slides.' },
+					{ name: 'iMovie', desc: 'Video.' },
+				],
+			},
+			{
+				id: 'manual-apps',
+				name: 'Manual installs',
+				tag: 'manual',
+				summary: 'Grab these from their own sites.',
+				includes: [
+					{ name: 'Bambu Studio', desc: '3D-print slicer.' },
+					{ name: 'Wipr', desc: 'Content blocking.' },
+					{ name: 'Ulysses', desc: 'Long-form writing.' },
+					{ name: 'Claude', desc: 'Desktop assistant.' },
+					{ name: 'Folder Preview', desc: 'Finder folder thumbnails.' },
+				],
+			},
+		],
+	},
+	{
+		num: '05',
+		id: 'browsers',
+		title: 'Browsers',
+		tagline: 'One for reading, one for the web, one for AI.',
+		cards: [
+			{
+				id: 'chrome',
+				name: 'Chrome',
+				tag: 'cask',
+				summary: 'Compatibility, web apps, and development.',
+				run: 'brew install --cask google-chrome',
+			},
+			{
+				id: 'comet',
+				name: 'Comet',
+				tag: 'manual',
+				summary:
+					"Perplexity's AI browser — research, summaries, comparisons, experimental workflows.",
+				manual: 'https://www.perplexity.ai/comet',
+			},
+			{
+				id: 'safari',
+				name: 'Safari',
+				tag: 'built-in',
+				summary:
+					'Already here. Personal browsing, reading, and the best battery life.',
+			},
+		],
+	},
+	{
+		num: '06',
+		id: 'cli',
+		title: 'Developer & CLI',
+		tagline: 'A modern terminal toolkit.',
+		cards: [
+			{
+				id: 'cli-toolkit',
+				name: 'CLI toolkit',
+				tag: 'cli',
+				summary: 'The everyday command-line set, in one paste.',
+				run: 'brew install git wget htop tree jq fd fzf ripgrep bat zoxide eza fastfetch',
+				includes: [
+					{ name: 'git · wget', desc: 'Version control & downloads.' },
+					{ name: 'fd · ripgrep · fzf', desc: 'Fast find, grep, and fuzzy search.' },
+					{ name: 'bat · eza', desc: 'Better cat & ls.' },
+					{ name: 'zoxide', desc: 'Smarter cd.' },
+					{ name: 'jq · tree · htop · fastfetch', desc: 'JSON, trees, processes, fetch.' },
+				],
+			},
+			{
+				id: 'node',
+				name: 'Node.js',
+				tag: 'cli',
+				summary: 'Runtime plus a version manager.',
+				run: 'brew install node nvm',
+				note: 'Verify with `node -v` and `npm -v`.',
+			},
+		],
+	},
+	{
+		num: '07',
+		id: 'shell',
+		title: 'Shell',
+		tagline: 'Glyphs, aliases, and a fast prompt.',
+		cards: [
+			{
+				id: 'nerd-font',
+				name: 'Nerd Font',
+				tag: 'cask',
+				summary: 'JetBrains Mono with icon glyphs — powers Ghostty and the prompt.',
+				run: 'brew install --cask font-jetbrains-mono-nerd-font',
+			},
+			{
+				id: 'zsh-aliases',
+				name: 'zsh enhancements',
+				tag: 'config',
+				summary: 'Wire up zoxide + fzf and the eza / bat / fd aliases.',
+				run: `cat <<'EOF' >> ~/.zshrc
+
+# magus.sh — shell enhancements
+eval "$(zoxide init zsh)"
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+alias ls="eza --icons --group-directories-first"
+alias ll="eza -lh --icons"
+alias cat="bat"
+alias find="fd"
+EOF
+source ~/.zshrc`,
+				note: 'Appends to ~/.zshrc — run once.',
+			},
+		],
+	},
+	{
+		num: '08',
+		id: 'ghostty',
+		title: 'Ghostty',
+		tagline: 'Tokyo Night — the same palette as this site.',
+		cards: [
+			{
+				id: 'ghostty-config',
+				name: 'Ghostty config',
+				tag: 'config',
+				summary:
+					'Writes ~/.config/ghostty/config: JetBrains Mono, a bar cursor, subtle transparency, and the full Tokyo Night palette.',
+				run: `mkdir -p ~/.config/ghostty
+cat <<'EOF' > ~/.config/ghostty/config
+font-family = JetBrainsMono Nerd Font
+font-size = 14
+cursor-style = bar
+window-padding-x = 10
+window-padding-y = 10
+background-opacity = 0.95
+background = #1a1b26
+foreground = #c0caf5
+palette = 0=#15161e
+palette = 1=#f7768e
+palette = 2=#9ece6a
+palette = 3=#e0af68
+palette = 4=#7aa2f7
+palette = 5=#bb9af7
+palette = 6=#7dcfff
+palette = 7=#a9b1d6
+palette = 8=#414868
+palette = 9=#f7768e
+palette = 10=#9ece6a
+palette = 11=#e0af68
+palette = 12=#7aa2f7
+palette = 13=#bb9af7
+palette = 14=#7dcfff
+palette = 15=#c0caf5
+EOF`,
+				note: 'That background, #1a1b26, is magus.sh’s own Nightshade. Verify with `echo $TERM_PROGRAM` → ghostty.',
+			},
+		],
+	},
+	{
+		num: '09',
+		id: 'ai',
+		title: 'Local AI',
+		tagline: 'Private, offline models on your own machine.',
+		cards: [
+			{
+				id: 'ollama',
+				name: 'Ollama',
+				tag: 'cask + cli',
+				summary:
+					'Local LLMs for coding assistants, offline AI, and private document analysis.',
+				run: `brew install ollama
+brew install --cask ollama-app`,
+				upstream: { name: 'ollama.com', url: 'https://ollama.com' },
+			},
+			{
+				id: 'ollama-run',
+				name: 'Run a model',
+				tag: 'cli',
+				summary: 'Start the server and pull your first model.',
+				run: `ollama serve
+ollama run llama3`,
+			},
+		],
+	},
+	{
+		num: '10',
+		id: 'emulation',
+		title: 'Emulation',
+		tagline: 'ES-DE front-end, RetroArch core, standalones for the rest.',
+		cards: [
+			{
+				id: 'emulation-stack',
+				name: 'Emulation stack',
+				tag: 'cask',
+				summary:
+					'The same stack that powers the Steam Deck side of magus.sh — one paste.',
+				run: 'brew install --cask es-de retroarch dolphin pcsx2 duckstation ppsspp',
+				includes: [
+					{ name: 'ES-DE', desc: 'The front-end that ties it together.' },
+					{ name: 'RetroArch', desc: 'Most systems, one roof.' },
+					{ name: 'Dolphin', desc: 'GameCube & Wii.' },
+					{ name: 'PCSX2', desc: 'PlayStation 2.' },
+					{ name: 'DuckStation', desc: 'PlayStation 1.' },
+					{ name: 'PPSSPP', desc: 'PSP.' },
+				],
+			},
+		],
+	},
+	{
+		num: '11',
+		id: 'folders',
+		title: 'Folder structure',
+		tagline: 'Four folders, one rule each.',
+		cards: [
+			{
+				id: 'folders',
+				name: 'Home folders',
+				tag: 'shell',
+				summary: 'A place for everything, so nothing piles up on the Desktop.',
+				run: 'mkdir -p ~/Projects ~/Media ~/Temp ~/Archive',
+				includes: [
+					{ name: 'Projects', desc: 'Active work.' },
+					{ name: 'Media', desc: 'Assets.' },
+					{ name: 'Temp', desc: 'Disposable — empty it weekly.' },
+					{ name: 'Archive', desc: 'Completed work.' },
+				],
+			},
+		],
+	},
+	{
+		num: '12',
+		id: 'maintenance',
+		title: 'Maintenance',
+		tagline: 'A five-minute ritual, once a week.',
+		cards: [
+			{
+				id: 'maintenance-tools',
+				name: 'Maintenance tools',
+				tag: 'cask + cli',
+				summary: 'Track updates everywhere and keep the disk tidy.',
+				run: 'brew install --cask updatest && brew install mole',
+				includes: [
+					{
+						name: 'Updatest',
+						desc: 'Updates across Homebrew, App Store, Sparkle, GitHub & Electron apps.',
+					},
+					{ name: 'mole', desc: 'Mac maintenance & cleanup.' },
+				],
+			},
+			{
+				id: 'weekly-ritual',
+				name: 'Weekly ritual',
+				tag: 'brew',
+				summary: 'Every Friday: run this, open Updatest, run mole, empty ~/Temp.',
+				run: 'brew update && brew upgrade && brew cleanup',
+			},
+		],
+	},
+];
+
+const isBlock = (s: string): boolean => s.includes('\n');
+---
+
+<Base
+	title="magus.sh — Mac setup"
+	description="Set up a fresh Mac with copy-paste commands — terminal, dev tools, local AI, emulation, and the utilities that make macOS feel like yours. Beta."
+>
+	<div class="mac">
+		<header class="mac-hero">
+			<div class="mac-kicker rise rise-1">
+				<Icon name="simple-icons:apple" class="mac-kicker-icon" />
+				<span>macOS</span>
+				<span class="mac-beta">Beta</span>
+			</div>
+			<h1 class="mac-title rise rise-2">
+				Mac <em>setup.</em>
+			</h1>
+			<p class="mac-lede rise rise-3">
+				Open this on a fresh Mac and copy what you want — terminal, dev tools,
+				local AI, an emulation stack, and the small utilities that make macOS
+				feel like yours. Distilled from a build guide refined over years:
+				opinionated, idempotent where it can be, and yours to edit.
+			</p>
+
+			<nav class="mac-index rise rise-4" aria-label="Sections">
+				{
+					SECTIONS.map((s) => (
+						<a class="mac-index-link" href={`#${s.id}`}>
+							<span class="mac-index-num">{s.num}</span>
+							<span>{s.title}</span>
+						</a>
+					))
+				}
+			</nav>
+		</header>
+
+		<div class="mac-sections">
+			{
+				SECTIONS.map((section) => (
+					<section class="sec" id={section.id} aria-label={section.title}>
+						<div class="sec-head">
+							<span class="sec-num">{section.num}</span>
+							<div class="sec-head-copy">
+								<h2 class="sec-title">{section.title}</h2>
+								<p class="sec-tagline">{section.tagline}</p>
+							</div>
+						</div>
+
+						<div class="sec-cards">
+							{section.cards.map((card) => (
+								<article class="cmd" id={card.id}>
+									<div class="cmd-head">
+										<div class="cmd-id">
+											<h3 class="cmd-name">{card.name}</h3>
+											{card.tag && <span class="cmd-tag">{card.tag}</span>}
+										</div>
+										{card.upstream && (
+											<a
+												class="cmd-upstream"
+												href={card.upstream.url}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												<Icon name="lucide:external-link" class="cmd-upstream-icon" />
+												<span>{card.upstream.name}</span>
+											</a>
+										)}
+									</div>
+
+									{card.summary && <p class="cmd-summary">{card.summary}</p>}
+
+									{card.run && !isBlock(card.run) && (
+										<div class="cmd-term">
+											<div class="cmd-term-cmd">
+												<span class="cmd-prompt" aria-hidden="true">$</span>
+												<code>{card.run}</code>
+											</div>
+											<button
+												class="cmd-copy"
+												type="button"
+												data-copy={card.run}
+												aria-label={`Copy ${card.name} command`}
+											>
+												<Icon name="lucide:copy" class="cmd-copy-icon" />
+												<span data-copy-label>Copy</span>
+											</button>
+										</div>
+									)}
+
+									{card.run && isBlock(card.run) && (
+										<div class="cmd-term cmd-term--block">
+											<div class="cmd-term-bar">
+												<span class="cmd-term-glyph" aria-hidden="true">zsh</span>
+												<button
+													class="cmd-copy"
+													type="button"
+													data-copy={card.run}
+													aria-label={`Copy ${card.name} command`}
+												>
+													<Icon name="lucide:copy" class="cmd-copy-icon" />
+													<span data-copy-label>Copy</span>
+												</button>
+											</div>
+											<pre class="cmd-pre"><code>{card.run}</code></pre>
+										</div>
+									)}
+
+									{!card.run && card.manual && (
+										<a
+											class="cmd-manual"
+											href={card.manual}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											<Icon name="lucide:download" class="cmd-manual-icon" />
+											<span>Get it</span>
+											<span class="cmd-manual-arrow" aria-hidden="true">↗</span>
+										</a>
+									)}
+
+									{card.includes && (
+										<ul class="cmd-includes">
+											{card.includes.map((inc) => (
+												<li>
+													<span class="ci-name">{inc.name}</span>
+													<span class="ci-desc">{inc.desc}</span>
+												</li>
+											))}
+										</ul>
+									)}
+
+									{card.note && (
+										<p class="cmd-note">
+											<span class="cmd-note-glyph" aria-hidden="true">!</span>
+											<span>{card.note}</span>
+										</p>
+									)}
+								</article>
+							))}
+						</div>
+					</section>
+				))
+			}
+		</div>
+
+		<aside class="mac-philosophy rise" aria-label="Philosophy">
+			<p class="mac-philosophy-lead">The goal is not more software.</p>
+			<ul class="mac-philosophy-list">
+				<li>fewer decisions</li>
+				<li>less friction</li>
+				<li>better defaults</li>
+				<li>local-first where possible</li>
+				<li>tools that disappear into the background</li>
+			</ul>
+			<p class="mac-philosophy-sign">Build the machine once. Use it every day.</p>
+		</aside>
+
+		<footer class="mac-foot">
+			<a class="mac-back" href="/setup">
+				<span aria-hidden="true">←</span>
+				<span>Steam Deck setup</span>
+			</a>
+			<p class="mac-note">Wrap, don’t reinvent. No telemetry.</p>
+		</footer>
+	</div>
+</Base>
+
+<script>
+	import { copyWithFeedback } from '../lib/clipboard';
+
+	document
+		.querySelectorAll<HTMLButtonElement>('button[data-copy]')
+		.forEach((btn) => {
+			const label = btn.querySelector<HTMLElement>('[data-copy-label]');
+			const text = btn.dataset.copy ?? '';
+			if (!label) return;
+			btn.addEventListener('click', () => {
+				void copyWithFeedback(text, btn, label);
+			});
+		});
+</script>
+
+<style>
+	.mac {
+		max-width: 940px;
+		margin: 0 auto;
+		padding: clamp(28px, 6vw, 72px) clamp(20px, 4vw, 40px) 80px;
+		position: relative;
+		isolation: isolate;
+		background-image:
+			radial-gradient(50rem 34rem at 16% 4%, var(--color-glow-primary), transparent 70%),
+			radial-gradient(44rem 30rem at 90% 0%, var(--color-glow-secondary), transparent 72%);
+	}
+
+	/* ----- hero ---------------------------------------------------- */
+	.mac-hero {
+		max-width: 46rem;
+	}
+	.mac-kicker {
+		display: inline-flex;
+		align-items: center;
+		gap: 9px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+	}
+	.mac-kicker-icon {
+		width: 15px;
+		height: 15px;
+		color: var(--color-text-muted);
+	}
+	.mac-beta {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 3px 8px;
+		border-radius: 999px;
+		border: 1px solid color-mix(in oklab, var(--color-accent) 48%, var(--color-border));
+		background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+		color: var(--color-accent);
+		font-size: 10px;
+		letter-spacing: 0.16em;
+	}
+	.mac-beta::before {
+		content: '';
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: currentColor;
+		box-shadow: 0 0 10px currentColor;
+	}
+
+	.mac-title {
+		margin: 18px 0 0;
+		font-family: 'Geist Mono', var(--font-mono);
+		font-weight: 500;
+		font-size: clamp(2.6rem, 6vw, 4.4rem);
+		line-height: 1;
+		letter-spacing: -0.04em;
+		color: var(--color-text);
+	}
+	.mac-title em {
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-weight: 400;
+		font-size: 1.1em;
+		letter-spacing: -0.02em;
+		color: var(--color-accent);
+		background: linear-gradient(
+			100deg,
+			var(--color-accent) 0%,
+			var(--color-warn) 60%,
+			var(--color-danger) 100%
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		filter: drop-shadow(0 0 22px color-mix(in oklab, var(--color-accent) 20%, transparent));
+	}
+
+	.mac-lede {
+		margin: 22px 0 0;
+		max-width: 52ch;
+		font-size: 1.0625rem;
+		line-height: 1.6;
+		color: var(--color-text-muted);
+		text-wrap: pretty;
+	}
+
+	/* ----- section index ------------------------------------------- */
+	.mac-index {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 7px;
+		margin-top: clamp(26px, 4vw, 38px);
+	}
+	.mac-index-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		padding: 6px 11px 6px 8px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-bg) 52%, transparent);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.02em;
+		color: var(--color-text-muted);
+		text-decoration: none;
+		transition:
+			border-color 0.18s ease,
+			color 0.18s ease,
+			background-color 0.18s ease;
+	}
+	.mac-index-link:hover {
+		border-color: var(--color-accent);
+		color: var(--color-text);
+		background: color-mix(in oklab, var(--color-accent) 8%, transparent);
+	}
+	.mac-index-num {
+		font-size: 9px;
+		letter-spacing: 0.1em;
+		color: var(--color-accent);
+	}
+
+	/* ----- sections ------------------------------------------------ */
+	.mac-sections {
+		display: grid;
+		gap: clamp(32px, 5vw, 52px);
+		margin-top: clamp(38px, 6vw, 60px);
+	}
+	.sec {
+		scroll-margin-top: 84px;
+	}
+	.sec-head {
+		display: flex;
+		align-items: baseline;
+		gap: 14px;
+		padding-bottom: 14px;
+		margin-bottom: 16px;
+		border-bottom: 1px solid var(--color-border);
+	}
+	.sec-num {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.1em;
+		color: var(--color-accent);
+		padding-top: 2px;
+	}
+	.sec-title {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-weight: 400;
+		font-size: 1.5rem;
+		line-height: 1.05;
+		letter-spacing: -0.01em;
+		color: var(--color-text);
+	}
+	.sec-tagline {
+		margin: 5px 0 0;
+		font-size: 0.9rem;
+		line-height: 1.45;
+		color: var(--color-text-muted);
+	}
+	.sec-cards {
+		display: grid;
+		gap: 14px;
+	}
+
+	/* ----- command card -------------------------------------------- */
+	.cmd {
+		position: relative;
+		border: 1px solid var(--color-border);
+		border-radius: 14px;
+		background: color-mix(in oklab, var(--color-bg-elevated) 70%, transparent);
+		padding: clamp(15px, 2.2vw, 20px);
+		transition:
+			border-color 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+	.cmd::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: clamp(15px, 2.2vw, 20px);
+		right: clamp(15px, 2.2vw, 20px);
+		height: 1px;
+		background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+		opacity: 0.24;
+	}
+	.cmd:hover {
+		border-color: color-mix(in oklab, var(--color-accent) 38%, var(--color-border));
+	}
+
+	.cmd-head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 14px;
+	}
+	.cmd-id {
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+	.cmd-name {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: 1.05rem;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+		color: var(--color-text);
+	}
+	.cmd-tag {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-accent);
+	}
+	.cmd-upstream {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		flex-shrink: 0;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--color-text-dim);
+		text-decoration: none;
+		transition: color 0.18s ease;
+	}
+	.cmd-upstream:hover {
+		color: var(--color-accent);
+	}
+	.cmd-upstream-icon {
+		width: 12px;
+		height: 12px;
+	}
+
+	.cmd-summary {
+		margin: 9px 0 0;
+		max-width: 62ch;
+		font-size: 0.92rem;
+		line-height: 1.55;
+		color: var(--color-text-muted);
+	}
+
+	/* ----- terminal: inline (single line) -------------------------- */
+	.cmd-term {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 14px;
+		margin-top: 14px;
+		padding: 12px 13px;
+		border-radius: 10px;
+		background: color-mix(in oklab, var(--color-bg) 80%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-border) 72%, transparent);
+	}
+	.cmd-term-cmd {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-width: 0;
+		overflow-x: auto;
+		scrollbar-width: none;
+		font-family: var(--font-mono);
+		font-size: clamp(0.8rem, 1.05vw, 0.92rem);
+		color: var(--color-text);
+	}
+	.cmd-term-cmd::-webkit-scrollbar {
+		display: none;
+	}
+	.cmd-prompt {
+		flex-shrink: 0;
+		color: var(--color-accent);
+	}
+	.cmd-term-cmd code {
+		font-family: inherit;
+		font-size: inherit;
+		color: inherit;
+		background: none;
+		padding: 0;
+		white-space: nowrap;
+	}
+
+	/* ----- terminal: block (multi-line) ---------------------------- */
+	.cmd-term--block {
+		display: block;
+		padding: 0;
+		overflow: hidden;
+	}
+	.cmd-term-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 8px 10px 8px 13px;
+		border-bottom: 1px solid color-mix(in oklab, var(--color-border) 64%, transparent);
+		background: color-mix(in oklab, var(--color-bg-elevated) 40%, transparent);
+	}
+	.cmd-term-glyph {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+	}
+	.cmd-pre {
+		margin: 0;
+		padding: 13px 14px;
+		overflow-x: auto;
+		scrollbar-width: thin;
+		font-family: var(--font-mono);
+		font-size: clamp(0.78rem, 1vw, 0.9rem);
+		line-height: 1.65;
+		color: var(--color-text);
+	}
+	.cmd-pre code {
+		font-family: inherit;
+		font-size: inherit;
+		color: inherit;
+		background: none;
+		padding: 0;
+		white-space: pre;
+	}
+	/* dim comment lines inside blocks isn't feasible per-line without parsing;
+	   the muted bar + mono body read clearly enough on their own. */
+
+	/* ----- copy button --------------------------------------------- */
+	.cmd-copy {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		flex-shrink: 0;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--color-text);
+		background: transparent;
+		border: 1px solid var(--color-border);
+		padding: 8px 12px;
+		border-radius: 8px;
+		cursor: pointer;
+		transition:
+			border-color 0.18s ease,
+			color 0.18s ease,
+			background-color 0.18s ease;
+	}
+	.cmd-copy:hover {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+		background: var(--color-accent-soft);
+	}
+	.cmd-copy:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 3px;
+	}
+	.cmd-copy.copied {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+		background: var(--color-accent-soft);
+	}
+	.cmd-copy-icon {
+		width: 13px;
+		height: 13px;
+	}
+
+	/* ----- manual / download link ---------------------------------- */
+	.cmd-manual {
+		display: inline-flex;
+		align-items: center;
+		gap: 9px;
+		margin-top: 14px;
+		padding: 9px 14px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 82%, transparent);
+		border-radius: 9px;
+		background: color-mix(in oklab, var(--color-bg) 55%, transparent);
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-text-muted);
+		text-decoration: none;
+		transition:
+			border-color 0.18s ease,
+			color 0.18s ease,
+			background-color 0.18s ease;
+	}
+	.cmd-manual:hover {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+		background: color-mix(in oklab, var(--color-accent) 8%, transparent);
+	}
+	.cmd-manual-icon {
+		width: 13px;
+		height: 13px;
+	}
+	.cmd-manual-arrow {
+		color: var(--color-accent);
+	}
+
+	/* ----- includes list ------------------------------------------- */
+	.cmd-includes {
+		display: grid;
+		gap: 6px 18px;
+		margin: 14px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	@media (min-width: 560px) {
+		.cmd-includes {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	.cmd-includes li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 4px 8px;
+		padding: 4px 0;
+		border-top: 1px solid color-mix(in oklab, var(--color-border) 45%, transparent);
+		font-size: 0.85rem;
+		line-height: 1.4;
+	}
+	.ci-name {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.02em;
+		color: var(--color-text);
+		white-space: nowrap;
+	}
+	.ci-desc {
+		color: var(--color-text-dim);
+	}
+
+	/* ----- note ---------------------------------------------------- */
+	.cmd-note {
+		display: flex;
+		gap: 9px;
+		margin: 13px 0 0;
+		padding: 10px 12px;
+		border-radius: 8px;
+		border: 1px solid color-mix(in oklab, var(--color-warn) 26%, var(--color-border));
+		background: color-mix(in oklab, var(--color-warn) 7%, transparent);
+		font-size: 0.84rem;
+		line-height: 1.5;
+		color: var(--color-text-muted);
+	}
+	.cmd-note-glyph {
+		flex-shrink: 0;
+		display: grid;
+		place-items: center;
+		width: 16px;
+		height: 16px;
+		margin-top: 1px;
+		border-radius: 50%;
+		background: color-mix(in oklab, var(--color-warn) 22%, transparent);
+		color: var(--color-warn);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 700;
+		line-height: 1;
+	}
+	.cmd-note code,
+	.cmd-summary code,
+	.sec-tagline code {
+		font-family: var(--font-mono);
+		font-size: 0.92em;
+		padding: 1px 5px;
+		border-radius: 5px;
+		background: color-mix(in oklab, var(--color-bg) 70%, transparent);
+		border: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent);
+		color: var(--color-text);
+	}
+
+	/* ----- philosophy ---------------------------------------------- */
+	.mac-philosophy {
+		margin-top: clamp(44px, 7vw, 72px);
+		padding: clamp(24px, 4vw, 36px);
+		border: 1px solid var(--color-border);
+		border-radius: 16px;
+		background:
+			radial-gradient(
+				36rem 20rem at 0% 0%,
+				color-mix(in oklab, var(--color-accent) 9%, transparent),
+				transparent 70%
+			),
+			color-mix(in oklab, var(--color-bg-elevated) 50%, transparent);
+		text-align: center;
+	}
+	.mac-philosophy-lead {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-size: 1.25rem;
+		color: var(--color-text);
+	}
+	.mac-philosophy-list {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 8px 10px;
+		margin: 18px 0;
+		padding: 0;
+		list-style: none;
+	}
+	.mac-philosophy-list li {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.04em;
+		color: var(--color-text-muted);
+		padding: 5px 11px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-bg) 45%, transparent);
+	}
+	.mac-philosophy-sign {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.06em;
+		color: var(--color-accent);
+	}
+
+	/* ----- footer -------------------------------------------------- */
+	.mac-foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		flex-wrap: wrap;
+		margin-top: clamp(34px, 5vw, 52px);
+		padding-top: 22px;
+		border-top: 1px solid var(--color-border);
+	}
+	.mac-back {
+		display: inline-flex;
+		align-items: center;
+		gap: 9px;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-text-muted);
+		text-decoration: none;
+		transition: color 0.18s ease;
+	}
+	.mac-back:hover {
+		color: var(--color-accent);
+	}
+	.mac-note {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.04em;
+		color: var(--color-text-dim);
+	}
+
+	@media (max-width: 560px) {
+		.cmd-term:not(.cmd-term--block) {
+			flex-direction: column;
+			align-items: stretch;
+		}
+		.cmd-term:not(.cmd-term--block) .cmd-copy {
+			justify-content: center;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.cmd,
+		.cmd-copy,
+		.cmd-upstream,
+		.cmd-manual,
+		.mac-index-link,
+		.mac-back {
+			transition: none;
+		}
+	}
+</style>
