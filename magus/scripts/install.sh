@@ -126,22 +126,63 @@ chmod +x "$TMP/magus"
 mv -f "$TMP/magus" "$BIN_DIR/magus" || die "cannot write to $BIN_DIR"
 ok "installed $BIN_DIR/magus"
 
-# ~/.local/bin is on PATH via .bashrc, which a fresh shell has but a graphical
-# session does not (§8). Say so rather than letting `magus` mysteriously not
-# be found.
+# SteamOS does not put ~/.local/bin on PATH, so without this `magus` installs
+# successfully and then cannot be found — which looks like a broken install.
+#
+# Appending to a shell rc file is a change to someone's environment, so it is
+# the one thing here that touches anything outside $BIN_DIR. It is guarded: only
+# rc files that already exist, only when the line is not already present, and
+# always announced. MAGUS_NO_PATH=1 skips it.
+add_to_path() {
+  rc="$1"
+  [ -f "$rc" ] || return 1
+  # Already handled, by us or by the user.
+  grep -qF "$BIN_DIR" "$rc" 2>/dev/null && { ok "$BIN_DIR already referenced in $rc"; return 0; }
+  {
+    printf '\n# added by the magus installer\n'
+    printf 'export PATH="%s:$PATH"\n' "$BIN_DIR"
+  } >> "$rc" || return 1
+  ok "added $BIN_DIR to PATH in $rc"
+  PATH_CHANGED=1
+  return 0
+}
+
+PATH_CHANGED=0
 case ":${PATH}:" in
-  *":$BIN_DIR:"*) ;;
+  *":$BIN_DIR:"*)
+    ok "$BIN_DIR is on your PATH"
+    ;;
   *)
-    warn "$BIN_DIR is not on your PATH"
-    printf '    %sadd this to ~/.bashrc:%s\n' "$C_DIM" "$C_OFF"
-    printf '    export PATH="%s:$PATH"\n' "$BIN_DIR"
+    if [ "${MAGUS_NO_PATH:-0}" = "1" ]; then
+      warn "$BIN_DIR is not on your PATH (MAGUS_NO_PATH=1, leaving it alone)"
+    else
+      touched=0
+      for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+        add_to_path "$rc" && touched=1
+      done
+      if [ "$touched" = "0" ]; then
+        warn "$BIN_DIR is not on your PATH, and no shell rc file was found"
+        printf '    %sadd this to your shell profile:%s\n' "$C_DIM" "$C_OFF"
+        printf '    export PATH="%s:$PATH"\n' "$BIN_DIR"
+      fi
+    fi
     ;;
 esac
 
 # ---- what next -------------------------------------------------------------
 
 log "done"
-printf '  magus is installed. It has changed nothing else.\n\n'
-printf '    %s%s doctor%s   see what it would do — changes nothing\n' "$C_HEAD" "$BIN_DIR/magus" "$C_OFF"
-printf '    %s%s run%s      answer five questions, then converge\n' "$C_HEAD" "$BIN_DIR/magus" "$C_OFF"
-printf '\n  %sRun it yourself — this installer deliberately does not.%s\n' "$C_DIM" "$C_OFF"
+printf '  magus is installed. It has changed no settings.\n\n'
+
+# The rc file only affects shells started after it, so this shell still cannot
+# find a bare `magus`. Print the command that actually works right now.
+if [ "$PATH_CHANGED" = "1" ]; then
+  printf '  %sThis shell was started before the PATH change. Either:%s\n' "$C_DIM" "$C_OFF"
+  printf '    %ssource ~/.bashrc%s   %s— then plain `magus` works%s\n' "$C_HEAD" "$C_OFF" "$C_DIM" "$C_OFF"
+  printf '    %s— or just open a new terminal.%s\n\n' "$C_DIM" "$C_OFF"
+fi
+
+printf '    %smagus doctor%s   see what it would do — changes nothing\n' "$C_HEAD" "$C_OFF"
+printf '    %smagus run%s      answer five questions, then converge\n' "$C_HEAD" "$C_OFF"
+printf '\n  %sUntil this shell picks up the new PATH, use %s/magus.%s\n' "$C_DIM" "$BIN_DIR" "$C_OFF"
+printf '  %sRun it yourself — this installer deliberately does not.%s\n' "$C_DIM" "$C_OFF"
