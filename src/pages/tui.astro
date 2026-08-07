@@ -2468,7 +2468,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	function seedDefaults(): void {
-		const want = ['set-sudo-password', 'install-dependencies', 'protonup-qt', 'heroic'];
+		const want = ['set-sudo-password', 'install-magus', 'protonup-qt', 'heroic'];
 		for (const f of flat) {
 			if (want.some((p) => matchPattern(f.cmd.id, p))) state.picked.add(f.cmd.id);
 		}

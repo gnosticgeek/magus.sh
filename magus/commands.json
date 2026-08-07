@@ -23,19 +23,20 @@
           ]
         },
         {
-          "id": "setup/02-install-dependencies",
-          "slug": "02-install-dependencies",
-          "title": "Install Dependencies",
-          "summary": "Installs nvm and Node.js 22 to ~/. Required for the magus TUI — safe on SteamOS's immutable file system.",
+          "id": "setup/02-install-magus",
+          "slug": "02-install-magus",
+          "title": "Install magus",
+          "summary": "One 4 MB binary into ~/.local/bin. Nothing to install alongside it, and it survives SteamOS updates because it lives entirely in $HOME.",
           "order": 20,
           "groupId": null,
-          "upstream": null,
+          "upstream": {
+            "name": "gnosticgeek/magus.sh releases",
+            "url": "https://github.com/gnosticgeek/magus.sh/releases"
+          },
           "danger": "low",
           "deckOnly": false,
           "run": [
-            "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash",
-            "export NVM_DIR=\"$HOME/.nvm\"\n[ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\"\nnvm install 22\n",
-            "export NVM_DIR=\"$HOME/.nvm\"\n[ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\"\nnpm install -g tsx @inquirer/prompts\n"
+            "curl -fsSL https://magus.sh/install | sh"
           ]
         }
       ]
@@ -1427,7 +1428,7 @@
       "tagline": "the full transmutation",
       "commandIds": [
         "setup/01-set-sudo-password",
-        "setup/02-install-dependencies",
+        "setup/02-install-magus",
         "install/40-flatseal",
         "install/60-brave",
         "optimise/01-install-cryoutilities",
@@ -1446,7 +1447,7 @@
       "tagline": "emulators, shaders, bezels",
       "commandIds": [
         "setup/01-set-sudo-password",
-        "setup/02-install-dependencies",
+        "setup/02-install-magus",
         "gaming/100-retroarch",
         "gaming/110-dolphin",
         "gaming/120-duckstation",

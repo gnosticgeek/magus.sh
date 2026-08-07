@@ -202,7 +202,7 @@ export const PRESETS: Preset[] = [
 		tagline: 'the full transmutation',
 		patterns: [
 			'set-sudo-password',
-			'install-dependencies',
+			'install-magus',
 			'protonup-qt',
 			'heroic',
 			'install-cryoutilities',
@@ -221,7 +221,7 @@ export const PRESETS: Preset[] = [
 		tagline: 'emulators, shaders, bezels',
 		patterns: [
 			'set-sudo-password',
-			'install-dependencies',
+			'install-magus',
 			'retroarch',
 			'dolphin',
 			'duckstation',

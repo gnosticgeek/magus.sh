@@ -16,9 +16,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: magus/go.mod
           cache-dependency-path: magus/go.sum
@@ -57,7 +57,7 @@ jobs:
           ./magus-linux-amd64 doctor --plain && code=0 || code=$?
           test "$code" = "1" || { echo "doctor exited $code, expected 1"; exit 1; }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: magus-binaries
           path: magus/dist/*
