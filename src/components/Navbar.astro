@@ -8,6 +8,12 @@ interface Props {
 }
 
 const { githubUrl = '#', ariaLabel = 'Site' } = Astro.props;
+
+// Trailing slashes vary depending on how the page is served, so normalise
+// before comparing — otherwise /tui/ never matches /tui and the current page
+// is never marked.
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isLab = path === '/tui';
 ---
 
 <a class="nav-skip" href="#main">Skip to content</a>
@@ -33,6 +39,17 @@ const { githubUrl = '#', ariaLabel = 'Site' } = Astro.props;
 		</a>
 
 		<div class="nav-actions">
+			<a
+				class="nav-link"
+				href="/tui"
+				data-current={isLab ? 'true' : 'false'}
+				aria-current={isLab ? 'page' : undefined}
+				aria-label="TUI prototype (lab)"
+			>
+				<span class="nav-link-tag">lab</span>
+				<span class="nav-link-name">tui</span>
+			</a>
+			<span class="nav-divider nav-divider-lab" aria-hidden="true"></span>
 			<a
 				class="nav-icon-btn"
 				href={githubUrl}
@@ -240,6 +257,62 @@ const { githubUrl = '#', ariaLabel = 'Site' } = Astro.props;
 		width: 1px;
 		height: 22px;
 		background: var(--color-border);
+	}
+
+	.nav-link {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.4rem;
+		min-height: var(--tap-min);
+		padding: 0 10px;
+		border-radius: 8px;
+		text-decoration: none;
+		color: var(--color-text-muted);
+		align-self: center;
+		transition:
+			color 0.18s ease,
+			background 0.18s ease;
+	}
+	.nav-link:hover,
+	.nav-link:focus-visible {
+		color: var(--color-accent);
+		background: var(--color-accent-soft);
+		outline: none;
+	}
+	.nav-link[data-current='true'] {
+		color: var(--color-accent);
+	}
+	.nav-link-tag {
+		font-family: var(--font-mono);
+		font-size: 9px;
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+	}
+	.nav-link[data-current='true'] .nav-link-tag {
+		color: inherit;
+	}
+	.nav-link-name {
+		font-family: var(--font-mono);
+		font-size: 13px;
+		letter-spacing: 0.02em;
+	}
+	/* The bar is tight on a phone: brand, link, GitHub and the theme switcher.
+	   Shed the link's chrome — tag first, then its divider and padding — rather
+	   than let the theme switcher get clipped off the right edge. */
+	@media (max-width: 480px) {
+		.nav-link-tag {
+			display: none;
+		}
+		.nav-divider-lab {
+			display: none;
+		}
+		.nav-link {
+			padding: 0 4px;
+		}
+		.nav-actions {
+			gap: 6px;
+		}
 	}
 
 	.nav-icon-btn {

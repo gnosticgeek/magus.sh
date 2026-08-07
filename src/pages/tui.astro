@@ -40,7 +40,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 				<span class="kicker-dot" aria-hidden="true"></span>
 				<span>lab</span>
 				<span class="sep">·</span>
-				<span class="muted">not linked from anywhere — yet</span>
+				<span class="muted">a prototype, not the shipped app</span>
 			</p>
 			<h1 class="lab-title">
 				What does the <em>TUI</em> feel like?
@@ -48,12 +48,44 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			<p class="lab-lede">
 				A click-through prototype of the magus.sh terminal app. Use the
 				keyboard (or the rail under the window) — same hotkeys we'd ship.
-				Picks carry through to review, write, and run.
+				Both devices answer the same five questions and converge the same
+				manifest; switch device to see where their opinions diverge.
 			</p>
 		</header>
 
 		<div class="lab-layout">
 			<section class="lab-main">
+				<div class="device-switch" role="radiogroup" aria-label="Device">
+					<span class="device-label">device</span>
+					<button
+						type="button"
+						class="device-btn"
+						data-device="deck"
+						role="radio"
+						aria-checked="true"
+					>
+						<span class="device-name">Steam Deck</span>
+						<span class="device-sub">handheld · 32px cursor</span>
+					</button>
+					<button
+						type="button"
+						class="device-btn"
+						data-device="machine"
+						role="radio"
+						aria-checked="false"
+					>
+						<span class="device-name">Steam Machine</span>
+						<span class="device-sub">under a TV · 48px, HDMI, CEC</span>
+					</button>
+					<p class="device-note">
+						Same flow, same manifest, different opinions —
+						<code>magus</code> branches on DMI, not on a separate build. The
+						v0.1 command picker still ships as <code>magus</code> with no
+						arguments: <button type="button" class="flow-link" data-flow-toggle
+						>show it</button>.
+					</p>
+				</div>
+
 				<div class="term" data-term>
 					<div class="term-chrome">
 						<span class="lights" aria-hidden="true">
@@ -71,6 +103,11 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 						<div class="screen" data-screen="review" hidden></div>
 						<div class="screen" data-screen="write" hidden></div>
 						<div class="screen" data-screen="run" hidden></div>
+						<!-- Steam Machine path (v0.2): wizard → manifest → converge → doctor -->
+						<div class="screen" data-screen="wizard" hidden></div>
+						<div class="screen" data-screen="manifest" hidden></div>
+						<div class="screen" data-screen="converge" hidden></div>
+						<div class="screen" data-screen="doctor" hidden></div>
 						<div class="term-help" data-term-help hidden></div>
 					</div>
 
@@ -85,28 +122,8 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 					</div>
 				</div>
 
-				<ol class="flow" role="tablist" aria-label="TUI flow steps">
-					<li class="flow-item" data-jump="splash" role="tab" tabindex="0">
-						<span class="flow-num">01</span>
-						<span class="flow-name">splash</span>
-					</li>
-					<li class="flow-item" data-jump="pick" role="tab" tabindex="0">
-						<span class="flow-num">02</span>
-						<span class="flow-name">pick</span>
-					</li>
-					<li class="flow-item" data-jump="review" role="tab" tabindex="0">
-						<span class="flow-num">03</span>
-						<span class="flow-name">review</span>
-					</li>
-					<li class="flow-item" data-jump="write" role="tab" tabindex="0">
-						<span class="flow-num">04</span>
-						<span class="flow-name">write</span>
-					</li>
-					<li class="flow-item" data-jump="run" role="tab" tabindex="0">
-						<span class="flow-num">05</span>
-						<span class="flow-name">run</span>
-					</li>
-				</ol>
+				<!-- Rebuilt by JS on device change: the two paths have different steps. -->
+				<ol class="flow" role="tablist" aria-label="TUI flow steps" data-flow></ol>
 			</section>
 
 			<aside class="lab-notes" aria-label="Design notes">
@@ -134,6 +151,30 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 
 				<h2 class="notes-title">Decision queue</h2>
 				<ul class="decision-list">
+					<li>
+						<span class="decision-tag">Settle</span>
+						<strong>The wizard is a manifest builder, nothing more.</strong>
+						<small>
+							Five questions write <code>manifest.toml</code>, then the
+							reconciler takes over. Same file the GUI will read.
+						</small>
+					</li>
+					<li>
+						<span class="decision-tag">Prototype</span>
+						<strong>Re-running is the normal case, not the exception.</strong>
+						<small>
+							The Steam Machine path ends on <em>doctor</em> — two months
+							later, after an OS update. That's the product.
+						</small>
+					</li>
+					<li>
+						<span class="decision-tag">Risk</span>
+						<strong>Ghostty and Alacritty aren't wired up in v0.2.</strong>
+						<small>
+							Picking them yields a step that says so out loud rather than
+							silently doing nothing.
+						</small>
+					</li>
 					<li>
 						<span class="decision-tag">Prototype</span>
 						<strong>Search is global from menu, scoped inside a stage.</strong>
@@ -193,16 +234,41 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		sigil: string;
 		items: Cmd[];
 	};
-	type Step = 'splash' | 'pick' | 'review' | 'write' | 'run';
+	type Device = 'deck' | 'machine';
+	type Step =
+		| 'splash' | 'pick' | 'review' | 'write' | 'run'
+		| 'wizard' | 'manifest' | 'converge' | 'doctor';
 
-	const STEPS: Step[] = ['splash', 'pick', 'review', 'write', 'run'];
+	// One binary, one flow, two sets of opinions (§1). Both devices answer the
+	// same five questions and converge the same manifest; only the optimisations
+	// differ, because a handheld and a console under a television want different
+	// things. Detection picks the opinions on real hardware; here a toggle does.
+	const WIZARD_STEPS: Step[] = ['splash', 'wizard', 'manifest', 'converge', 'doctor'];
 
-	const TITLE_BY_STEP: Record<Step, string> = {
-		splash: 'magus@deck — bash',
-		pick: 'magus@deck — pick',
-		review: 'magus@deck — review',
-		write: 'magus@deck — write',
-		run: 'magus@deck — done',
+	// The v0.1 command picker still ships as `magus` with no arguments. It is
+	// kept here as a second flow rather than deleted, because it is a real
+	// screen the binary can still show.
+	const PICKER_STEPS: Step[] = ['splash', 'pick', 'review', 'write', 'run'];
+	const ALL_STEPS: Step[] = [
+		'splash', 'pick', 'review', 'write', 'run',
+		'wizard', 'manifest', 'converge', 'doctor',
+	];
+
+	const HOST_BY_DEVICE: Record<Device, string> = {
+		deck: 'magus@deck',
+		machine: 'magus@steammachine',
+	};
+
+	const TITLE_SUFFIX: Record<Step, string> = {
+		splash: 'bash',
+		pick: 'pick',
+		review: 'review',
+		write: 'write',
+		run: 'done',
+		wizard: 'run',
+		manifest: 'review',
+		converge: 'reconcile',
+		doctor: 'doctor',
 	};
 
 	type CommandPattern = string;
@@ -232,7 +298,100 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	type PickView = 'menu' | 'stage' | 'search' | 'installing';
 	type InstallPhase = 'prompt' | 'running' | 'failed' | 'done';
 
+	// ---- Steam Machine path ---------------------------------------------------
+	// The wizard's only job is to produce a manifest (§5), so its answers ARE the
+	// manifest — there is no separate wizard state to fall out of sync with it.
+	type Manifest = {
+		terminal: string;
+		browser: string;
+		bundles: Set<string>;
+		theme: string;
+		optimise: boolean;
+	};
+
+	type Question = {
+		id: string;
+		title: string;
+		prompt: string;
+		multi?: boolean;
+		options: Array<{ id: string; name: string; note: string }>;
+	};
+
+	const QUESTIONS: Question[] = [
+		{
+			id: 'terminal', title: 'terminal', prompt: 'Which terminal should this machine use?',
+			options: [
+				{ id: 'kitty', name: 'kitty', note: 'GPU-accelerated · installs to ~/.local' },
+				{ id: 'ghostty', name: 'Ghostty', note: 'newer, fast — not wired up in v0.2' },
+				{ id: 'alacritty', name: 'Alacritty', note: 'minimal — not wired up in v0.2' },
+				{ id: 'konsole', name: 'Keep Konsole', note: 'change nothing' },
+			],
+		},
+		{
+			id: 'browser', title: 'browser', prompt: 'Which browser?',
+			options: [
+				{ id: 'firefox', name: 'Firefox', note: 'open source · the default' },
+				{ id: 'brave', name: 'Brave', note: 'chromium, blocks ads by default' },
+				{ id: 'chrome', name: 'Google Chrome', note: 'chromium, google account sync' },
+				{ id: 'vivaldi', name: 'Vivaldi', note: 'chromium, heavily customisable' },
+			],
+		},
+		{
+			id: 'bundles', title: 'apps', prompt: 'Which bundles?', multi: true,
+			options: [
+				{ id: 'essentials', name: 'Essentials', note: 'archives, editor, media player, images' },
+				{ id: 'gaming', name: 'Gaming extras', note: 'ProtonUp-Qt, Heroic, Lutris' },
+				{ id: 'creative', name: 'Creative', note: 'GIMP, Krita, Inkscape, OBS' },
+				{ id: 'dev', name: 'Dev', note: 'VS Code' },
+				{ id: 'comms', name: 'Comms', note: 'Discord, Signal, Element' },
+			],
+		},
+		{
+			id: 'optimise', title: 'optimisations', prompt: 'These are not questions — here is what will be done:',
+			options: [
+				{ id: 'yes', name: 'Apply all five', note: 'full RGB, CEC, performance, Proton-GE, Wi-Fi' },
+				{ id: 'no', name: 'Skip optimisations', note: 'leave every display and power default alone' },
+			],
+		},
+		{
+			id: 'theme', title: 'theme', prompt: 'Pick a palette. One choice drives everything.',
+			options: [
+				{ id: 'tokyo-night', name: 'Tokyo Night', note: 'the default' },
+				{ id: 'gruvbox', name: 'Gruvbox', note: 'warm, high contrast' },
+				{ id: 'catppuccin', name: 'Catppuccin', note: 'soft pastel' },
+				{ id: 'nord', name: 'Nord', note: 'cool, muted' },
+			],
+		},
+	];
+
+	// The bundle catalogue, mirroring bundles in magus/steps.go.
+	const BUNDLE_APPS: Record<string, string[]> = {
+		essentials: ['org.kde.ark', 'org.kde.kate', 'io.mpv.Mpv', 'org.kde.gwenview'],
+		gaming: ['net.davidotek.pupgui2', 'com.heroicgameslauncher.hgl', 'net.lutris.Lutris'],
+		creative: ['org.gimp.GIMP', 'org.kde.krita', 'org.inkscape.Inkscape', 'com.obsproject.Studio'],
+		dev: ['com.visualstudio.code'],
+		comms: ['com.discordapp.Discord', 'org.signal.Signal', 'im.riot.Riot'],
+	};
+
+	const defaultManifest = (): Manifest => ({
+		terminal: 'kitty',
+		browser: 'firefox',
+		bundles: new Set(['essentials', 'gaming']),
+		theme: 'tokyo-night',
+		optimise: true,
+	});
+
 	const state = {
+		device: 'deck' as Device,
+		flow: 'wizard' as 'wizard' | 'picker',
+		// machine path
+		manifest: defaultManifest(),
+		questionIndex: 0,
+		convergeIndex: 0,
+		convergePhase: 'running' as 'running' | 'done',
+		convergeRunId: 0,
+		driftRepaired: false,
+
 		step: 'splash' as Step,
 		cursor: 0,
 		picked: new Set<string>(),
@@ -252,11 +411,14 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	};
 
 	const screens = Object.fromEntries(
-		STEPS.map((s) => [
+		ALL_STEPS.map((s) => [
 			s,
 			document.querySelector<HTMLElement>(`[data-screen="${s}"]`)!,
 		]),
 	) as Record<Step, HTMLElement>;
+
+	/** Both devices walk the same flow — that is the point of unifying them. */
+	const activeSteps = (): Step[] => (state.flow === 'picker' ? PICKER_STEPS : WIZARD_STEPS);
 
 	const termStatus = document.querySelector<HTMLElement>('[data-term-status]')!;
 	const helpPanel = document.querySelector<HTMLElement>('[data-term-help]')!;
@@ -295,6 +457,45 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 			]);
 			return;
 		}
+		// --- Steam Machine path ---
+		if (state.step === 'wizard') {
+			const q = QUESTIONS[state.questionIndex];
+			setStatusHints([
+				...stepHints,
+				{ keys: ['↑', '↓'], label: 'choose' },
+				q.multi
+					? { keys: ['␣'], label: 'toggle', kind: 'primary' as const }
+					: { keys: ['↵'], label: 'accept', kind: 'primary' as const },
+				...(q.multi ? [{ keys: ['↵'], label: 'continue' }] : []),
+				resetHint,
+			]);
+			return;
+		}
+		if (state.step === 'manifest') {
+			setStatusHints([
+				...stepHints,
+				{ keys: ['↵'], label: 'write it and converge', kind: 'primary' },
+				resetHint,
+			]);
+			return;
+		}
+		if (state.step === 'converge') {
+			setStatusHints(
+				state.convergePhase === 'running'
+					? [{ keys: ['…'], label: 'converging' }, resetHint]
+					: [...stepHints, { keys: ['→'], label: 'two months later', kind: 'primary' }, resetHint],
+			);
+			return;
+		}
+		if (state.step === 'doctor') {
+			setStatusHints(
+				state.driftRepaired
+					? [...stepHints, { keys: ['r'], label: 'reset', kind: 'system' }]
+					: [...stepHints, { keys: ['y'], label: 'reconcile & repair', kind: 'primary' }, resetHint],
+			);
+			return;
+		}
+
 		if (state.step === 'splash') {
 			setStatusHints([
 				...stepHints,
@@ -482,6 +683,22 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	function updateReadout(): void {
+		if (state.device === 'machine') {
+			const steps = plannedSteps().length;
+			readoutStep.textContent =
+				state.step === 'wizard'
+					? `wizard ${state.questionIndex + 1}/${QUESTIONS.length}`
+					: state.step;
+			readoutPicked.textContent = String(steps);
+			readoutRuntime.textContent = `~${Math.max(2, Math.round(steps * 0.9))} min`;
+			readoutAction.textContent =
+				state.step === 'doctor' && !state.driftRepaired
+					? 'y'
+					: state.step === 'converge' && state.convergePhase === 'running'
+						? 'wait'
+						: 'enter';
+			return;
+		}
 		const picked = state.picked.size;
 		const runtime = picked === 0 ? '~0 min' : `~${Math.max(2, Math.round(picked * 1.4))} min`;
 		const view =
@@ -541,9 +758,40 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		}, 2600);
 	}
 
-	const flowItems = Array.from(
-		document.querySelectorAll<HTMLElement>('.flow-item'),
+	const flowEl = document.querySelector<HTMLElement>('[data-flow]')!;
+	let flowItems: HTMLElement[] = [];
+	const deviceButtons = Array.from(
+		document.querySelectorAll<HTMLElement>('[data-device]'),
 	);
+
+	/** Rebuild the step rail for the active device and re-bind its handlers. */
+	function buildFlowRail(): void {
+		const steps = activeSteps();
+		flowEl.innerHTML = steps
+			.map(
+				(s, i) =>
+					`<li class="flow-item" data-jump="${s}" role="tab" tabindex="0">
+						<span class="flow-num">${String(i + 1).padStart(2, '0')}</span>
+						<span class="flow-name">${s}</span>
+					</li>`,
+			)
+			.join('');
+		flowItems = Array.from(flowEl.querySelectorAll<HTMLElement>('.flow-item'));
+		for (const el of flowItems) {
+			el.addEventListener('click', () => {
+				const step = el.dataset.jump;
+				if (step && (activeSteps() as readonly string[]).includes(step)) {
+					setStep(step as Step);
+				}
+			});
+			el.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					el.click();
+					e.preventDefault();
+				}
+			});
+		}
+	}
 	const termTitle = document.querySelector<HTMLElement>('[data-term-title]')!;
 
 	const esc = (s: string) =>
@@ -562,9 +810,11 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		} else {
 			state.cursor = 0;
 		}
-		for (const s of STEPS) {
+		for (const s of ALL_STEPS) {
 			screens[s].hidden = s !== next;
 		}
+		if (next === 'converge') startConverge();
+		if (next === 'doctor') state.driftRepaired = false;
 		updateTitle();
 		refreshHints();
 		for (const el of flowItems) {
@@ -583,10 +833,14 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	function updateTitle(): void {
-		let title = TITLE_BY_STEP[state.step];
+		const host = HOST_BY_DEVICE[state.device];
+		let title = `${host} — ${TITLE_SUFFIX[state.step]}`;
 		if (state.step === 'pick' && state.pickView === 'stage') {
 			const stage = stages.find((s) => s.id === state.currentStageId);
-			if (stage) title = `magus@deck — pick · ${stage.short.toLowerCase()}`;
+			if (stage) title = `${host} — pick · ${stage.short.toLowerCase()}`;
+		}
+		if (state.step === 'wizard') {
+			title = `${host} — run · ${QUESTIONS[state.questionIndex].title}`;
 		}
 		termTitle.textContent = title;
 	}
@@ -596,11 +850,16 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		if (state.step === 'pick') renderPick();
 		if (state.step === 'review') renderReview();
 		if (state.step === 'run') renderRun();
+		if (state.step === 'wizard') renderWizard();
+		if (state.step === 'manifest') renderManifest();
+		if (state.step === 'converge') renderConverge();
+		if (state.step === 'doctor') renderDoctor();
 		renderHelpPanel();
 		updateReadout();
 	}
 
 	function renderSplash(): void {
+		if (state.flow === 'wizard') return renderSplashWizard();
 		const spells = String(flat.length);
 		const stagesN = String(stages.length);
 
@@ -662,6 +921,379 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 					`<div class="line${l.tight ? ' tight' : ''}" style="${l.tight ? tightStyle : looseStyle}">${l.html || '&nbsp;'}</div>`,
 			)
 			.join('');
+	}
+
+	// =========================================================================
+	// Steam Machine path — wizard → manifest → converge → doctor
+	// =========================================================================
+
+	function renderSplashWizard(): void {
+		const wordmark = [
+			'███╗   ███╗  █████╗   ██████╗  ██╗   ██╗ ███████╗',
+			'████╗ ████║ ██╔══██╗ ██╔════╝  ██║   ██║ ██╔════╝',
+			'██╔████╔██║ ███████║ ██║  ███╗ ██║   ██║ ███████╗',
+			'██║╚██╔╝██║ ██╔══██║ ██║   ██║ ██║   ██║ ╚════██║',
+			'██║ ╚═╝ ██║ ██║  ██║ ╚██████╔╝ ╚██████╔╝ ███████║',
+			'╚═╝     ╚═╝ ╚═╝  ╚═╝  ╚═════╝   ╚═════╝  ╚══════╝',
+		];
+		const deviceLabel = state.device === 'machine' ? 'steam machine' : '   steam deck';
+		const box = [
+			'┌──────────────────────┐',
+			'│ magus.sh       v0.3  │',
+			`│ device  ${deviceLabel}│`,
+			'│ questions          5 │',
+			'│ runtime      ~10 min │',
+			'└──────────────────────┘',
+		];
+		const lines: Array<{ html: string; tight?: boolean }> = [{ html: '' }];
+		wordmark.forEach((w, i) => {
+			lines.push({
+				html:
+					`     <span class="t-accent">${w}</span>     ` +
+					`<span class="t-dim">${esc(box[i])}</span>`,
+				tight: true,
+			});
+		});
+		lines.push({ html: '' });
+		lines.push({
+			html:
+				`     <span class="t-muted">the first hour of owning a ` +
+				`${state.device === 'machine' ? 'Steam Machine' : 'Steam Deck'}, done for you</span>`,
+		});
+		lines.push({ html: '' });
+		for (const b of [
+			'five questions, every one with a default',
+			'safe to run again — this repairs, it doesn’t reinstall',
+			'no root, no telemetry, nothing outside your home',
+		]) {
+			lines.push({
+				html: `     <span class="t-accent">✓</span> <span class="t-text">${esc(b)}</span>`,
+			});
+		}
+		lines.push({ html: '' });
+		lines.push({
+			html:
+				`     <span class="t-bright">press </span><span class="t-accent">[enter]</span>` +
+				`<span class="t-bright"> to begin</span><span class="cursor-blink">▌</span>`,
+		});
+
+		const tightStyle = 'white-space:pre;line-height:1.05;display:block';
+		const looseStyle = 'white-space:pre;line-height:1.6;min-height:1.6em;display:block';
+		screens.splash.innerHTML = lines
+			.map(
+				(l) =>
+					`<div class="line${l.tight ? ' tight' : ''}" style="${l.tight ? tightStyle : looseStyle}">${l.html || '&nbsp;'}</div>`,
+			)
+			.join('');
+	}
+
+	/** Whether an option is currently chosen, for the question at `index`. */
+	function isChosen(q: Question, optId: string): boolean {
+		if (q.id === 'bundles') return state.manifest.bundles.has(optId);
+		if (q.id === 'optimise') return state.manifest.optimise === (optId === 'yes');
+		return (state.manifest as unknown as Record<string, string>)[q.id] === optId;
+	}
+
+	function renderWizard(): void {
+		const q = QUESTIONS[state.questionIndex];
+		const lines: string[] = [];
+		lines.push(
+			`<span class="t-dim">── </span><span class="t-muted">question ${state.questionIndex + 1} of ${QUESTIONS.length}</span>` +
+				`<span class="t-dim"> ${'─'.repeat(Math.max(2, 34 - q.title.length))} </span><span class="t-bright">${esc(q.title)}</span>`,
+		);
+		lines.push('');
+		lines.push(`  <span class="t-bright">${esc(q.prompt)}</span>`);
+		lines.push('');
+
+		q.options.forEach((opt, i) => {
+			const focused = i === state.cursor;
+			const chosen = isChosen(q, opt.id);
+			const marker = q.multi
+				? chosen
+					? `<span class="t-accent">[×]</span>`
+					: `<span class="t-dim">[ ]</span>`
+				: chosen
+					? `<span class="t-accent">●</span>`
+					: `<span class="t-dim">○</span>`;
+			const caret = focused
+				? `<span class="t-accent">▸</span>`
+				: `<span class="t-dim"> </span>`;
+			const name = `<span class="${focused ? 't-bright' : chosen ? 't-text' : 't-muted'}">${esc(opt.name.padEnd(16))}</span>`;
+			lines.push(`${caret} ${marker} ${name}<span class="t-muted">${esc(opt.note)}</span>`);
+		});
+
+		lines.push('');
+		lines.push(`  <span class="t-dim">${'─'.repeat(56)}</span>`);
+		if (q.id === 'optimise') {
+			// Built today, on both devices.
+			for (const o of [
+				'Disable Baloo                 stops the indexer pinning the CPU',
+				'Double-click to open          instead of KDE’s single click',
+				state.device === 'machine'
+					? 'Cursor size 48px              you’re three metres away'
+					: 'Cursor size 32px              easier to track with thumbs',
+				'Proton-GE                     more games run, fewer tweaks',
+			]) {
+				lines.push(`  <span class="t-accent">✓</span> <span class="t-muted">${esc(o)}</span>`);
+			}
+			// Recorded but not built, and only on a machine plugged into a TV.
+			if (state.device === 'machine') {
+				for (const o of [
+					'HDMI colour range → full RGB  blacks are grey without it',
+					'HDMI-CEC                      the TV wakes with the machine',
+					'Performance power profile     it’s plugged into a wall',
+				]) {
+					lines.push(`  <span class="t-dim">· ${esc(o)}</span>`);
+				}
+				lines.push('');
+				lines.push(`  <span class="t-dim">· not built yet — the manifest records your answer</span>`);
+			}
+		} else if (q.id === 'bundles') {
+			const apps = [...state.manifest.bundles]
+				.reduce((n, b) => n + (BUNDLE_APPS[b]?.length ?? 0), 0);
+			lines.push(
+				`  <span class="t-text">${apps} apps</span><span class="t-dim"> · </span>` +
+					`<span class="t-text">~${(apps * 0.17).toFixed(1)} GB</span><span class="t-dim"> · </span>` +
+					`<span class="t-muted">flatpak, sandboxed, removable</span>`,
+			);
+		} else {
+			const chosenOpt = q.options.find((o) => isChosen(q, o.id));
+			lines.push(`  <span class="t-muted">${esc(chosenOpt?.note ?? '')}</span>`);
+			lines.push(
+				`  <span class="t-accent">default</span><span class="t-dim"> · press enter to accept</span>`,
+			);
+		}
+		screens.wizard.innerHTML = renderLines(lines);
+	}
+
+	/** The plan the manifest implies — mirrors StepsFor() in magus/steps.go. */
+	function plannedSteps(): Array<{ id: string; label: string }> {
+		const out: Array<{ id: string; label: string }> = [
+			{ id: 'flathub', label: 'add the Flathub remote' },
+		];
+		out.push({
+			id: `terminal:${state.manifest.terminal}`,
+			label:
+				state.manifest.terminal === 'konsole'
+					? 'keep the stock Konsole'
+					: `install ${state.manifest.terminal}`,
+		});
+		out.push({
+			id: `browser:${state.manifest.browser}`,
+			label: `install ${state.manifest.browser} as a user flatpak`,
+		});
+		for (const b of ['essentials', 'gaming', 'creative', 'dev', 'comms']) {
+			if (!state.manifest.bundles.has(b)) continue;
+			for (const app of BUNDLE_APPS[b]) {
+				out.push({ id: `bundle:${b}/${app}`, label: `install ${app}` });
+			}
+		}
+		if (state.manifest.optimise) {
+			out.push({ id: 'optimise:double-click', label: 'double-click to open' });
+			out.push({ id: 'optimise:baloo-off', label: 'disable the file indexer' });
+			out.push({
+				id: 'optimise:cursor-size',
+				label: `cursor size ${state.device === 'machine' ? 48 : 32}px`,
+			});
+			out.push({ id: 'optimise:proton-ge', label: 'install the latest GE-Proton' });
+			if (state.device === 'machine') {
+				out.push({ id: 'optimise:hdmi-full-range', label: 'HDMI colour range → full RGB' });
+				out.push({ id: 'optimise:cec', label: 'enable HDMI-CEC' });
+				out.push({ id: 'optimise:power-profile', label: 'performance power profile' });
+			}
+		}
+		out.push({ id: `theme:${state.manifest.theme}`, label: 'apply the global theme' });
+		return out;
+	}
+
+	function manifestToml(): string[] {
+		const bundles = [...state.manifest.bundles].map((b) => `"${b}"`).join(', ');
+		return [
+			'[magus]',
+			'version = "0.3.0"',
+			`device  = "${state.device === 'machine' ? 'steam-machine' : 'steam-deck'}"`,
+			'',
+			'[choices]',
+			`terminal = "${state.manifest.terminal}"`,
+			`browser  = "${state.manifest.browser}"`,
+			`bundles  = [${bundles}]`,
+			`theme    = "${state.manifest.theme}"`,
+			'',
+			'[optimisations]',
+			`baloo_off       = ${state.manifest.optimise}`,
+			`double_click    = ${state.manifest.optimise}`,
+			`cursor_size     = ${state.manifest.optimise ? (state.device === 'machine' ? 48 : 32) : 0}`,
+			`proton_ge       = ${state.manifest.optimise}`,
+			`hdmi_full_range = ${state.manifest.optimise && state.device === 'machine'}`,
+			`cec             = ${state.manifest.optimise && state.device === 'machine'}`,
+			`power_profile   = "${state.manifest.optimise && state.device === 'machine' ? 'performance' : 'balanced'}"`,
+		];
+	}
+
+	function renderManifest(): void {
+		const lines: string[] = [];
+		lines.push(
+			`<span class="t-dim">── </span><span class="t-muted">review</span><span class="t-dim"> ${'─'.repeat(46)}</span>`,
+		);
+		lines.push('');
+		const rows: Array<[string, string]> = [
+			['terminal', state.manifest.terminal],
+			['browser', state.manifest.browser],
+			['bundles', [...state.manifest.bundles].join(', ') || 'none'],
+			['theme', state.manifest.theme],
+			['optimise', state.manifest.optimise ? '5 applied' : 'skipped'],
+		];
+		for (const [k, v] of rows) {
+			lines.push(`  <span class="t-muted">${k.padEnd(11)}</span><span class="t-text">${esc(v)}</span>`);
+		}
+		lines.push('');
+		lines.push(
+			`  <span class="t-muted">This writes one file — </span><span class="t-text">~/.config/magus/manifest.toml</span>`,
+		);
+		lines.push('');
+		for (const l of manifestToml()) {
+			lines.push(`    <span class="t-dim">${esc(l)}</span>`);
+		}
+		lines.push('');
+		lines.push(
+			`  <span class="t-muted">Everything after this reads only that file. Edit it later</span>`,
+		);
+		lines.push(
+			`  <span class="t-muted">and run </span><span class="t-text">magus reconcile</span><span class="t-muted"> to converge — ${plannedSteps().length} steps.</span>`,
+		);
+		screens.manifest.innerHTML = renderLines(lines);
+	}
+
+	function startConverge(): void {
+		++state.convergeRunId;
+		const runId = state.convergeRunId;
+		state.convergeIndex = 0;
+		state.convergePhase = 'running';
+		const total = plannedSteps().length;
+		const tick = (): void => {
+			if (runId !== state.convergeRunId || state.step !== 'converge') return;
+			state.convergeIndex += 1;
+			if (state.convergeIndex >= total) {
+				state.convergeIndex = total;
+				state.convergePhase = 'done';
+				refreshHints();
+				renderConverge();
+				return;
+			}
+			renderConverge();
+			window.setTimeout(tick, 340);
+		};
+		window.setTimeout(tick, 420);
+	}
+
+	function renderConverge(): void {
+		const steps = plannedSteps();
+		const done = state.convergeIndex;
+		const total = steps.length;
+		const lines: string[] = [];
+
+		if (state.convergePhase === 'done') {
+			lines.push(`<span class="t-bright">── summary</span>`);
+			lines.push(
+				`  <span class="t-accent">✓</span> <span class="t-text">${total} changed · 0 already correct · 0 not applicable</span>`,
+			);
+			lines.push('');
+			lines.push(`  <span class="t-bright">your machine is set up.</span>`);
+			lines.push('');
+			lines.push(
+				`  <span class="t-muted">Run </span><span class="t-text">magus doctor</span><span class="t-muted"> any time to check nothing has broken.</span>`,
+			);
+			lines.push(
+				`  <span class="t-muted">When SteamOS updates and something disappears,</span>`,
+			);
+			lines.push(
+				`  <span class="t-text">magus reconcile</span><span class="t-muted"> puts it back. No decisions required.</span>`,
+			);
+			lines.push('');
+			lines.push(
+				`  <span class="t-dim">press </span><span class="t-accent">[→]</span><span class="t-dim"> to jump forward two months</span>`,
+			);
+			screens.converge.innerHTML = renderLines(lines);
+			return;
+		}
+
+		const pct = Math.round((done / total) * 100);
+		const barLen = 28;
+		const bar =
+			'█'.repeat(Math.round((pct / 100) * barLen)) +
+			'░'.repeat(barLen - Math.round((pct / 100) * barLen));
+		lines.push(
+			`<span class="t-bright">converging ${done}/${total}  </span>` +
+				`<span class="t-dim">[</span><span class="t-accent">${bar}</span><span class="t-dim">]  ${pct}%</span>`,
+		);
+		lines.push('');
+		for (const s of steps.slice(Math.max(0, done - 4), done)) {
+			lines.push(
+				`  <span class="t-accent">✓</span> <span class="t-muted">${esc(s.id)}</span>`,
+			);
+		}
+		if (done < total) {
+			lines.push(
+				`  <span class="t-accent">›</span> <span class="t-bright">${esc(steps[done].id)}</span>` +
+					`<span class="cursor-blink">▌</span>`,
+			);
+			lines.push(`    <span class="t-dim">${esc(steps[done].label)}</span>`);
+		}
+		screens.converge.innerHTML = renderLines(lines);
+	}
+
+	/** Two steps are broken by the simulated atomic update. */
+	const DRIFTED = ['terminal:kitty', 'theme'];
+
+	function renderDoctor(): void {
+		const steps = plannedSteps();
+		const lines: string[] = [];
+		const drifted = state.driftRepaired
+			? []
+			: steps.filter((s) => DRIFTED.some((d) => s.id.startsWith(d)));
+
+		lines.push(
+			`<span class="t-dim">$ </span><span class="t-text">magus doctor</span>` +
+				`<span class="t-dim">   # two months later, after an OS update</span>`,
+		);
+		lines.push('');
+		lines.push(`<span class="t-bright">── device</span>`);
+		lines.push(
+			`  <span class="t-accent">✓</span> <span class="t-text">steam-machine</span> <span class="t-dim">— heuristic, unverified</span>`,
+		);
+		lines.push('');
+		lines.push(`<span class="t-bright">── steps</span>`);
+		for (const s of steps.slice(0, 8)) {
+			const bad = drifted.some((d) => d.id === s.id);
+			lines.push(
+				bad
+					? `  <span class="t-warn">!</span> <span class="t-text">${esc(s.id.padEnd(30))}</span><span class="t-warn">drifted</span>`
+					: `  <span class="t-accent">✓</span> <span class="t-muted">${esc(s.id.padEnd(30))}</span><span class="t-dim">ok</span>`,
+			);
+		}
+		lines.push('');
+		lines.push(`<span class="t-bright">── summary</span>`);
+		if (drifted.length === 0) {
+			lines.push(
+				`  <span class="t-accent">✓</span> <span class="t-text">no drift — ${steps.length} steps all correct</span>`,
+			);
+			lines.push('');
+			lines.push(
+				`  <span class="t-dim">exit 0. Nothing to do — this is the normal case.</span>`,
+			);
+		} else {
+			lines.push(
+				`  <span class="t-warn">!</span> <span class="t-text">${drifted.length} of ${steps.length} steps need attention</span>`,
+			);
+			lines.push(`  <span class="t-dim">exit 1</span>`);
+			lines.push('');
+			lines.push(
+				`  <span class="t-bright">press </span><span class="t-accent">[y]</span>` +
+					`<span class="t-bright"> to run </span><span class="t-text">magus reconcile</span>` +
+					`<span class="t-bright"> and repair</span><span class="cursor-blink">▌</span>`,
+			);
+		}
+		screens.doctor.innerHTML = renderLines(lines);
 	}
 
 	type MenuRow =
@@ -1780,12 +2412,36 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	function nextStep(): void {
-		const idx = STEPS.indexOf(state.step);
-		if (idx < STEPS.length - 1) setStep(STEPS[idx + 1]);
+		const steps = activeSteps();
+		const idx = steps.indexOf(state.step);
+		if (idx < steps.length - 1) setStep(steps[idx + 1]);
 	}
 	function prevStep(): void {
-		const idx = STEPS.indexOf(state.step);
-		if (idx > 0) setStep(STEPS[idx - 1]);
+		const steps = activeSteps();
+		const idx = steps.indexOf(state.step);
+		if (idx > 0) setStep(steps[idx - 1]);
+	}
+
+	function paintDeviceButtons(): void {
+		for (const el of deviceButtons) {
+			const is = el.dataset.device === state.device;
+			el.classList.toggle('active', is);
+			el.setAttribute('aria-checked', is ? 'true' : 'false');
+		}
+	}
+
+	/** Switch device: rebuild the rail, reset the path, land on the splash. */
+	function setDevice(next: Device): void {
+		if (state.device === next) return;
+		state.device = next;
+		++state.convergeRunId; // cancel any in-flight converge animation
+		state.manifest = defaultManifest();
+		state.questionIndex = 0;
+		state.driftRepaired = false;
+		state.cursor = 0;
+		paintDeviceButtons();
+		buildFlowRail();
+		setStep('splash');
 	}
 	function resetAll(): void {
 		++installRunId;
@@ -1801,6 +2457,11 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		state.installIndex = 0;
 		state.notice = null;
 		state.helpOpen = false;
+		// machine path
+		++state.convergeRunId;
+		state.manifest = defaultManifest();
+		state.questionIndex = 0;
+		state.driftRepaired = false;
 		window.clearTimeout(noticeTimer);
 		seedDefaults();
 		setStep('splash');
@@ -1853,6 +2514,54 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 
 		if (state.step === 'splash' && k === 'Enter') {
 			nextStep();
+			e.preventDefault();
+			return;
+		}
+
+		// --- Steam Machine path ---
+		if (state.step === 'wizard') {
+			const q = QUESTIONS[state.questionIndex];
+			if (k === 'ArrowDown') {
+				state.cursor = Math.min(q.options.length - 1, state.cursor + 1);
+				render();
+			} else if (k === 'ArrowUp') {
+				state.cursor = Math.max(0, state.cursor - 1);
+				render();
+			} else if (k === ' ' && q.multi) {
+				const id = q.options[state.cursor].id;
+				if (state.manifest.bundles.has(id)) state.manifest.bundles.delete(id);
+				else state.manifest.bundles.add(id);
+				render();
+			} else if (k === 'Enter') {
+				const opt = q.options[state.cursor];
+				if (q.id === 'optimise') state.manifest.optimise = opt.id === 'yes';
+				else if (!q.multi) {
+					(state.manifest as unknown as Record<string, string>)[q.id] = opt.id;
+				}
+				if (state.questionIndex < QUESTIONS.length - 1) {
+					state.questionIndex += 1;
+					state.cursor = 0;
+					updateTitle();
+					refreshHints();
+					render();
+				} else {
+					setStep('manifest');
+				}
+			} else {
+				return;
+			}
+			e.preventDefault();
+			return;
+		}
+		if (state.step === 'manifest' && k === 'Enter') {
+			setStep('converge');
+			e.preventDefault();
+			return;
+		}
+		if (state.step === 'doctor' && (k === 'y' || k === 'Y')) {
+			state.driftRepaired = true;
+			refreshHints();
+			render();
 			e.preventDefault();
 			return;
 		}
@@ -2060,22 +2769,24 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		}
 	});
 
-	for (const el of flowItems) {
+	for (const el of deviceButtons) {
 		el.addEventListener('click', () => {
-			const step = el.dataset.jump;
-			if (step && (STEPS as readonly string[]).includes(step)) {
-				setStep(step as Step);
-			}
-		});
-		el.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				el.click();
-				e.preventDefault();
-			}
+			const d = el.dataset.device;
+			if (d === 'deck' || d === 'machine') setDevice(d);
 		});
 	}
 
+	const flowToggle = document.querySelector<HTMLElement>('[data-flow-toggle]');
+	flowToggle?.addEventListener('click', () => {
+		state.flow = state.flow === 'wizard' ? 'picker' : 'wizard';
+		flowToggle.textContent = state.flow === 'picker' ? 'back to the wizard' : 'show it';
+		buildFlowRail();
+		setStep('splash');
+	});
+
 	seedDefaults();
+	paintDeviceButtons();
+	buildFlowRail();
 	setStep('splash');
 </script>
 
@@ -2586,6 +3297,81 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	}
 
 	/* ------ flow rail ---------------------------------------------- */
+	.device-switch {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px 10px;
+		margin: 0 0 14px;
+	}
+	.device-label {
+		font-family: var(--font-mono);
+		font-size: 0.66rem;
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+	}
+	.device-btn {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		padding: 7px 14px;
+		border: 1px solid var(--color-border);
+		border-radius: 9px;
+		background: transparent;
+		color: var(--color-text-muted);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+		transition:
+			border-color 0.15s,
+			color 0.15s,
+			background 0.15s;
+	}
+	.device-btn:hover {
+		color: var(--color-text);
+		border-color: var(--color-border-strong);
+	}
+	.device-btn.active {
+		color: var(--color-text);
+		border-color: var(--color-accent);
+		background: var(--color-accent-soft);
+	}
+	.device-name {
+		font-size: 0.9rem;
+		font-weight: 500;
+	}
+	.device-sub {
+		font-family: var(--font-mono);
+		font-size: 0.66rem;
+		color: var(--color-text-dim);
+	}
+	.device-note {
+		flex: 1 1 16rem;
+		margin: 0;
+		font-size: 0.78rem;
+		color: var(--color-text-dim);
+	}
+	.flow-link {
+		border: 0;
+		background: none;
+		padding: 0;
+		font: inherit;
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		cursor: pointer;
+	}
+	.flow-link:hover {
+		color: var(--color-text);
+	}
+
+	.device-note code {
+		font-family: var(--font-mono);
+		font-size: 0.95em;
+		color: var(--color-text-muted);
+	}
+
 	.flow {
 		list-style: none;
 		margin: 18px 0 0;
