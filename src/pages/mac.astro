@@ -56,7 +56,8 @@ const SECTIONS: Section[] = [
 				tag: 'system',
 				summary:
 					'Finder extensions, path + status bars, list view, tap-to-click, three-finger drag, faster key repeat, and no Dock recents.',
-				run: `# Finder
+				run: `setopt interactive_comments
+# Finder
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 defaults write com.apple.finder ShowPathbar -bool true
 defaults write com.apple.finder ShowStatusBar -bool true

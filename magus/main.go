@@ -8,11 +8,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// Step is the top-level state of the wizard.
-type Step int
+// Screen is the top-level state of the TUI wizard. It is distinct from Step,
+// which is a unit of convergence in the reconciler.
+type Screen int
 
 const (
-	StepSplash Step = iota
+	StepSplash Screen = iota
 	StepPick
 	StepReview
 	StepWrite
@@ -51,7 +52,7 @@ type Model struct {
 
 	width, height int
 
-	step Step
+	step Screen
 
 	// Pick state
 	pickView        PickView
@@ -232,6 +233,13 @@ func (m *Model) togglePick(id string) {
 }
 
 func main() {
+	// With a verb, magus is a reconciler driven from the command line; with no
+	// arguments it is the TUI. Both paths end up converging the same manifest —
+	// the TUI is a manifest builder, not a second implementation (§5).
+	if len(os.Args) > 1 {
+		os.Exit(runCLI(os.Args[1:]))
+	}
+
 	cat, err := loadCatalogue()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "magus: %v\n", err)

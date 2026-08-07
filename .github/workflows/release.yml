@@ -1,0 +1,76 @@
+name: release
+
+# Cutting a tag publishes the binaries that magus.sh/install downloads.
+# Nothing else produces them, so the installer is only as current as the last
+# tag pushed here.
+on:
+  push:
+    tags: ['v*']
+  # Allows a dry build from the Actions tab without publishing anything.
+  workflow_dispatch:
+
+permissions:
+  contents: write # required to create the release and upload assets
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: magus/go.mod
+          cache-dependency-path: magus/go.sum
+
+      - name: Test
+        working-directory: magus
+        run: go test ./...
+
+      - name: Vet
+        working-directory: magus
+        run: go vet ./...
+
+      - name: Build
+        working-directory: magus
+        env:
+          CGO_ENABLED: '0' # static, so it runs on any glibc SteamOS ships
+        run: |
+          version="${GITHUB_REF_NAME:-dev}"
+          mkdir -p dist
+          for arch in amd64 arm64; do
+            GOOS=linux GOARCH="$arch" go build \
+              -trimpath \
+              -ldflags "-s -w -X main.buildVersion=${version}" \
+              -o "dist/magus-linux-${arch}" .
+          done
+          cd dist && sha256sum magus-linux-* > checksums.txt
+          cat checksums.txt
+
+      - name: Smoke-test the amd64 binary
+        working-directory: magus/dist
+        run: |
+          chmod +x magus-linux-amd64
+          ./magus-linux-amd64 version
+          # `doctor` with no manifest exits 1 by design; assert that rather than
+          # letting a non-zero exit fail the job.
+          ./magus-linux-amd64 doctor --plain && code=0 || code=$?
+          test "$code" = "1" || { echo "doctor exited $code, expected 1"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: magus-binaries
+          path: magus/dist/*
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            magus/dist/magus-linux-amd64 \
+            magus/dist/magus-linux-arm64 \
+            magus/dist/checksums.txt
