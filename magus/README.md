@@ -184,11 +184,14 @@ Target is `linux/amd64` (Steam Deck). To produce a release artefact:
 GOOS=linux GOARCH=amd64 go build -o magus-linux-amd64 .
 ```
 
-Setup stage's "Install Dependencies" downloads this binary from the GitHub
-release rather than installing Node + tsx — single file, no runtime, survives
-SteamOS immutable updates because it sits in `~/.local/bin/`.
+In practice nobody builds it by hand: the setup stage's "Install magus" command
+and `magus.sh/install` both fetch the released binary. Single file, no runtime,
+and it survives SteamOS's immutable updates because it sits in `~/.local/bin/`.
 
 ## Why Bubble Tea over @inquirer/prompts
+
+*(Historical — the @inquirer prototype under `tui/` has since been deleted. The
+reasoning is kept because it is why the Go binary looks the way it does.)*
 
 - The spec describes a full-screen stateful app with split-pane previews,
   animated progress bars, a documented state machine, and key-hierarchy hints.
