@@ -10,11 +10,11 @@ import (
 
 // MenuRow is one row in the Pick Menu.
 type MenuRow struct {
-	Kind    string // "stage" | "preset" | "action" | "sep"
-	Stage   *Stage
-	Preset  *Preset
-	ID      string // for actions: "review" | "quit"
-	Label   string // for actions
+	Kind   string // "stage" | "preset" | "action" | "sep"
+	Stage  *Stage
+	Preset *Preset
+	ID     string // for actions: "review" | "quit"
+	Label  string // for actions
 }
 
 func (m Model) menuRows() []MenuRow {
@@ -355,12 +355,13 @@ func splitWidths(total int) (int, int) {
 }
 
 // wrapScreen builds the standard 5-section layout used by most screens:
-//   header
-//   <blank>
-//   body
-//   <blank>
-//   footer
-//   status bar pinned at bottom.
+//
+//	header
+//	<blank>
+//	body
+//	<blank>
+//	footer
+//	status bar pinned at bottom.
 func wrapScreen(m Model, header, body, footer, bar string) string {
 	bodyW := m.width
 	if bodyW <= 0 {

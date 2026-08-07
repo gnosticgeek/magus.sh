@@ -10,11 +10,11 @@ import (
 
 // StageRow is one row in either the group list or command list.
 type StageRow struct {
-	Kind      string // "item" | "group" | "select-all" | "install" | "back" | "back-group" | "sep"
-	Cmd       *Cmd
-	Group     *Group
-	Label     string
-	Disabled  bool
+	Kind     string // "item" | "group" | "select-all" | "install" | "back" | "back-group" | "sep"
+	Cmd      *Cmd
+	Group    *Group
+	Label    string
+	Disabled bool
 }
 
 // stageRows builds the row set for the current view (group list or command list).
