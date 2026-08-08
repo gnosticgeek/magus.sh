@@ -9,6 +9,13 @@
       "autoPort": true
     },
     {
+      "name": "magus-gui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "gui", "run", "dev"],
+      "port": 5173,
+      "autoPort": true
+    },
+    {
       "name": "magus-sh-static",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "dist/client", "-p", "4322", "--no-clipboard"],

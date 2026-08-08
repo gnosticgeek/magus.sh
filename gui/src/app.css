@@ -1,0 +1,83 @@
+/* ==========================================================================
+   Palettes.
+   One [data-theme] attribute on <html> re-colours the whole app. No component
+   contains a hex value; everything resolves through these custom properties,
+   which is what makes the wizard's single theme choice drive the entire GUI.
+   ========================================================================== */
+
+:root,
+[data-theme='tokyo-night'] {
+	--wall-1: #1a1b26;
+	--wall-2: #24283b;
+	--panel: #1f2335;
+	--panel-lift: #272c41;
+	--border: #2f3549;
+	--fg: #c0caf5;
+	--fg-dim: #9aa5ce;
+	--accent: #7aa2f7;
+	--accent-2: #bb9af7;
+	--ok: #9ece6a;
+	--warn: #e0af68;
+	--bad: #f7768e;
+}
+[data-theme='gruvbox'] {
+	--wall-1: #1d2021; --wall-2: #282828; --panel: #282828; --panel-lift: #32302f;
+	--border: #504945; --fg: #ebdbb2; --fg-dim: #bdae93;
+	--accent: #fabd2f; --accent-2: #fe8019;
+	--ok: #b8bb26; --warn: #d79921; --bad: #fb4934;
+}
+[data-theme='catppuccin'] {
+	--wall-1: #181825; --wall-2: #1e1e2e; --panel: #1e1e2e; --panel-lift: #282839;
+	--border: #45475a; --fg: #cdd6f4; --fg-dim: #a6adc8;
+	--accent: #cba6f7; --accent-2: #89b4fa;
+	--ok: #a6e3a1; --warn: #fab387; --bad: #f38ba8;
+}
+[data-theme='nord'] {
+	--wall-1: #2e3440; --wall-2: #3b4252; --panel: #2e3440; --panel-lift: #3b4252;
+	--border: #4c566a; --fg: #eceff4; --fg-dim: #d8dee9;
+	--accent: #88c0d0; --accent-2: #81a1c1;
+	--ok: #a3be8c; --warn: #ebcb8b; --bad: #bf616a;
+}
+
+:root {
+	--mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--radius: 10px;
+	--radius-lg: 16px;
+	color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+	margin: 0;
+	background: linear-gradient(155deg, var(--wall-2), var(--wall-1));
+	color: var(--fg);
+	font-family: var(--sans);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	/* A desktop shell should not rubber-band like a web page. */
+	overflow: hidden;
+	/* Nor should a chrome-less window let you select its furniture. */
+	user-select: none;
+}
+
+/* Anything the user might genuinely want to copy — paths, errors — opts back in. */
+.selectable { user-select: text; cursor: text; }
+
+button { font: inherit; color: inherit; }
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
