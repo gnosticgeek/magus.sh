@@ -42,6 +42,31 @@ magus uninstall          # reverse what magus installed
 magus <verb> --dry-run   # report what would change without changing it
 ```
 
+### Machine-readable output
+
+Every verb takes `--json`. The document goes to **stdout**; the human log stays
+on **stderr** and is silenced, so the two can be captured separately.
+
+```bash
+magus doctor --json | jq '.steps[] | select(.needs_attention)'
+```
+
+This is the contract a GUI talks to, and it exists so a front end never composes
+a shell string. EmuDeck's Electron wrapper pipes arbitrary bash from its renderer
+straight to `exec`, which turns any front-end bug into arbitrary command
+execution — the alternative, and the one omasteam reached independently (§8), is
+that every action is a *named* command the backend dispatches.
+
+Three versions travel in the document because they move for different reasons:
+`schema` (this contract), `magus.version` (the binary), and
+`magus.manifest_schema` (the manifest format). Each step carries its state
+before and after, whether it changed, `why` it was skipped, and a single
+`needs_attention` boolean for a front end to colour on.
+
+**Failures appear in the document**, not only in the exit code — otherwise a
+caller parsing stdout sees a valid-looking empty result and reads a failure as
+"nothing to do". Exit codes are unchanged either way.
+
 The manifest at `~/.config/magus/manifest.toml` is the only thing that connects
 the two halves. The wizard's job is to produce it; everything downstream reads
 only it, so `--defaults`, a hand-edited file and the eventual GUI all converge
