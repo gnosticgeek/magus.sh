@@ -13,7 +13,8 @@ const { githubUrl = '#', ariaLabel = 'Site' } = Astro.props;
 // before comparing — otherwise /tui/ never matches /tui and the current page
 // is never marked.
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
-const isLab = path === '/tui';
+const isTui = path === '/tui';
+const isTest = path === '/test';
 ---
 
 <a class="nav-skip" href="#main">Skip to content</a>
@@ -39,16 +40,28 @@ const isLab = path === '/tui';
 		</a>
 
 		<div class="nav-actions">
-			<a
-				class="nav-link"
-				href="/tui"
-				data-current={isLab ? 'true' : 'false'}
-				aria-current={isLab ? 'page' : undefined}
-				aria-label="TUI prototype (lab)"
-			>
-				<span class="nav-link-tag">lab</span>
-				<span class="nav-link-name">tui</span>
-			</a>
+			<!-- One `lab` tag for the pair — repeating it per link reads as noise. -->
+			<div class="nav-lab">
+				<span class="nav-link-tag nav-lab-tag" aria-hidden="true">lab</span>
+				<a
+					class="nav-link"
+					href="/tui"
+					data-current={isTui ? 'true' : 'false'}
+					aria-current={isTui ? 'page' : undefined}
+					aria-label="TUI prototype (lab)"
+				>
+					<span class="nav-link-name">tui</span>
+				</a>
+				<a
+					class="nav-link"
+					href="/test"
+					data-current={isTest ? 'true' : 'false'}
+					aria-current={isTest ? 'page' : undefined}
+					aria-label="Steam Machine test bench (lab)"
+				>
+					<span class="nav-link-name">test</span>
+				</a>
+			</div>
 			<span class="nav-divider nav-divider-lab" aria-hidden="true"></span>
 			<a
 				class="nav-icon-btn"
@@ -259,6 +272,18 @@ const isLab = path === '/tui';
 		background: var(--color-border);
 	}
 
+	.nav-lab {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.nav-lab .nav-link {
+		padding: 0 6px;
+	}
+	.nav-lab-tag {
+		align-self: center;
+	}
+
 	.nav-link {
 		display: inline-flex;
 		align-items: baseline;
@@ -297,21 +322,46 @@ const isLab = path === '/tui';
 		font-size: 13px;
 		letter-spacing: 0.02em;
 	}
-	/* The bar is tight on a phone: brand, link, GitHub and the theme switcher.
-	   Shed the link's chrome — tag first, then its divider and padding — rather
-	   than let the theme switcher get clipped off the right edge. */
+	/* The bar is tight on a phone: brand, two lab links, GitHub and the theme
+	   switcher. Shed chrome — the tag, its divider, then padding and gaps —
+	   rather than let the theme switcher get clipped off the right edge. */
 	@media (max-width: 480px) {
+		.nav-inner {
+			gap: 8px;
+			padding: 0 12px;
+		}
 		.nav-link-tag {
 			display: none;
 		}
 		.nav-divider-lab {
 			display: none;
 		}
-		.nav-link {
-			padding: 0 4px;
+		.nav-link,
+		.nav-lab .nav-link {
+			padding: 0 3px;
+		}
+		.nav-lab {
+			gap: 0.1rem;
 		}
 		.nav-actions {
-			gap: 6px;
+			gap: 4px;
+		}
+	}
+
+	/* Sub-380px (360dp Androids): the lockup gives up its blinking cursor and a
+	   couple of type steps so the theme switcher stays fully on screen. */
+	@media (max-width: 400px) {
+		.nav-brand {
+			gap: 0.4rem;
+		}
+		.nav-brand-cursor {
+			display: none;
+		}
+		.nav-brand-magus {
+			font-size: 14px;
+		}
+		.nav-brand-sh {
+			font-size: 19px;
 		}
 	}
 

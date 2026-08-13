@@ -1,0 +1,707 @@
+---
+import { Icon } from 'astro-icon/components';
+import Base from '../layouts/Base.astro';
+import { LAB_BATCHES, LAB_TEST_COUNT } from '../lib/test-lab';
+
+const STATUSES = [
+	{ id: 'pass', label: 'works', icon: 'lucide:check' },
+	{ id: 'partial', label: 'partly', icon: 'lucide:minus' },
+	{ id: 'fail', label: 'broken', icon: 'lucide:x' },
+] as const;
+---
+
+<Base
+	title="magus.sh — test bench"
+	description="Scratch bench for trying unproven commands on a Steam Machine."
+	canonical="https://magus.sh/test"
+>
+	<div class="lab mx-auto max-w-4xl px-5 pt-6 pb-24">
+		<header class="lab-head rise rise-2">
+			<span class="lab-kicker">/ bench — unproven</span>
+			<h1 class="lab-title">
+				Steam Machine <em>test bench.</em>
+			</h1>
+			<p class="lab-sub">
+				Nothing here has run on the hardware yet. Copy a command, try it on the
+				machine, mark what happened. Results live in this browser only —
+				hit <strong>export</strong> when you want them out.
+			</p>
+
+			<div class="lab-meta">
+				<span class="lab-stat"><b data-stat="done">0</b>/{LAB_TEST_COUNT} recorded</span>
+				<span class="lab-stat lab-stat-pass"><b data-stat="pass">0</b> works</span>
+				<span class="lab-stat lab-stat-fail"><b data-stat="fail">0</b> broken</span>
+				<div class="lab-actions">
+					<button type="button" class="lab-btn" data-export>
+						<Icon name="lucide:clipboard-copy" class="h-3.5 w-3.5" aria-hidden="true" />
+						<span class="lab-btn-label">Export results</span>
+					</button>
+					<button type="button" class="lab-btn lab-btn-quiet" data-reset>
+						<Icon name="lucide:rotate-ccw" class="h-3.5 w-3.5" aria-hidden="true" />
+						<span class="lab-btn-label">Reset</span>
+					</button>
+				</div>
+			</div>
+		</header>
+
+		{
+			LAB_BATCHES.map((batch, bi) => (
+				<section class:list={['lab-batch', 'rise', `rise-${bi + 3}`]} id={batch.id}>
+					<div class="lab-batch-head">
+						<Icon name={batch.icon} class="lab-batch-icon" aria-hidden="true" />
+						<h2>{batch.name}</h2>
+						<span class="lab-batch-count">{batch.tests.length} tests</span>
+					</div>
+					<p class="lab-batch-tagline">{batch.tagline}</p>
+
+					<ol class="lab-list">
+						{batch.tests.map((test, ti) => (
+							<li class="lab-test" data-test-id={test.id} data-test-title={test.title}>
+								<div class="lab-test-head">
+									<span class="lab-test-num">{String(ti + 1).padStart(2, '0')}</span>
+									<h3>{test.title}</h3>
+									<div class="lab-flags">
+										{test.needsDesktop && <span class="lab-flag">desktop mode</span>}
+										{test.danger && (
+											<span class:list={['lab-flag', `lab-flag-${test.danger}`]}>
+												{test.danger} risk
+											</span>
+										)}
+										{test.ref && (
+											<a
+												class="lab-ref"
+												href={test.ref.url}
+												target="_blank"
+												rel="noopener noreferrer"
+												aria-label={`Upstream: ${test.ref.name}`}
+											>
+												<Icon name="lucide:arrow-up-right" class="h-3.5 w-3.5" />
+											</a>
+										)}
+									</div>
+								</div>
+
+								<dl class="lab-qa">
+									<div>
+										<dt>unknown</dt>
+										<dd>{test.question}</dd>
+									</div>
+									<div>
+										<dt>pass looks like</dt>
+										<dd>{test.expect}</dd>
+									</div>
+								</dl>
+
+								<div class="lab-cmds">
+									{test.commands.map((cmd) => (
+										<div class="lab-cmd">
+											<pre class="lab-cmd-pre"><code>{cmd.run}</code></pre>
+											<button
+												type="button"
+												class="lab-copy"
+												data-copy={cmd.run}
+												aria-label={`Copy command for ${test.title}`}
+											>
+												<Icon name="lucide:copy" class="h-3.5 w-3.5" aria-hidden="true" />
+												<span class="lab-copy-label">Copy</span>
+											</button>
+											{cmd.note && <p class="lab-cmd-note">{cmd.note}</p>}
+										</div>
+									))}
+								</div>
+
+								{test.undo && (
+									<details class="lab-undo">
+										<summary>undo</summary>
+										<div class="lab-cmd">
+											<pre class="lab-cmd-pre"><code>{test.undo}</code></pre>
+											<button
+												type="button"
+												class="lab-copy"
+												data-copy={test.undo}
+												aria-label={`Copy undo command for ${test.title}`}
+											>
+												<Icon name="lucide:copy" class="h-3.5 w-3.5" aria-hidden="true" />
+												<span class="lab-copy-label">Copy</span>
+											</button>
+										</div>
+									</details>
+								)}
+
+								<div class="lab-result">
+									<div class="lab-status" role="group" aria-label={`Result for ${test.title}`}>
+										{STATUSES.map((s) => (
+											<button
+												type="button"
+												class:list={['lab-status-btn', `is-${s.id}`]}
+												data-status={s.id}
+												aria-pressed="false"
+											>
+												<Icon name={s.icon} class="h-3.5 w-3.5" aria-hidden="true" />
+												{s.label}
+											</button>
+										))}
+									</div>
+									<textarea
+										class="lab-notes"
+										rows="1"
+										placeholder="what actually happened — output, version, surprises"
+										aria-label={`Notes for ${test.title}`}
+									/>
+								</div>
+							</li>
+						))}
+					</ol>
+				</section>
+			))
+		}
+
+		<p class="lab-foot rise rise-5">
+			Anything that passes here graduates to a card in
+			<a href="/setup">/setup</a>. Anything that breaks is worth a note on why —
+			that's the part upstream docs never write down.
+		</p>
+	</div>
+</Base>
+
+<script>
+	import { copyWithFeedback } from '../lib/clipboard';
+	import { LAB_BATCHES, STORAGE_KEY_LAB } from '../lib/test-lab';
+
+	type Result = { status?: string; notes?: string };
+	type Results = Record<string, Result>;
+
+	const load = (): Results => {
+		try {
+			const raw = localStorage.getItem(STORAGE_KEY_LAB);
+			return raw ? (JSON.parse(raw) as Results) : {};
+		} catch {
+			return {};
+		}
+	};
+
+	let results = load();
+
+	const save = () => {
+		try {
+			localStorage.setItem(STORAGE_KEY_LAB, JSON.stringify(results));
+		} catch {}
+	};
+
+	const tests = Array.from(document.querySelectorAll<HTMLLIElement>('.lab-test'));
+
+	const setStat = (name: string, value: number) => {
+		const el = document.querySelector(`[data-stat="${name}"]`);
+		if (el) el.textContent = String(value);
+	};
+
+	const refreshStats = () => {
+		const all = Object.values(results);
+		setStat('done', all.filter((r) => r.status).length);
+		setStat('pass', all.filter((r) => r.status === 'pass').length);
+		setStat('fail', all.filter((r) => r.status === 'fail').length);
+	};
+
+	const autoGrow = (ta: HTMLTextAreaElement) => {
+		ta.style.height = 'auto';
+		ta.style.height = `${ta.scrollHeight}px`;
+	};
+
+	tests.forEach((li) => {
+		const id = li.dataset.testId;
+		if (!id) return;
+		const saved = results[id] ?? {};
+
+		li.dataset.result = saved.status ?? '';
+		li.querySelectorAll<HTMLButtonElement>('.lab-status-btn').forEach((btn) => {
+			btn.setAttribute('aria-pressed', btn.dataset.status === saved.status ? 'true' : 'false');
+			btn.addEventListener('click', () => {
+				const next = results[id]?.status === btn.dataset.status ? undefined : btn.dataset.status;
+				results[id] = { ...results[id], status: next };
+				li.dataset.result = next ?? '';
+				li.querySelectorAll<HTMLButtonElement>('.lab-status-btn').forEach((b) => {
+					b.setAttribute('aria-pressed', b.dataset.status === next ? 'true' : 'false');
+				});
+				save();
+				refreshStats();
+			});
+		});
+
+		const notes = li.querySelector<HTMLTextAreaElement>('.lab-notes');
+		if (notes) {
+			notes.value = saved.notes ?? '';
+			autoGrow(notes);
+			notes.addEventListener('input', () => {
+				autoGrow(notes);
+				results[id] = { ...results[id], notes: notes.value };
+				save();
+			});
+		}
+	});
+
+	document.querySelectorAll<HTMLButtonElement>('.lab-copy').forEach((btn) => {
+		const label = btn.querySelector<HTMLElement>('.lab-copy-label');
+		btn.addEventListener('click', () => {
+			if (!label) return;
+			copyWithFeedback(btn.dataset.copy ?? '', btn, label);
+		});
+	});
+
+	/* Markdown report — paste straight back into an issue or a chat. */
+	const report = (): string => {
+		const lines: string[] = ['# Steam Machine test bench', ''];
+		for (const batch of LAB_BATCHES) {
+			lines.push(`## ${batch.name}`, '');
+			for (const test of batch.tests) {
+				const r = results[test.id] ?? {};
+				const mark = r.status === 'pass' ? 'x' : ' ';
+				lines.push(`- [${mark}] **${test.title}** — ${r.status ?? 'untested'}`);
+				if (r.notes?.trim()) {
+					lines.push(...r.notes.trim().split('\n').map((l) => `      ${l}`));
+				}
+			}
+			lines.push('');
+		}
+		return lines.join('\n');
+	};
+
+	const exportBtn = document.querySelector<HTMLButtonElement>('[data-export]');
+	const exportLabel = exportBtn?.querySelector<HTMLElement>('.lab-btn-label');
+	exportBtn?.addEventListener('click', () => {
+		if (!exportLabel) return;
+		copyWithFeedback(report(), exportBtn, exportLabel);
+	});
+
+	document.querySelector<HTMLButtonElement>('[data-reset]')?.addEventListener('click', () => {
+		if (!confirm('Clear every recorded result on this page?')) return;
+		results = {};
+		save();
+		tests.forEach((li) => {
+			li.dataset.result = '';
+			li.querySelectorAll('.lab-status-btn').forEach((b) =>
+				b.setAttribute('aria-pressed', 'false'),
+			);
+			const ta = li.querySelector<HTMLTextAreaElement>('.lab-notes');
+			if (ta) {
+				ta.value = '';
+				autoGrow(ta);
+			}
+		});
+		refreshStats();
+	});
+
+	refreshStats();
+</script>
+
+<style>
+	.lab-head {
+		display: grid;
+		gap: 10px;
+		padding-bottom: 22px;
+		border-bottom: 1px solid var(--color-border);
+	}
+	.lab-kicker {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.28em;
+		text-transform: uppercase;
+		color: var(--color-warn);
+	}
+	.lab-title {
+		font-family: var(--font-serif);
+		font-size: var(--fs-app-title);
+		font-weight: 400;
+		line-height: 1.02;
+		letter-spacing: -0.02em;
+		color: var(--color-text);
+		margin: 0;
+	}
+	.lab-title em {
+		font-style: italic;
+		color: var(--color-accent);
+	}
+	.lab-sub {
+		max-width: 62ch;
+		font-size: 0.9rem;
+		line-height: 1.6;
+		color: var(--color-text-muted);
+	}
+	.lab-sub strong {
+		color: var(--color-text);
+		font-weight: 500;
+	}
+
+	.lab-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 14px;
+		margin-top: 6px;
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+	}
+	.lab-stat b {
+		color: var(--color-text);
+		font-weight: 500;
+	}
+	.lab-stat-pass b {
+		color: var(--color-accent);
+	}
+	.lab-stat-fail b {
+		color: var(--color-danger);
+	}
+	.lab-actions {
+		display: flex;
+		gap: 8px;
+		margin-left: auto;
+	}
+	.lab-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 32px;
+		padding: 0 10px;
+		border: 1px solid var(--color-border);
+		border-radius: 7px;
+		background: color-mix(in oklab, var(--color-bg-elevated) 70%, transparent);
+		color: var(--color-text-muted);
+		font: inherit;
+		cursor: pointer;
+		transition: border-color 0.16s, color 0.16s, background-color 0.16s;
+	}
+	.lab-btn:hover,
+	.lab-btn:focus-visible {
+		border-color: var(--color-accent);
+		color: var(--color-text);
+		background: color-mix(in oklab, var(--color-accent) 8%, transparent);
+	}
+	.lab-btn.copied {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+	.lab-btn-quiet {
+		color: var(--color-text-dim);
+	}
+
+	.lab-batch {
+		margin-top: 40px;
+		scroll-margin-top: 80px;
+	}
+	.lab-batch-head {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.lab-batch-icon {
+		width: 18px;
+		height: 18px;
+		color: var(--color-accent);
+	}
+	.lab-batch-head h2 {
+		font-family: var(--font-sans);
+		font-size: 1.05rem;
+		font-weight: 500;
+		letter-spacing: -0.01em;
+		color: var(--color-text);
+		margin: 0;
+	}
+	.lab-batch-count {
+		margin-left: auto;
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+	}
+	.lab-batch-tagline {
+		margin-top: 6px;
+		max-width: 68ch;
+		font-size: 0.82rem;
+		line-height: 1.55;
+		color: var(--color-text-muted);
+	}
+
+	.lab-list {
+		display: grid;
+		gap: 14px;
+		margin: 18px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.lab-test {
+		position: relative;
+		display: grid;
+		gap: 12px;
+		padding: 16px 16px 14px;
+		border: 1px solid var(--color-border);
+		border-radius: 10px;
+		background: color-mix(in oklab, var(--color-bg-elevated) 62%, transparent);
+		transition: border-color 0.2s ease;
+	}
+	.lab-test::before {
+		content: '';
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 2px;
+		border-radius: 10px 0 0 10px;
+		background: var(--color-border-strong);
+		transition: background-color 0.2s ease;
+	}
+	.lab-test[data-result='pass']::before {
+		background: var(--color-accent);
+	}
+	.lab-test[data-result='partial']::before {
+		background: var(--color-warn);
+	}
+	.lab-test[data-result='fail']::before {
+		background: var(--color-danger);
+	}
+
+	.lab-test-head {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.lab-test-num {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		color: var(--color-text-dim);
+	}
+	.lab-test-head h3 {
+		font-size: 0.95rem;
+		font-weight: 500;
+		letter-spacing: -0.005em;
+		color: var(--color-text);
+		margin: 0;
+	}
+	.lab-flags {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-left: auto;
+	}
+	.lab-flag {
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		padding: 2px 6px;
+		font-family: var(--font-mono);
+		font-size: 9px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-text-muted);
+		white-space: nowrap;
+	}
+	.lab-flag-medium {
+		color: var(--color-warn);
+		border-color: color-mix(in oklab, var(--color-warn) 42%, var(--color-border));
+	}
+	.lab-flag-high {
+		color: var(--color-danger);
+		border-color: color-mix(in oklab, var(--color-danger) 42%, var(--color-border));
+	}
+	.lab-ref {
+		display: inline-flex;
+		color: var(--color-text-dim);
+	}
+	.lab-ref:hover {
+		color: var(--color-accent);
+	}
+
+	.lab-qa {
+		display: grid;
+		gap: 6px;
+		margin: 0;
+	}
+	.lab-qa > div {
+		display: grid;
+		grid-template-columns: 96px minmax(0, 1fr);
+		gap: 10px;
+		align-items: baseline;
+	}
+	.lab-qa dt {
+		font-family: var(--font-mono);
+		font-size: 9px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+	}
+	.lab-qa dd {
+		margin: 0;
+		font-size: 0.82rem;
+		line-height: 1.5;
+		color: var(--color-text-muted);
+	}
+
+	.lab-cmds {
+		display: grid;
+		gap: 8px;
+	}
+	.lab-cmd {
+		position: relative;
+		display: grid;
+		gap: 6px;
+	}
+	.lab-cmd-pre {
+		margin: 0;
+		padding: 9px 78px 9px 11px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 84%, transparent);
+		border-radius: 7px;
+		background: var(--color-bg);
+		font-family: var(--font-mono);
+		font-size: 11.5px;
+		line-height: 1.55;
+		color: var(--color-text);
+		overflow-x: auto;
+		white-space: pre;
+		tab-size: 2;
+	}
+	.lab-copy {
+		position: absolute;
+		top: 6px;
+		right: 6px;
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		height: 26px;
+		padding: 0 8px;
+		border: 1px solid var(--color-border);
+		border-radius: 6px;
+		background: var(--color-bg-elevated);
+		color: var(--color-text-dim);
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.06em;
+		cursor: pointer;
+		transition: color 0.15s, border-color 0.15s;
+	}
+	.lab-copy:hover,
+	.lab-copy:focus-visible {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+	}
+	.lab-copy.copied {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+	}
+	.lab-cmd-note {
+		font-size: 0.76rem;
+		line-height: 1.5;
+		color: var(--color-text-dim);
+		padding-left: 11px;
+		border-left: 1px solid var(--color-border);
+	}
+
+	.lab-undo summary {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-text-dim);
+		cursor: pointer;
+	}
+	.lab-undo summary:hover {
+		color: var(--color-text-muted);
+	}
+	.lab-undo[open] summary {
+		margin-bottom: 8px;
+	}
+
+	.lab-result {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: 10px;
+		padding-top: 12px;
+		border-top: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
+	}
+	.lab-status {
+		display: flex;
+		gap: 6px;
+	}
+	.lab-status-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		min-height: 32px;
+		padding: 0 10px;
+		border: 1px solid var(--color-border);
+		border-radius: 7px;
+		background: transparent;
+		color: var(--color-text-dim);
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		cursor: pointer;
+		transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+	}
+	.lab-status-btn:hover {
+		color: var(--color-text);
+		border-color: var(--color-border-strong);
+	}
+	.lab-status-btn.is-pass[aria-pressed='true'] {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+		background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+	}
+	.lab-status-btn.is-partial[aria-pressed='true'] {
+		color: var(--color-warn);
+		border-color: var(--color-warn);
+		background: color-mix(in oklab, var(--color-warn) 10%, transparent);
+	}
+	.lab-status-btn.is-fail[aria-pressed='true'] {
+		color: var(--color-danger);
+		border-color: var(--color-danger);
+		background: color-mix(in oklab, var(--color-danger) 10%, transparent);
+	}
+
+	.lab-notes {
+		flex: 1;
+		min-width: 220px;
+		min-height: 32px;
+		padding: 7px 10px;
+		border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+		border-radius: 7px;
+		background: color-mix(in oklab, var(--color-bg) 60%, transparent);
+		color: var(--color-text);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 1.5;
+		resize: none;
+		overflow: hidden;
+	}
+	.lab-notes::placeholder {
+		color: var(--color-text-dim);
+	}
+	.lab-notes:focus {
+		outline: none;
+		border-color: var(--color-accent);
+		background: var(--color-bg);
+	}
+
+	.lab-foot {
+		margin-top: 40px;
+		padding-top: 18px;
+		border-top: 1px solid var(--color-border);
+		font-size: 0.82rem;
+		line-height: 1.6;
+		color: var(--color-text-dim);
+	}
+	.lab-foot a {
+		color: var(--color-accent);
+	}
+
+	@media (max-width: 639px) {
+		.lab-qa > div {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 2px;
+		}
+		.lab-actions {
+			margin-left: 0;
+		}
+	}
+</style>
