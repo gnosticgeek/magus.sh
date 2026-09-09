@@ -1,0 +1,31 @@
+# Magus / Ghostty
+# Copy into ~/.config/ghostty/config.ghostty after reviewing existing settings.
+# Reload colours with Cmd+Shift+,; fully restart Ghostty for opacity changes.
+font-family = JetBrains Mono
+font-size = 14
+
+theme = dark:Catppuccin Mocha,light:Catppuccin Latte
+window-padding-x = 12
+window-padding-y = 10
+window-padding-balance = true
+background-opacity = 0.84
+background-blur = true
+cursor-style = block
+cursor-style-blink = false
+mouse-hide-while-typing = true
+macos-titlebar-style = tabs
+shell-integration = detect
+
+# Additional defaults ported from Machinist / Athanor.
+window-save-state = always
+window-new-tab-position = end
+macos-option-as-alt = true
+window-colorspace = display-p3
+window-padding-color = extend
+alpha-blending = linear-corrected
+font-thicken = true
+resize-overlay = never
+copy-on-select = clipboard
+clipboard-trim-trailing-spaces = true
+shell-integration-features = cursor,sudo,title
+scrollback-limit = 10000000

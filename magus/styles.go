@@ -1,16 +1,16 @@
 package main
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 // Palette — mirrors the t-* CSS variables used by the Astro prototype.
 // Hex values picked to land on a dark terminal background.
 var (
-	colorBright = lipgloss.AdaptiveColor{Light: "#1a1a1a", Dark: "#f4f1ea"} // focused / primary text
-	colorText   = lipgloss.AdaptiveColor{Light: "#2a2a2a", Dark: "#d6cfc1"} // normal / picked
-	colorMuted  = lipgloss.AdaptiveColor{Light: "#555555", Dark: "#857f72"} // unpicked / summary
-	colorDim    = lipgloss.AdaptiveColor{Light: "#888888", Dark: "#5a5448"} // separators / hints
-	colorAccent = lipgloss.AdaptiveColor{Light: "#b45309", Dark: "#f59e0b"} // cursor / checkbox / focus
-	colorWarn   = lipgloss.AdaptiveColor{Light: "#9f1239", Dark: "#fb7185"} // errors / empty state
+	colorBright = adaptiveColor{Light: "#1a1a1a", Dark: "#f4f1ea"} // focused / primary text
+	colorText   = adaptiveColor{Light: "#2a2a2a", Dark: "#d6cfc1"} // normal / picked
+	colorMuted  = adaptiveColor{Light: "#555555", Dark: "#857f72"} // unpicked / summary
+	colorDim    = adaptiveColor{Light: "#888888", Dark: "#5a5448"} // separators / hints
+	colorAccent = adaptiveColor{Light: "#b45309", Dark: "#f59e0b"} // cursor / checkbox / focus
+	colorWarn   = adaptiveColor{Light: "#9f1239", Dark: "#fb7185"} // errors / empty state
 )
 
 // Reusable styles.

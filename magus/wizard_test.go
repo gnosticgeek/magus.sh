@@ -266,7 +266,7 @@ func TestWizardOptionsMatchManifestValidation(t *testing.T) {
 
 func renderAt(t *testing.T, w *Wizard) string {
 	t.Helper()
-	return wizardModel{w: w, width: 80, height: 24}.View()
+	return wizardModel{w: w, width: 80, height: 24}.View().Content
 }
 
 func TestQuestionViewShowsPromptOptionsAndProgress(t *testing.T) {

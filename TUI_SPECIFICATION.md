@@ -6,6 +6,52 @@
 
 ---
 
+## Mac-first product contract (September 2026)
+
+The Mac implementation supersedes the historical stage-install and script-output
+flows below **on macOS**. The SteamOS implementation remains separate.
+Implementation and testing details: [Mac alpha guide](magus/MAC.md).
+
+- `magus` and interactive `magus run` open directly into Apps, Command-line tools,
+  Mac settings, Presets, and Review & install. There is no required splash.
+- One persistent basket spans categories and search. Presets only add picks.
+  New manifests start empty; confirmed selections survive another launch.
+- Review precedes every install. The executor uses the same typed steps as
+  `reconcile` and `doctor`, with real process output and inspect-before-apply.
+- Website-inspired lavender, pink, and ice-blue branding with colour-coded app
+  categories: Browsers, Developer tools, AI & local models, Productivity, Media,
+  and Communication, plus Audio & Music, Design & Graphics, Cloud & Storage,
+  Security & Privacy, Games, Menu Bar, and Utilities. Roughly equal split panes at 80 columns,
+  single-column browsing with Tab details below that. Minimum reference: 72×20.
+- Search receives text before global shortcuts. Arrow navigation and Space
+  selection work across categories. Help stays contextual and compact.
+- Bubbles List supplies paging and fuzzy matching with a basket outside the list.
+  Tab focuses a scrollable preview; Page Up/Down navigate pages or focused details.
+  Result counts and page numbers remain visible. Selection notices expire.
+- App and tool results use a responsive grid from 80 columns, adding a side
+  preview from 120 columns. Smaller terminals use one list. Ctrl+S toggles all
+  current category/search results across pages, preserving other selections.
+- Progress reports item counts and elapsed time. Download progress is
+  indeterminate. No simulated failures, artificial install ticks, or guessed ETA.
+- Retry/skip/stop preserve completed work. Summary distinguishes installed,
+  already present, failed, skipped, and unfinished items.
+- Original typed Finder preferences are saved before writes and restored only
+  when there is no conflicting external change. Finder refresh is explicit.
+- Preview mode can inspect the machine but does not install or write state.
+- Installed items have a green tick, separate from basket selection; unmanaged
+  app bundles are labelled external. Plain terminals use a `+` marker.
+- Update all is an explicit, separately confirmed Homebrew maintenance action.
+  A Bubbles Table shows installed and available versions from local metadata.
+  Refreshing metadata requires an explicit action and is disabled in preview.
+  Confirmed targets are rechecked before execution; stale reviews stop the run.
+  It includes eligible installed packages outside the catalogue, uses live
+  Homebrew terminal output, and refreshes inventory afterwards. Preview does not
+  execute upgrades. Installation selection itself still skips installed packages.
+- Mac bootstrap verifies the download and opens the menu via an interactive TTY.
+  Package and preference changes remain behind Review & install.
+
+The remainder is the historical SteamOS design reference, not the Mac contract.
+
 ## Overview
 
 The magus.sh TUI is a five-stage terminal application that guides users through selecting and installing SteamOS setup commands. The Astro `/tui` page is the visual source of truth; the production implementation lives in `magus/` as a static Go binary.

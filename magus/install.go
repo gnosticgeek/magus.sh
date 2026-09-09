@@ -5,7 +5,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/progress"
+	tea "charm.land/bubbletea/v2"
 )
 
 // installTickMsg fires once per simulated install step (~800ms apart).
@@ -62,7 +63,7 @@ func (m Model) advanceInstall(msg installTickMsg) (tea.Model, tea.Cmd) {
 	return m, tea.Tick(installStepDelay, func(time.Time) tea.Msg { return installTickMsg{runID: id} })
 }
 
-func (m Model) keyInstall(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) keyInstall(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.installPhase {
 	case InstallFailed:
 		switch msg.String() {
@@ -97,7 +98,7 @@ func (m Model) keyInstall(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case InstallDone:
-		switch msg.Type {
+		switch msg.Code {
 		case tea.KeyEscape:
 			m.pickView = PickMenu
 			m.cursor = m.menuCursor
@@ -198,11 +199,7 @@ func progressBar(done, total, width int) string {
 	if total == 0 {
 		return ""
 	}
-	filled := done * width / total
-	if filled > width {
-		filled = width
-	}
-	bar := "[" + strings.Repeat("█", filled) + strings.Repeat("░", width-filled) + "]"
-	pct := done * 100 / total
-	return sAccent.Render(bar) + sDim.Render(fmt.Sprintf("  %d%%", pct))
+	bar := progress.New(progress.WithWidth(max(1, width)), progress.WithColors(colorAccent), progress.WithoutPercentage())
+	fraction := min(max(done, 0), total)
+	return bar.ViewAs(float64(fraction)/float64(total)) + sDim.Render(fmt.Sprintf("  %d%%", fraction*100/total))
 }

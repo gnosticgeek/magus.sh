@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // MenuRow is one row in the Pick Menu.
@@ -284,7 +285,7 @@ func previewAction(m Model, id string, w int) string {
 	return ""
 }
 
-func (m Model) keyMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) keyMenu(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	rows := m.menuRows()
 	maxF := focusableMenuCount(rows) - 1
 	switch msg.String() {
@@ -299,12 +300,7 @@ func (m Model) keyMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "/":
-		m.priorView = PickMenu
-		m.pickView = PickSearch
-		m.searchQuery = ""
-		m.searchResults = m.runSearch("", "")
-		m.cursor = 0
-		return m, nil
+		return m.startSearch(PickMenu)
 	case "enter":
 		focusedIdx := focusableMenuIndex(rows, m.cursor)
 		if focusedIdx < 0 {
@@ -399,12 +395,7 @@ func truncate(s string, n int) string {
 	if n <= 1 {
 		return "…"
 	}
-	// Naive truncation on rune count.
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n-1]) + "…"
+	return ansi.Truncate(s, n, "…")
 }
 
 func min(a, b int) int {

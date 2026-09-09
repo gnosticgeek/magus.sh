@@ -1,0 +1,29 @@
+# Magus: a minimal prompt using the terminal's Rose Pine colour palette.
+add_newline = true
+format = "$directory$git_branch$git_status$cmd_duration$line_break$character"
+
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncate_to_repo = true
+read_only = " [read-only]"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[git_branch]
+symbol = ""
+style = "purple"
+format = "[on $branch]($style) "
+
+[git_status]
+style = "yellow"
+format = '([$all_status$ahead_behind]($style) )'
+
+[cmd_duration]
+min_time = 2000
+style = "yellow"
+format = "[took $duration]($style) "
+
+[character]
+success_symbol = "[❯](bold purple)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold cyan)"

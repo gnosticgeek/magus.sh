@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // The wizard is a manifest builder and nothing more (§5). It never touches the
@@ -319,14 +320,17 @@ type wizardModel struct {
 	width, height int
 }
 
-func (m wizardModel) Init() tea.Cmd { return nil }
+func (m wizardModel) Init() tea.Cmd { return tea.RequestBackgroundColor }
 
 func (m wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		lightBackground.Store(!msg.IsDark())
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		return m, nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			m.w.Cancelled = true
@@ -335,7 +339,7 @@ func (m wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.w.Up()
 		case "down", "j":
 			m.w.Down()
-		case " ":
+		case "space":
 			m.w.Toggle()
 		case "enter":
 			m.w.Accept()
@@ -349,7 +353,14 @@ func (m wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m wizardModel) View() string {
+func (m wizardModel) View() tea.View {
+	v := tea.NewView(m.viewContent())
+	v.AltScreen = true
+	v.WindowTitle = "Magus"
+	return v
+}
+
+func (m wizardModel) viewContent() string {
 	if m.w.AtReview() {
 		return m.viewReview()
 	}
@@ -478,15 +489,7 @@ func (m wizardModel) viewReview() string {
 // built. confirmed is false when they quit, in which case nothing should be
 // written.
 func RunWizard(d Device) (Manifest, bool, error) {
-	w := NewWizard(d)
-	p := tea.NewProgram(wizardModel{w: w, width: 80, height: 24}, tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
-		return Manifest{}, false, err
-	}
-	if w.Cancelled || !w.Done {
-		return Manifest{}, false, nil
-	}
-	return w.M, true, nil
+	return runSetupForms(d, accessibleSetup(), os.Stdin, os.Stderr)
 }
 
 // wrapFrame is wrapScreen without the Model dependency, so screens that aren't

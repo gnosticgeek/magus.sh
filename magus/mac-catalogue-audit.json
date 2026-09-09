@@ -1,0 +1,351 @@
+{
+  "checked": "2026-09-09",
+  "packages": [
+	{"id":"mole","kind":"formula","source":"https://formulae.brew.sh/api/formula/mole.json","disabled":false,"deprecated":false,"platform":"macos"},
+    {
+      "id": "stats",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/stats.json",
+      "disabled": false,
+      "deprecated": false,
+      "minimum_macos": "12"
+    },
+    {
+      "id": "mos",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/mos.json",
+      "disabled": false,
+      "deprecated": false,
+      "minimum_macos": null
+    },
+    {
+      "id": "hiddenbar",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/hiddenbar.json",
+      "disabled": false,
+      "deprecated": false,
+      "minimum_macos": null
+    },
+    {
+      "id": "swiftbar",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/swiftbar.json",
+      "disabled": false,
+      "deprecated": false,
+      "minimum_macos": "12"
+    },
+    {
+      "id": "thaw",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/thaw.json",
+      "disabled": false,
+      "deprecated": false,
+      "minimum_macos": "26"
+    },
+    {
+      "id": "codexbar",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/codexbar.json",
+      "disabled": false,
+      "deprecated": false,
+      "minimum_macos": "14"
+    },
+    {
+      "id": "aldente",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/aldente.json",
+      "disabled": false,
+      "deprecated": false,
+      "minimum_macos": "12"
+    },
+    {
+      "id": "ollama-app",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/ollama-app.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": { ">=": ["14"] }
+    },
+    {
+      "id": "lm-studio",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/lm-studio.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": { ">=": ["12"] },
+      "arch": "arm64"
+    },
+    {
+      "id": "firefox",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/firefox.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "brave-browser",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/brave-browser.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {
+        ">=": [
+          "13"
+        ]
+      }
+    },
+    {
+      "id": "google-chrome",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/google-chrome.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {
+        ">=": [
+          "13"
+        ]
+      }
+    },
+    {
+      "id": "ghostty",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/ghostty.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {
+        ">=": [
+          "13"
+        ]
+      }
+    },
+    {
+      "id": "iterm2",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/iterm2.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {
+        ">=": [
+          "13"
+        ]
+      }
+    },
+    {
+      "id": "visual-studio-code",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/visual-studio-code.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "zed",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/zed.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "obsidian",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/obsidian.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {
+        ">=": [
+          "12"
+        ]
+      }
+    },
+    {
+      "id": "vlc",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/vlc.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "iina",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/iina.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {
+        ">=": [
+          "12"
+        ]
+      }
+    },
+    {
+      "id": "rectangle",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/rectangle.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "raycast",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/raycast.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {
+        ">=": [
+          "11"
+        ]
+      }
+    },
+    {
+      "id": "the-unarchiver",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/the-unarchiver.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "signal",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/signal.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {
+        ">=": [
+          "12"
+        ]
+      }
+    },
+    {
+      "id": "discord",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/discord.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "git",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/git.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "jq",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/jq.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "yq",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/yq.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "ripgrep",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/ripgrep.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "fd",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/fd.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "fzf",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/fzf.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "bat",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/bat.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "eza",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/eza.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "btop",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/btop.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "fastfetch",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/fastfetch.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "zoxide",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/zoxide.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "direnv",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/direnv.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "git-delta",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/git-delta.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "lazygit",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/lazygit.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "tmux",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/tmux.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    }
+  ]
+}

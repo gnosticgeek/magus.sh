@@ -99,6 +99,11 @@ func whyOf(s Step) string {
 // explicitly rather than reaching for globals is what lets the test harness in
 // §9 drive real steps against a temp HOME.
 type Context struct {
+	Parent   context.Context
+	Execute  commandFunc
+	OnLog    func(string)
+	Brew     string
+	AppRoots []string
 	Manifest Manifest
 	Device   Device
 	Paths    Paths

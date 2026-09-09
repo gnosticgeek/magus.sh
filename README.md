@@ -1,11 +1,12 @@
 # magus.sh
 
-An open-source setup tool for SteamOS devices, with a website that guides users from installation to their first terminal setup.
+An open-source terminal setup tool for SteamOS devices and a Mac-first local alpha, with a website that guides users into setup.
 
 ## Product status
 
 - **Steam devices:** Steam Deck and Steam Machine paths are available in alpha. Steam Machine hardware detection is unverified on real hardware; HDMI colour range, HDMI-CEC, and performance power profile preferences are not applied yet.
-- **Linux (Flatpaks)** and **Mac:** coming soon. These pages do not offer installers or release dates.
+- **Mac:** source alpha implemented: 80 Homebrew apps/tools/fonts with 13 app categories, installed markers, one review basket, Update all, six reversible Finder preferences, and portable setups for Ghostty, Zed, Firefox, Zsh, and Raycast. See [build and test instructions](magus/MAC.md). Darwin assets publish with the next tagged release.
+- **Linux (Flatpaks):** coming soon. The Mac page documents its source alpha while general Linux remains unreleased.
 - The separate desktop app and website Labs are experimental, not the primary product journey.
 
 ## Website
@@ -22,7 +23,7 @@ Astro + TypeScript + Tailwind. Pages share a single dark palette, Geist typograp
 | `/tui`, `/test` | Experimental Labs linked from the footer |
 | `/install`, `/run` | Plain-text installer; both use the same source script |
 
-The install command only installs Magus. Run `magus run` separately in an interactive terminal to begin setup. See [the terminal tool documentation](magus/README.md) for the manifest and reconciler contracts.
+On Mac, the install command verifies Magus and opens the menu when a terminal is available; changes require review inside the menu. On Linux, run `magus run` separately to begin setup. See [the terminal tool documentation](magus/README.md) for the manifest and reconciler contracts.
 
 ## Develop and verify
 

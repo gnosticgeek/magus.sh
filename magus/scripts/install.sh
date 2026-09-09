@@ -2,13 +2,9 @@
 #
 # magus installer — curl -fsSL magus.sh/install | sh
 #
-# Downloads the magus binary for this machine, verifies its checksum, and puts
-# it in ~/.local/bin. It installs the tool and stops there: it does not change
-# a single setting on your machine. Run `magus run` yourself afterwards.
-#
-# That split is deliberate. A pipe-to-shell that also starts reconfiguring your
-# desktop is asking for a great deal of trust in one keystroke — and it could
-# not work anyway, because the wizard needs a terminal and a pipe is not one.
+# Downloads and verifies Magus. On a Mac with an interactive terminal, opens
+# the menu; applications/settings change only after review inside the TUI.
+# Linux retains its separate `magus run` launch.
 #
 # environment:
 #   MAGUS_VERSION   install a specific tag (default: the latest release)
@@ -40,8 +36,8 @@ have() { command -v "$1" >/dev/null 2>&1; }
 log "magus installer"
 
 case "$(uname -s)" in
-  Linux) ;;
-  Darwin) die "magus targets SteamOS. On a Mac, build from source: cd magus && go build ." ;;
+  Linux) OS="linux" ;;
+  Darwin) OS="darwin" ;;
   *) die "unsupported OS: $(uname -s)" ;;
 esac
 
@@ -62,7 +58,7 @@ else
   die "need curl or wget to download anything"
 fi
 
-ok "linux/$ARCH"
+ok "$OS/$ARCH"
 
 # ---- resolve the version ---------------------------------------------------
 
@@ -79,7 +75,7 @@ fi
 
 ok "version $VERSION"
 
-ASSET="magus-linux-$ARCH"
+ASSET="magus-$OS-$ARCH"
 BASE="https://github.com/$REPO/releases/download/$VERSION"
 
 # ---- download and verify ---------------------------------------------------
@@ -88,7 +84,10 @@ log "downloading"
 
 TMP=$(mktemp -d) || die "could not create a temp directory"
 # Clean up on any exit, including the failure paths below.
-trap 'rm -rf "$TMP"' EXIT INT TERM
+STAGED=""
+trap 'rm -rf "$TMP"; [ -z "$STAGED" ] || rm -f "$STAGED"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 fetch_to "$BASE/$ASSET" "$TMP/magus" \
   || die "download failed: $BASE/$ASSET"
@@ -96,34 +95,32 @@ ok "got $ASSET"
 
 # Verify against the release's checksum file. A binary piped off the internet
 # and made executable deserves at least this much.
-if fetch_to "$BASE/checksums.txt" "$TMP/checksums.txt" 2>/dev/null; then
-  if have sha256sum; then
-    want=$(sed -n "s/^\([0-9a-f]*\)  *$ASSET\$/\1/p" "$TMP/checksums.txt" | head -1)
-    got=$(sha256sum "$TMP/magus" | cut -d' ' -f1)
-    if [ -z "$want" ]; then
-      warn "no checksum listed for $ASSET — skipping verification"
-    elif [ "$want" != "$got" ]; then
-      die "checksum mismatch — refusing to install
-    expected $want
-    got      $got"
-    else
-      ok "checksum verified"
-    fi
-  else
-    warn "sha256sum not found — skipping verification"
-  fi
+fetch_to "$BASE/checksums.txt" "$TMP/checksums.txt" \
+  || die "cannot download checksums — refusing an unverified binary"
+want=$(awk -v asset="$ASSET" '$2 == asset { print $1 }' "$TMP/checksums.txt")
+[ "${#want}" = 64 ] || die "missing or invalid checksum for $ASSET"
+case "$want" in *[!0-9a-f]*) die "invalid checksum for $ASSET" ;; esac
+if have sha256sum; then
+  got=$(sha256sum "$TMP/magus" | cut -d' ' -f1)
+elif have shasum; then
+  got=$(shasum -a 256 "$TMP/magus" | cut -d' ' -f1)
 else
-  warn "no checksums.txt in this release — skipping verification"
+  die "need sha256sum or shasum to verify this download"
 fi
+[ "$want" = "$got" ] || die "checksum mismatch — refusing to install"
+ok "checksum verified"
 
 # ---- install ---------------------------------------------------------------
 
 log "installing"
 
 mkdir -p "$BIN_DIR" || die "cannot create $BIN_DIR"
-chmod +x "$TMP/magus"
-# Move into place as one step so there is never a half-written magus on PATH.
-mv -f "$TMP/magus" "$BIN_DIR/magus" || die "cannot write to $BIN_DIR"
+STAGED=$(mktemp "$BIN_DIR/.magus.XXXXXX") || die "cannot stage binary"
+cp "$TMP/magus" "$STAGED" || die "cannot copy binary"
+chmod 755 "$STAGED"
+# Stage on the destination filesystem so the final rename is atomic.
+mv -f "$STAGED" "$BIN_DIR/magus" || die "cannot write to $BIN_DIR"
+STAGED=""
 ok "installed $BIN_DIR/magus"
 
 # SteamOS does not put ~/.local/bin on PATH, so without this `magus` installs
@@ -153,8 +150,8 @@ case ":${PATH}:" in
     ok "$BIN_DIR is on your PATH"
     ;;
   *)
-    if [ "${MAGUS_NO_PATH:-0}" = "1" ]; then
-      warn "$BIN_DIR is not on your PATH (MAGUS_NO_PATH=1, leaving it alone)"
+    if [ "$OS" = "darwin" ] || [ "${MAGUS_NO_PATH:-0}" = "1" ]; then
+      warn "$BIN_DIR is not on your PATH; launch with $BIN_DIR/magus"
     else
       touched=0
       for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
@@ -169,20 +166,13 @@ case ":${PATH}:" in
     ;;
 esac
 
-# ---- what next -------------------------------------------------------------
+# ---- launch ---------------------------------------------------------------
 
 log "done"
-printf '  magus is installed. It has changed no settings.\n\n'
-
-# The rc file only affects shells started after it, so this shell still cannot
-# find a bare `magus`. Print the command that actually works right now.
-if [ "$PATH_CHANGED" = "1" ]; then
-  printf '  %sThis shell was started before the PATH change. Either:%s\n' "$C_DIM" "$C_OFF"
-  printf '    %ssource ~/.bashrc%s   %s— then plain `magus` works%s\n' "$C_HEAD" "$C_OFF" "$C_DIM" "$C_OFF"
-  printf '    %s— or just open a new terminal.%s\n\n' "$C_DIM" "$C_OFF"
+printf '  Open the setup menu: %s/magus run\n' "$BIN_DIR"
+if [ "$OS" = "darwin" ] && [ "${MAGUS_NO_LAUNCH:-0}" != "1" ] && [ -t 1 ]; then
+  # Reattach stdin: the installer itself arrived over a pipe.
+  if ( : < /dev/tty ) 2>/dev/null; then
+    "$BIN_DIR/magus" run < /dev/tty
+  fi
 fi
-
-printf '    %smagus doctor%s   see what it would do — changes nothing\n' "$C_HEAD" "$C_OFF"
-printf '    %smagus run%s      answer five questions, then converge\n' "$C_HEAD" "$C_OFF"
-printf '\n  %sUntil this shell picks up the new PATH, use %s/magus.%s\n' "$C_DIM" "$BIN_DIR" "$C_OFF"
-printf '  %sRun it yourself — this installer deliberately does not.%s\n' "$C_DIM" "$C_OFF"

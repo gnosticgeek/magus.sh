@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"os"
+	"runtime"
 	"strings"
 )
 
@@ -12,6 +13,7 @@ import (
 type DeviceKind string
 
 const (
+	DeviceMac     DeviceKind = "mac"
 	DeviceDeck    DeviceKind = "steam-deck"
 	DeviceMachine DeviceKind = "steam-machine"
 	// DeviceSteamOS is SteamOS on hardware Valve did not make — a handheld from
@@ -53,6 +55,9 @@ var deckProducts = map[string]bool{
 func DetectDevice() Device {
 	if forced := os.Getenv("MAGUS_DEVICE"); forced != "" {
 		return Device{Kind: DeviceKind(forced), Confident: true}
+	}
+	if runtime.GOOS == "darwin" {
+		return Device{Kind: DeviceMac, OSID: "darwin", Product: runtime.GOARCH, Confident: true}
 	}
 	return classify(
 		readDMI("sys_vendor"),

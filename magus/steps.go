@@ -71,6 +71,9 @@ var bundleOrder = []string{"essentials", "gaming", "creative", "dev", "comms"}
 // still describes the same intent; it is each step's Check that decides whether
 // that intent applies to the hardware actually present.
 func StepsFor(m Manifest) []Step {
+	if m.Magus.Platform == "darwin" {
+		return macSteps(m)
+	}
 	steps := []Step{flathubStep{}}
 
 	switch m.Choices.Terminal {

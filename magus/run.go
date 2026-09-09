@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // runTickMsg advances the final-run install simulation.
@@ -122,7 +122,7 @@ func (m Model) viewRun() string {
 	return wrapScreen(m, header, body.String(), "", statusBar(hints))
 }
 
-func (m Model) keyRun(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) keyRun(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.runPhase {
 	case InstallPrompt:
 		switch msg.String() {
@@ -155,7 +155,7 @@ func (m Model) keyRun(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case InstallDone:
-		if msg.Type == tea.KeyEnter {
+		if msg.Code == tea.KeyEnter {
 			return m, tea.Quit
 		}
 	}

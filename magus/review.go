@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func (m Model) viewReview() string {
@@ -47,7 +47,7 @@ func (m Model) viewReview() string {
 	return wrapScreen(m, header, body.String(), footer, statusBar(hints))
 }
 
-func (m Model) keyReview(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) keyReview(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "y", "Y", "enter":
 		if m.totalPicked() == 0 {

@@ -13,10 +13,10 @@ const benefits = [
   { icon: 'lucide:refresh-cw', title: 'Built to run again.', copy: 'Check for drift with doctor, then use reconcile to restore supported parts of your setup after they change.' },
 ];
 const faqs = [
-  ['What is Magus?', 'Magus is an open-source setup tool for SteamOS devices. It brings selected apps and desktop preferences into a guided terminal flow, with a saved manifest for repeatable setup.'],
-  ['Does the install command change my settings?', 'It installs the Magus binary and may add its folder to your existing shell profile, then stops. It does not apply your app or desktop choices. Launch magus run separately to begin setup, and read the installer beforehand.'],
+  ['What is Magus?', 'Magus is an open-source setup tool for SteamOS devices and Mac. It brings selected apps and preferences into a guided terminal flow, with a saved manifest for repeatable setup.'],
+  ['Does the install command change my settings?', 'It downloads and verifies the Magus binary. On Mac it can open the menu when a terminal is available; settings and apps still change only after you review and apply your choices.'],
   ['Is Steam Machine support ready?', 'The Steam Machine path is available in alpha. Hardware detection is still unverified on real Steam Machine hardware. HDMI colour range, HDMI-CEC, and the performance power profile are recorded preferences but are not applied yet.'],
-  ['Can I use it on Linux or Mac?', 'Dedicated Linux and Mac setup paths are coming soon. The current supported journey is for SteamOS devices; a Linux-compatible binary is not a promise of general Linux support.'],
+  ['Can I use it on Linux or Mac?', 'The Mac source alpha includes Homebrew apps, updates, reversible settings and portable app setups. General Linux support is still coming soon; a Linux-compatible binary is not a promise of support for every distribution.'],
   ['Can I choose individual commands instead?', 'Yes. The advanced Steam Deck command picker lets you select tools, inspect their commands, and review a generated script. It remains a separate option from the guided terminal setup.'],
   ['Is there a desktop app?', 'A desktop interface is being explored. It is not part of this release; the terminal tool is the main setup experience.'],
 ];
@@ -27,7 +27,7 @@ const faqs = [
       <div class="hero-copy">
         <a href="/steam" class="announcement"><span>ALPHA</span> Now for Steam devices <span aria-hidden="true">↗</span></a>
         <h1>Your device.<br /><span class="hero-title-line">Your kind of <span class="hero-magic"><AuroraText>magic</AuroraText>.</span></span></h1>
-        <p class="hero-lede">A thoughtful setup for your Steam Deck or Steam Machine. The apps you want. The little details, handled. All in one open-source tool.</p>
+        <p class="hero-lede">A thoughtful setup for your Steam device or Mac. The apps you want. The little details, handled. All in one open-source tool.</p>
         <div class="action-row"><ActionLink href="/start">Get started</ActionLink><a class="text-link" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a></div>
         <p class="hero-footnote"><span aria-hidden="true">◇</span> Free & open source <span>·</span> No telemetry</p>
       </div>
@@ -50,7 +50,7 @@ const faqs = [
       <SectionHeading eyebrow="A FEW THINGS TO KNOW" title="Before you begin." description="Small tool. Clear expectations." />
       <div class="faq-list">{faqs.map(([question, answer]) => <details><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div>
     </section>
-    <section class="closing-cta"><span class="eyebrow">READY WHEN YOU ARE</span><h2>Make yourself at home.</h2><p>Your next setup starts with Magus.</p><ActionLink href="/start">Get started with Magus</ActionLink><small>Steam devices in alpha. Linux and Mac on the way.</small></section>
+    <section class="closing-cta"><span class="eyebrow">READY WHEN YOU ARE</span><h2>Make yourself at home.</h2><p>Your next setup starts with Magus.</p><ActionLink href="/start">Get started with Magus</ActionLink><small>Steam devices in alpha. Mac source alpha available. General Linux support on the way.</small></section>
   </div>
 </Base>
 

@@ -1,5 +1,10 @@
 # magus — Go binary
 
+**Mac local alpha:** [Mac TUI guide](MAC.md). On macOS, no arguments and
+`magus run` now open the same basket-based menu. `magus preview` inspects without
+installing. The older SteamOS flow described below is retained.
+
+
 One statically-linked binary with two faces:
 
 - **No arguments** — the Bubble Tea TUI that walks the five magus.sh stages and
@@ -162,7 +167,7 @@ taking choices the user never made.
 brew install go              # one-time, only needed to build
 cd magus
 go run .                     # iterate
-go build -o magus .          # produce the shipped binary (~5 MB, single file)
+go build -o magus .          # produce a single binary (size depends on build flags)
 ./magus
 ```
 
@@ -226,3 +231,25 @@ reasoning is kept because it is why the Go binary looks the way it does.)*
   TUIs are out of scope, you'd reimplement most of the rendering by hand.
 - Static binary distribution beats the nvm/Node/tsx bootstrap on every axis:
   fewer steps, smaller surface, faster startup.
+
+## Terminal interface
+
+The terminal UI uses Bubble Tea 2, Bubbles 2 and Lip Gloss 2. Steam catalogue
+search supports fuzzy matching, editable/pasted text, and paging through every
+result. Enter toggles a result; spaces are part of the search query. Progress
+uses the shared Bubbles component. Details use Glamour Markdown rendering.
+Mac confirmations use layered dialogs when the terminal has room, with an
+ordinary page on smaller screens.
+
+The SteamOS `magus run` setup wizard uses Huh forms. Tab/Shift+Tab move through
+fields, and the final review offers Apply, Edit choices, or Cancel. For a
+screen-reader-friendly setup in an interactive terminal:
+
+```sh
+MAGUS_ACCESSIBLE=1 magus run
+```
+
+This mode uses plain numbered prompts, prints the review, and requires an
+explicit yes before applying. Enter `0` to finish the bundle selection. Closing
+input cancels setup. This option applies to the SteamOS manifest wizard; the
+Mac catalogue remains a full-screen interface.

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -14,17 +15,18 @@ import (
 // than claiming a version it isn't.
 var buildVersion = "dev"
 
-// usage is the help text. It lists exactly the five verbs from the brief (§5) —
-// if a sixth ever appears here without appearing there, one of the two is wrong.
-const usage = `magus — the first hour of owning a Steam Machine, done for you.
+// usage describes the shared CLI and the Mac-specific preview/restore actions.
+const usage = `magus — a thoughtful setup for your Mac or Steam device.
 
 usage:
   magus                    launch the interactive TUI
-  magus run                ask the five questions, write a manifest, converge
-  magus run --defaults     no questions; write the opinionated manifest and converge
+  magus run                open the setup menu (Mac) or Steam wizard
+  magus run --defaults     use saved choices; fresh Mac starts empty, Steam uses defaults
   magus reconcile          converge to the existing manifest, no questions
   magus doctor             report drift and breakage; changes nothing
   magus uninstall          reverse what magus installed
+  magus preview            browse the Mac menu without making changes
+  magus restore            restore Mac settings recorded by Magus
   magus version            print the binary and manifest schema versions
 
 flags:
@@ -74,6 +76,9 @@ func runCLI(args []string) int {
 	paths, err := NewPaths()
 	if err != nil {
 		rep.Die("cannot resolve home directory: %v", err)
+	}
+	if runtime.GOOS == "darwin" || verb == "preview" {
+		return runMacCLI(verb, paths, *manifestPath, *defaults, *dryRun, *asJSON, *plain, *timeout)
 	}
 	if err := paths.EnsureDirs(); err != nil {
 		rep.Die("cannot create %s: %v", paths.Config, err)
@@ -183,6 +188,9 @@ func cmdRun(rep *Reporter, paths Paths, device Device, path string, defaults, dr
 		return die(1, "%v", err)
 	default:
 		rep.OK("using existing manifest %s", path)
+		if err := manifestPlatformCheck(m, "linux"); err != nil {
+			return die(1, "%v", err)
+		}
 		if m.Migrate() && !dryRun {
 			if err := m.Save(path); err != nil {
 				rep.Warn("could not save migrated manifest: %v", err)
@@ -192,6 +200,9 @@ func cmdRun(rep *Reporter, paths Paths, device Device, path string, defaults, dr
 		}
 	}
 
+	if err := manifestPlatformCheck(m, "linux"); err != nil {
+		return die(1, "%v", err)
+	}
 	out.withManifest(m, device)
 	if !out.Manifest.Valid {
 		return die(1, "%s", out.Manifest.Invalid)
@@ -258,6 +269,9 @@ func cmdDoctor(rep *Reporter, paths Paths, device Device, path string, asJSON bo
 	if err != nil {
 		return die(1, "%v", err)
 	}
+	if err := manifestPlatformCheck(m, "linux"); err != nil {
+		return die(1, "%v", err)
+	}
 	out.withManifest(m, device)
 
 	rep.Section("manifest")
@@ -321,6 +335,9 @@ func withManifest(rep *Reporter, paths Paths, device Device, command, path strin
 		return die(2, "no manifest at %s — run `magus run --defaults` first", path)
 	}
 	if err != nil {
+		return die(1, "%v", err)
+	}
+	if err := manifestPlatformCheck(m, "linux"); err != nil {
 		return die(1, "%v", err)
 	}
 	if m.Migrate() && !dryRun {

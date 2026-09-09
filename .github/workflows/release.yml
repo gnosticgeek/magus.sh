@@ -38,13 +38,15 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME:-dev}"
           mkdir -p dist
-          for arch in amd64 arm64; do
-            GOOS=linux GOARCH="$arch" go build \
-              -trimpath \
-              -ldflags "-s -w -X main.buildVersion=${version}" \
-              -o "dist/magus-linux-${arch}" .
+          for os in linux darwin; do
+            for arch in amd64 arm64; do
+              GOOS="$os" GOARCH="$arch" go build \
+                -trimpath \
+                -ldflags "-s -w -X main.buildVersion=${version}" \
+                -o "dist/magus-${os}-${arch}" .
+            done
           done
-          cd dist && sha256sum magus-linux-* > checksums.txt
+          cd dist && sha256sum magus-linux-* magus-darwin-* > checksums.txt
           cat checksums.txt
 
       - name: Smoke-test the amd64 binary
@@ -62,15 +64,43 @@ jobs:
           name: magus-binaries
           path: magus/dist/*
 
+  mac-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: magus/go.mod
+          cache-dependency-path: magus/go.sum
+      - name: Test Mac behavior with isolated fixtures
+        working-directory: magus
+        run: |
+          go test ./...
+          go vet ./...
+          MAGUS_TEST_MAC_DEFAULTS=1 go test -run TestMacRealPreferenceFile -v
+          go build -o /tmp/magus .
+          /tmp/magus version
+
+  publish:
+    needs: [build, mac-test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: magus-binaries
+          path: magus/dist
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            --repo "$GITHUB_REPOSITORY" \
+            --repo "${{ github.repository }}" \
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             magus/dist/magus-linux-amd64 \
             magus/dist/magus-linux-arm64 \
+            magus/dist/magus-darwin-amd64 \
+            magus/dist/magus-darwin-arm64 \
             magus/dist/checksums.txt

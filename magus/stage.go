@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // StageRow is one row in either the group list or command list.
@@ -304,7 +304,7 @@ func previewItem(m Model, st *Stage, c *Cmd, w int) string {
 	lines := []string{
 		header,
 		mark + " " + sBright.Render(c.Title),
-		sMuted.Render(wrap(c.Summary, w)),
+		renderMarkdown(c.Summary, w),
 		"",
 		sText.Render("will run"),
 	}
@@ -416,7 +416,7 @@ func previewSelectAll(m Model, st *Stage, w int) string {
 	}, "\n")
 }
 
-func (m Model) keyStage(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) keyStage(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	st := m.cat.StageByID(m.currentStageID)
 	rows := m.stageRows()
 	maxF := focusableStageCount(rows) - 1
@@ -441,13 +441,8 @@ func (m Model) keyStage(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "/":
-		m.priorView = PickStage
-		m.pickView = PickSearch
-		m.searchQuery = ""
-		m.searchResults = m.runSearch("", m.currentStageID)
-		m.cursor = 0
-		return m, nil
-	case " ":
+		return m.startSearch(PickStage)
+	case "space":
 		idx := focusableStageIndex(rows, m.cursor)
 		if idx < 0 {
 			return m, nil

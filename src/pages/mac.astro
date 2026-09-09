@@ -1,5 +1,76 @@
 ---
-import ComingSoon from '../components/ComingSoon.astro';
+import { Icon } from 'astro-icon/components';
+import Base from '../layouts/Base.astro';
+import CommandSnippet from '../components/CommandSnippet.astro';
 import { PLATFORMS } from '../lib/platforms';
+
+const mac = PLATFORMS[2];
+const apps = [
+  ['lucide:boxes', 'Apps and tools', 'Browse 80 Homebrew apps, command-line tools and fonts across focused categories. Magus marks what is already installed and keeps one review basket.'],
+  ['lucide:wand-sparkles', 'Portable app setups', 'Apply or export curated setups for Ghostty, Zed and Firefox, extend Zsh with modern tools, and follow a guided Raycast checklist.'],
+  ['lucide:rotate-ccw', 'Changes you can undo', 'Finder preferences and managed configuration files keep their original values. Restore refuses to overwrite settings you edited later.'],
+];
 ---
-<ComingSoon platform={PLATFORMS[2]} />
+
+<Base title="Mac — Magus source alpha" description="Build the Magus Mac alpha, choose Homebrew apps and reversible settings, and apply portable setups for Ghostty, Zed, Firefox, Zsh and Raycast.">
+  <div class="site-frame inner-page">
+    <header class="page-intro">
+      <a class="breadcrumb" href="/start">Platforms <span aria-hidden="true">/</span> {mac.name}</a>
+      <span class="status-badge live">{mac.status}</span>
+      <h1>A fresh start.<br /><span class="gradient-text">For your Mac.</span></h1>
+      <p class="lede">Choose your essentials, review every change, and keep the setup portable. The Mac experience is available as a source alpha while its first binary release is prepared.</p>
+    </header>
+
+    <section class="site-section mac-feature-grid" aria-label="Mac alpha features">
+      {apps.map(([icon, title, copy]) => (
+        <article>
+          <span class="benefit-icon"><Icon name={icon} aria-hidden="true" /></span>
+          <h2>{title}</h2>
+          <p>{copy}</p>
+        </article>
+      ))}
+    </section>
+
+    <div class="install-layout">
+      <div class="install-steps">
+        <section class="install-step"><span class="step-index">01</span><div>
+          <h2>Build the alpha.</h2>
+          <p>Install Go with Homebrew, clone Magus, then build the native terminal app. It runs on Apple silicon and Intel Macs.</p>
+          <CommandSnippet command="brew install go && git clone https://github.com/gnosticgeek/magus.sh.git && cd magus.sh/magus && go build -o magus ." label="Build from source" />
+          <p class="step-note">The one-line Magus installer will support macOS after the next tagged release publishes and verifies the new Darwin binaries.</p>
+        </div></section>
+        <section class="install-step"><span class="step-index">02</span><div>
+          <h2>Open the menu.</h2>
+          <p>Launch Magus in an interactive terminal. It inspects this Mac before showing your basket.</p>
+          <CommandSnippet command="./magus run" label="Launch the Mac alpha" />
+          <p>Browse apps, tools, fonts, Mac settings, presets, updates, terminal choices and app setups. Nothing changes until you review and apply the basket.</p>
+        </div></section>
+        <section class="install-step"><span class="step-index">03</span><div>
+          <h2>Make the apps yours.</h2>
+          <p><strong>App setups</strong> includes three managed files—Ghostty, Zed and Firefox—plus Modern CLI choices and a Raycast guide with selected extension links.</p>
+          <p>Existing files are backed up before replacement. You can export each setup instead when you would rather merge it yourself.</p>
+        </div></section>
+        <section class="install-step"><span class="step-index">04</span><div>
+          <h2>Return safely.</h2>
+          <p>Use <code>./magus doctor</code> to inspect the saved setup without changing it, <code>./magus reconcile</code> to reapply it, and <code>./magus restore</code> to restore recorded settings.</p>
+        </div></section>
+      </div>
+
+      <aside class="device-notes" aria-label="Mac alpha notes">
+        <div class="device-note"><Icon name="simple-icons:apple" aria-hidden="true" /><h2>Mac alpha</h2><span class="status-badge live">Source available</span><p>The menu, Homebrew catalogue, update review and reversible preferences are implemented and covered by automated macOS checks.</p></div>
+        <div class="device-note"><h2>App setups</h2><p>Ghostty, Zed, Firefox, Modern CLI and Raycast were ported from the earlier Machinist/Athanor work and adapted to Magus's review flow.</p></div>
+        <div class="device-note"><h2>Alpha boundaries</h2><p>Live Zed and Firefox behaviour still needs wider testing. Firefox copies values from <code>user.js</code>, so restoring that file does not reset preferences it already loaded.</p><a href="https://github.com/gnosticgeek/magus.sh/blob/main/magus/APP_SETUPS.md">Read the setup notes ↗</a></div>
+      </aside>
+    </div>
+
+    <section class="troubleshooting site-section">
+      <p class="eyebrow">BEFORE YOU APPLY</p><h2>Clear boundaries for an alpha.</h2>
+      <div class="faq-list">
+        <details><summary>Will Magus replace my existing configuration?<span aria-hidden="true">+</span></summary><p>Only after you select a setup and approve it in Review &amp; apply. Managed files are backed up, symlinked paths are refused, and later edits are left untouched. Export a preset when you want to merge individual values.</p></details>
+        <details><summary>What does the Raycast setup change?<span aria-hidden="true">+</span></summary><p>Nothing automatically. Magus provides a checklist for Spotlight, clipboard history, snippets, Hyper Key, root search and Auto Quit, plus links to six useful extensions. Raycast remains in control of its own data.</p></details>
+        <details><summary>Can I update apps installed outside Magus?<span aria-hidden="true">+</span></summary><p>Yes. Update all inspects eligible Homebrew packages from the whole machine, shows the versions it found, and asks for a separate review before starting.</p></details>
+        <details><summary>Where are my choices saved?<span aria-hidden="true">+</span></summary><p>The declarative selection lives in <code>~/.config/magus/manifest.toml</code>. Backups and run outcomes stay in Magus's local state directory.</p></details>
+      </div>
+    </section>
+  </div>
+</Base>

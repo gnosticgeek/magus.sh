@@ -1,0 +1,510 @@
+{
+  "checked": "2026-09-09",
+  "source": "Local Homebrew info --cask --json=v2 --installed; not a fresh remote metadata validation",
+  "packages": [
+    {
+      "id": "affinity",
+      "name": [
+        "Affinity"
+      ],
+      "desc": "Image editing and design software",
+      "app": "Affinity.app",
+      "version": "3.2.3,4646",
+      "depends_on": {
+        "macos": {}
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "aside",
+      "name": [
+        "Aside"
+      ],
+      "desc": "Web browser with built-in AI assistant",
+      "app": "Aside.app",
+      "version": "1.0.825.1",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "13"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "audacity",
+      "name": [
+        "Audacity"
+      ],
+      "desc": "Multi-track audio editor and recorder",
+      "app": "Audacity 4.app",
+      "version": "4.0.0",
+      "depends_on": {},
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "balenaetcher",
+      "name": [
+        "Etcher"
+      ],
+      "desc": "Tool to flash OS images to SD cards & USB drives",
+      "app": "balenaEtcher.app",
+      "version": "2.1.6",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "11"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "bambu-studio",
+      "name": [
+        "Bambu Studio"
+      ],
+      "desc": "3D model slicing software for 3D printers, maintained by Bambu Lab",
+      "app": "BambuStudio.app",
+      "version": "02.08.02.61,20260820225108",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "11"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "caskhub",
+      "name": [
+        "CaskHub"
+      ],
+      "desc": "Native GUI for Homebrew casks",
+      "app": "CaskHub.app",
+      "version": "0.8.2",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "15"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "chatgpt",
+      "name": [
+        "ChatGPT"
+      ],
+      "desc": "OpenAI's official ChatGPT desktop app",
+      "app": "ChatGPT.app",
+      "version": "26.903.61454",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "13"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "claude",
+      "name": [
+        "Claude"
+      ],
+      "desc": "Anthropic's official Claude AI desktop app",
+      "app": "Claude.app",
+      "version": "1.49585.0,41ad1dff5275eedc8af25989f59f33c5efe14063",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "13"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "dockflow",
+      "name": [
+        "DockFlow"
+      ],
+      "desc": "Manage Dock presets and switch between them instantly",
+      "app": "DockFlow.app",
+      "version": "1.81",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "13"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "downie",
+      "name": [
+        "Downie"
+      ],
+      "desc": "Downloads videos from different websites",
+      "app": "Downie 4.app",
+      "version": "4.12.15,5256",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "11"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "es-de",
+      "name": [
+        "ES-DE",
+        "EmulationStation Desktop Edition"
+      ],
+      "desc": "Frontend for browsing and launching games from your multi-platform collection",
+      "app": "ES-DE.app",
+      "version": "3.4.1,288889626",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "11"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "fluidvoice",
+      "name": [
+        "FluidVoice"
+      ],
+      "desc": "Offline voice-to-text dictation app with AI enhancement",
+      "app": "FluidVoice.app",
+      "version": "1.6.9",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "15"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "grok-bot",
+      "name": [
+        "Grok Bot"
+      ],
+      "desc": "AI teammates that work across your apps and tools",
+      "app": "Grok Bot.app",
+      "version": "0.44.0",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "12"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "handbrake-app",
+      "name": [
+        "HandBrake"
+      ],
+      "desc": "Open-source video transcoder",
+      "app": "HandBrake.app",
+      "version": "1.11.2",
+      "depends_on": {
+        "macos": {}
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "hermes-desktop",
+      "name": [
+        "Hermes Agent Desktop"
+      ],
+      "desc": "Open-source desktop AI agent",
+      "app": "Hermes.app",
+      "version": "0.21.1,2237be355906",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "11"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "jellyfin-media-player",
+      "name": [
+        "Jellyfin Media Player"
+      ],
+      "desc": "Jellyfin desktop client",
+      "app": "Jellyfin Media Player.app",
+      "version": "1.12.0",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "12"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "jordanbaird-ice",
+      "name": [
+        "Ice"
+      ],
+      "desc": "Menu bar manager",
+      "app": "Ice.app",
+      "version": "0.11.12",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "14"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "keka",
+      "name": [
+        "Keka"
+      ],
+      "desc": "File archiver",
+      "app": "Keka.app",
+      "version": "1.6.7",
+      "depends_on": {
+        "macos": {}
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "monocle-app",
+      "name": [
+        "Monocle"
+      ],
+      "desc": "Window dimming utility",
+      "app": "Monocle.app",
+      "version": "3.5.1",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "14"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "moonfin",
+      "name": [
+        "Moonfin"
+      ],
+      "desc": "Media streaming client for Jellyfin and Emby",
+      "app": "Moonfin.app",
+      "version": "2.5.1",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "14"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "notion",
+      "name": [
+        "Notion"
+      ],
+      "desc": "App to write, plan, collaborate, and get organised",
+      "app": "Notion.app",
+      "version": "7.33.0",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "12"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "proton-drive",
+      "name": [
+        "Proton Drive"
+      ],
+      "desc": "Client for Proton Drive",
+      "app": "Proton Drive.app",
+      "version": "3.0.3",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "13"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "protonvpn",
+      "name": [
+        "ProtonVPN"
+      ],
+      "desc": "VPN client focusing on security",
+      "app": "ProtonVPN.app",
+      "version": "6.5.1",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "14"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "retroarch-metal",
+      "name": [
+        "RetroArch"
+      ],
+      "desc": "Frontend for emulators, game engines and media players (Metal graphics API)",
+      "app": "RetroArch.app",
+      "version": "1.22.2",
+      "depends_on": {
+        "macos": {}
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "shottr",
+      "name": [
+        "Shottr"
+      ],
+      "desc": "Screenshot measurement and annotation tool",
+      "app": "Shottr.app",
+      "version": "1.9.1",
+      "depends_on": {
+        "macos": {}
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "spotify",
+      "name": [
+        "Spotify"
+      ],
+      "desc": "Music streaming service",
+      "app": "Spotify.app",
+      "version": "1.2.99.317",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "13"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "unsloth",
+      "name": [
+        "Unsloth Desktop"
+      ],
+      "desc": "Desktop application for Unsloth Studio",
+      "app": "Unsloth.app",
+      "version": "0.1.807-beta",
+      "depends_on": {
+        "arch": [
+          {
+            "type": "arm",
+            "bits": 64
+          }
+        ]
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "upscayl",
+      "name": [
+        "Upscayl"
+      ],
+      "desc": "AI image upscaler",
+      "app": "Upscayl.app",
+      "version": "2.15.0",
+      "depends_on": {
+        "macos": {
+          ">=": [
+            "12"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    },
+    {
+      "id": "vorssaint",
+      "name": [
+        "Vorssaint"
+      ],
+      "desc": "Menu bar toolkit with keep-awake, system monitor and volume mixer",
+      "app": "Vorssaint.app",
+      "version": "3.3.5",
+      "depends_on": {
+        "arch": [
+          {
+            "type": "arm",
+            "bits": 64
+          }
+        ],
+        "macos": {
+          ">=": [
+            "14"
+          ]
+        }
+      },
+      "disabled": false,
+      "deprecated": false
+    }
+  ]
+}

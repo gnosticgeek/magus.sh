@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // writeTickMsg advances the script-write animation through its phases.
@@ -88,11 +88,11 @@ func (m Model) viewWrite() string {
 	return wrapScreen(m, header, strings.Join(lines, "\n"), "", statusBar(hints))
 }
 
-func (m Model) keyWrite(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) keyWrite(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.writeStep < 4 {
 		return m, nil
 	}
-	if msg.Type == tea.KeyEnter {
+	if msg.Code == tea.KeyEnter {
 		m.step = StepRun
 		m.runPhase = InstallPrompt
 		m.runLog = nil

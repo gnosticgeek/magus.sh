@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 )
 
 // Screen is the top-level state of the TUI wizard. It is distinct from Step,
@@ -62,6 +64,7 @@ type Model struct {
 	currentStageID  string
 	currentGroupID  string
 	priorView       PickView // PickMenu or PickStage (for search return)
+	searchInput     textinput.Model
 	searchQuery     string
 	searchResults   []searchHit
 	installedStages map[string]bool
@@ -108,15 +111,29 @@ func (m Model) reset() Model {
 	return n
 }
 
-func (m Model) Init() tea.Cmd { return nil }
+func (m Model) Init() tea.Cmd { return tea.RequestBackgroundColor }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.step == StepPick && m.pickView == PickSearch {
+		if k, ok := msg.(tea.KeyPressMsg); ok && k.String() == "ctrl+c" {
+			return m, tea.Quit
+		}
+		switch msg.(type) {
+		case tea.WindowSizeMsg, tea.BackgroundColorMsg:
+		default:
+			return m.updateSearch(msg)
+		}
+	}
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		lightBackground.Store(!msg.IsDark())
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		m.searchInput.SetWidth(max(1, msg.Width-10))
 		return m, nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Globals: r/R = reset, ctrl+c = hard quit.
 		switch msg.String() {
 		case "ctrl+c":
@@ -136,7 +153,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
+	v := tea.NewView(m.viewContent())
+	v.AltScreen = true
+	v.WindowTitle = "Magus"
+	return v
+}
+
+func (m Model) viewContent() string {
 	switch m.step {
 	case StepSplash:
 		return m.viewSplash()
@@ -162,7 +186,7 @@ func (m Model) View() string {
 }
 
 // handleKey dispatches based on step + view.
-func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch m.step {
 	case StepSplash:
 		return m.keySplash(msg)
@@ -233,6 +257,9 @@ func (m *Model) togglePick(id string) {
 }
 
 func main() {
+	if len(os.Args) == 1 && runtime.GOOS == "darwin" {
+		os.Exit(runCLI([]string{"run"}))
+	}
 	// With a verb, magus is a reconciler driven from the command line; with no
 	// arguments it is the TUI. Both paths end up converging the same manifest —
 	// the TUI is a manifest builder, not a second implementation (§5).
@@ -245,7 +272,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "magus: %v\n", err)
 		os.Exit(1)
 	}
-	p := tea.NewProgram(newModel(cat), tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(newModel(cat))
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "magus: %v\n", err)
 		os.Exit(1)

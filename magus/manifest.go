@@ -17,21 +17,23 @@ import (
 // including retiring something an earlier version installed, which is what makes
 // "converge to the current intended state" different from "don't crash on
 // re-run" (§3).
-const Version = "0.3.0"
+const Version = "0.4.0"
 
 // Manifest is the declarative record of what this machine should look like.
 // It is the only thing the wizard produces and the only thing the reconciler
 // reads. The future GUI reads and writes this same file rather than being a
 // second implementation.
 type Manifest struct {
+	Mac           MacSelection         `toml:"mac"`
 	Magus         MagusSection         `toml:"magus"`
 	Choices       ChoicesSection       `toml:"choices"`
 	Optimisations OptimisationsSection `toml:"optimisations"`
 }
 
 type MagusSection struct {
-	Version string `toml:"version"`
-	Device  string `toml:"device"`
+	Platform string `toml:"platform,omitempty"`
+	Version  string `toml:"version"`
+	Device   string `toml:"device"`
 }
 
 type ChoicesSection struct {
@@ -94,8 +96,11 @@ var (
 // and what holding Enter through the wizard produces. Every default here is the
 // brief's §4 default.
 func DefaultManifest(d Device) Manifest {
+	if d.Kind == DeviceMac {
+		return newMacManifest()
+	}
 	m := Manifest{
-		Magus: MagusSection{Version: Version, Device: string(d.Kind)},
+		Magus: MagusSection{Version: Version, Platform: "linux", Device: string(d.Kind)},
 		Choices: ChoicesSection{
 			Terminal: "kitty",
 			Browser:  "firefox",
@@ -194,6 +199,15 @@ func (m Manifest) Save(path string) error {
 // Validate reports every problem with the manifest at once rather than the first
 // one. A user who mistyped two bundle names should learn both in one run.
 func (m Manifest) Validate() error {
+	if m.Magus.Platform == "darwin" || m.Magus.Device == "mac" {
+		return validateMacManifest(m)
+	}
+	if m.Magus.Platform != "" && m.Magus.Platform != "linux" {
+		return fmt.Errorf("unsupported platform %q", m.Magus.Platform)
+	}
+	if len(m.Mac.Packages)+len(m.Mac.Settings)+len(m.Mac.AppConfigs) > 0 || m.Mac.Terminal != "" || m.Mac.ModernShell != nil {
+		return fmt.Errorf("Mac selections require a Mac manifest")
+	}
 	var problems []string
 
 	if m.Magus.Version == "" {
@@ -247,6 +261,12 @@ func (m Manifest) HasBundle(name string) bool { return oneOf(name, m.Choices.Bun
 // pass takes the artifact away. Migrating on read is what keeps every other code
 // path able to assume a current-schema manifest.
 func (m *Manifest) Migrate() bool {
+	if !oneOf(m.Magus.Version, []string{"0.1.0", "0.2.0", "0.3.0", Version}) {
+		return false
+	}
+	if m.Magus.Platform == "darwin" {
+		return false
+	}
 	changed := false
 
 	// 0.2.0 → 0.3.0: the optimisations section gained the KDE and Proton-GE

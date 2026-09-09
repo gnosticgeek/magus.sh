@@ -1,0 +1,51 @@
+// Zed settings reference: https://zed.dev/docs/configuring-zed
+{
+  // Font family is left to Zed's default so this doesn't fail if a
+  // particular font isn't installed. Uncomment to pick one:
+  // "buffer_font_family": "JetBrains Mono",
+  "buffer_font_size": 14,
+  "ui_font_size": 14,
+
+  // Follow the system light/dark appearance.
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "One Dark"
+  },
+
+  // Privacy: opt out of telemetry.
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+
+  // Tidy every file on save (formats via the language server).
+  "format_on_save": "on",
+  "remove_trailing_whitespace_on_save": true,
+  "ensure_final_newline_on_save": true,
+
+  // Calmer editor surface.
+  "cursor_blink": false,
+
+  // Inline git blame on the current line.
+  "git": {
+    "inline_blame": {
+      "enabled": true
+    }
+  },
+
+  // Keep the file finder and search fast in large repos.
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.svn",
+    "**/.hg",
+    "**/.DS_Store",
+    "**/node_modules",
+    "**/dist",
+    "**/build",
+    "**/target",
+    "**/.next",
+    "**/.venv",
+    "**/__pycache__"
+  ]
+}

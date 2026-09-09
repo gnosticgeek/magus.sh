@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // MAGUS wordmark — block letters, kept tight so it fits inside 80 cols
@@ -76,7 +76,7 @@ func (m Model) viewSplash() string {
 	return frame(m, body, bar)
 }
 
-func (m Model) keySplash(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) keySplash(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
 		m.step = StepPick
