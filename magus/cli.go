@@ -11,7 +11,7 @@ import (
 )
 
 // buildVersion is the release tag, injected at link time by the release
-// workflow (-X main.buildVersion=v0.3.0). A build from source says so rather
+// workflow (-X main.buildVersion=v0.4.0). A build from source says so rather
 // than claiming a version it isn't.
 var buildVersion = "dev"
 

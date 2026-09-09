@@ -37,6 +37,26 @@ func TestSearchAcceptsTextAndPasteWithoutReset(t *testing.T) {
 		t.Fatal("backspace failed")
 	}
 }
+
+func TestTUIViewsShowBuildVersion(t *testing.T) {
+	previous := buildVersion
+	buildVersion = "v0.4.0-test"
+	t.Cleanup(func() { buildVersion = previous })
+
+	cat, err := loadCatalogue()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ansi.Strip(newModel(cat).viewSplash()); !strings.Contains(got, "magus.sh v0.4.0-test") {
+		t.Fatal("Steam TUI splash does not show the build version")
+	}
+
+	mac := newMacModel(Paths{}, "", newMacManifest(), true, 0)
+	if got := ansi.Strip(mac.headerView(80)); !strings.Contains(got, "Magus v0.4.0-test") {
+		t.Fatal("Mac TUI header does not show the build version")
+	}
+}
+
 func TestSearchCanReachEveryResult(t *testing.T) {
 	cat, err := loadCatalogue()
 	if err != nil {

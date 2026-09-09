@@ -22,7 +22,7 @@ var magusWordmark = []string{
 func (m Model) viewSplash() string {
 	// Info box on the right
 	info := []string{
-		sBright.Render("magus.sh v0.1"),
+		sBright.Render("magus.sh " + buildVersion),
 		sMuted.Render("spells     ") + sText.Render(fmt.Sprintf("%d", m.cat.TotalCommands())),
 		sMuted.Render("stages     ") + sText.Render(fmt.Sprintf("%d", len(m.cat.Stages))),
 		sMuted.Render("runtime    ") + sText.Render("~10 min"),

@@ -61,7 +61,7 @@ func (m *macModel) headerView(width int) string {
 	if m.preview {
 		title += " / PREVIEW — no changes"
 	}
-	metadata := sMuted.Render(m.inventory.osVersion)
+	metadata := sMuted.Render("Magus " + buildVersion + "  ·  " + m.inventory.osVersion)
 	if home && m.height >= 24 && width >= max(60, lipgloss.Width(macWordmark)) {
 		lines := strings.Split(macWordmark, "\n")
 		seal := []string{"    /\\    ", "   /  \\   ", "  < /\\ >  ", "   \\  /   ", "    \\/    "}
