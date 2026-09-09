@@ -130,20 +130,23 @@ func (s appConfigStep) read(p Paths) (appConfigSnapshot, []byte, error) {
 	if err != nil && !os.IsNotExist(err) {
 		return appConfigSnapshot{}, nil, err
 	}
-	snap := appConfigSnapshot{Path: path, Original: data, Existed: err == nil, Mode: 0600}
+	current := appConfigSnapshot{Path: path, Original: data, Existed: err == nil, Mode: 0600}
 	if info, e := os.Stat(path); e == nil {
-		snap.Mode = info.Mode().Perm()
+		current.Mode = info.Mode().Perm()
 	}
 	if err = regularTerminalPath(s.backup(p)); err != nil {
-		return snap, nil, err
+		return current, nil, err
 	}
 	raw, err := os.ReadFile(s.backup(p))
 	if os.IsNotExist(err) {
-		return snap, data, nil
+		return current, data, nil
 	}
 	if err != nil {
-		return snap, nil, err
+		return current, nil, err
 	}
+	// Decode into fresh storage. Decoding into current can reuse Original's
+	// backing array, which aliases data and corrupts the comparison below.
+	var snap appConfigSnapshot
 	if err = json.Unmarshal(raw, &snap); err != nil {
 		return snap, nil, err
 	}
