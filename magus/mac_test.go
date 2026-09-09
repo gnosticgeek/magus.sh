@@ -20,6 +20,11 @@ import (
 
 func macTestContext(t *testing.T) *Context {
 	t.Helper()
+	// Keep fixtures inside the temporary home even on Linux CI hosts that set
+	// absolute XDG paths for the runner account.
+	for _, name := range []string{"XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CONFIG_HOME"} {
+		t.Setenv(name, "")
+	}
 	p := newPathsUnder(t.TempDir())
 	if err := p.EnsureDirs(); err != nil {
 		t.Fatal(err)
