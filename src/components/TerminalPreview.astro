@@ -1,0 +1,22 @@
+---
+interface Props { compact?: boolean; }
+const { compact = false } = Astro.props;
+---
+<div class:list={['terminal-preview', { compact }]} aria-label="Illustrative Magus terminal preview">
+  <div class="terminal-chrome"><span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>magus — SteamOS</span><span class="preview-label">Preview</span></div>
+  <div class="terminal-content">
+    <p class="terminal-command"><span>$</span> magus run</p>
+    <div class="terminal-wordmark">magus<span>_</span></div>
+    <p class="terminal-muted">A setup that feels like yours.</p>
+    <div class="terminal-divider"></div>
+    <p class="terminal-caption">YOUR DEVICE</p>
+    <p class="terminal-device"><span class="terminal-check">✓</span> Steam Deck <span class="terminal-muted">/ SteamOS</span></p>
+    <p class="terminal-caption">CHOOSE YOUR SETUP</p>
+    <div class="terminal-choice"><span>›</span><span>Apps & tools<small>Make room for your favourites.</small></span><span class="terminal-choice-tag">select</span></div>
+    <div class="terminal-option"><span>○</span> Desktop preferences</div>
+    <div class="terminal-option"><span>○</span> Gaming essentials</div>
+    <div class="terminal-divider"></div>
+    <p class="terminal-hints"><span>↑ ↓ navigate</span><span>enter select</span><span>q quit</span></p>
+  </div>
+  <div class="terminal-bottom"><span><i aria-hidden="true"></i> Your choices. Your device.</span><span>No telemetry</span></div>
+</div>

@@ -1,0 +1,33 @@
+---
+import { INSTALL_COMMAND } from '../lib/platforms';
+const steps = [
+  { title: 'Install the tool', description: 'One command gets Magus onto your device.', command: INSTALL_COMMAND, lines: ['Download the release for your architecture.', 'Check the installer reports a verified checksum.', 'Install into ~/.local/bin.'], note: 'Installation stops here. Your setup starts when you launch Magus.' },
+  { title: 'Make it yours', description: 'Choose your apps and desktop preferences.', command: 'magus run', lines: ['Open the guided terminal setup.', 'Choose the options that fit your device.', 'Save your choices in a local manifest.'], note: 'The manifest records your setup so Magus can apply it again.' },
+  { title: 'Keep it yours', description: 'Check your setup and repair what has changed.', command: 'magus doctor', lines: ['Check the machine against your saved setup.', 'Report changes and steps that need attention.', 'Run magus reconcile to apply your setup again.'], note: 'Doctor reports without changing settings. Repair is a separate command.' },
+];
+---
+<div class="workflow" data-workflow>
+  <div class="workflow-controls" role="group" aria-label="Choose a demonstration">
+    {steps.map((step, i) => <button type="button" data-demo-index={i} aria-pressed={i === 0 ? 'true' : 'false'} aria-controls={`workflow-panel-${i}`}><span class="workflow-number">0{i + 1}</span><span><strong>{step.title}</strong><small>{step.description}</small></span><span class="workflow-arrow" aria-hidden="true">↗</span></button>)}
+  </div>
+  <div class="workflow-screen">
+    <div class="terminal-chrome"><span>~/magus</span><span class="preview-label">Illustrative preview</span></div>
+    {steps.map((step, i) => <section id={`workflow-panel-${i}`} data-demo-panel={i} aria-label={step.title}>
+      <p class="workflow-code"><span>$</span> <code>{step.command}</code></p>
+      <ol>{step.lines.map(line => <li><span aria-hidden="true">✓</span>{line}</li>)}</ol>
+      <p class="workflow-note">{step.note}</p>
+    </section>)}
+  </div>
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-workflow]').forEach(root => {
+    const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-demo-index]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-demo-panel]'));
+    const select = (index: number) => {
+      buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
+      panels.forEach((panel, i) => { panel.hidden = i !== index; });
+    };
+    buttons.forEach((button, index) => button.addEventListener('click', () => select(index)));
+    select(0);
+  });
+</script>

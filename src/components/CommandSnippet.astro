@@ -1,0 +1,20 @@
+---
+interface Props { command: string; label: string; }
+const { command, label } = Astro.props;
+---
+<div class="command-snippet" data-command-snippet>
+  <div class="command-snippet-top"><span>{label}</span><button type="button" data-command-copy aria-label={`Copy ${label.toLowerCase()}`}><span data-copy-label aria-live="polite">Copy</span></button></div>
+  <pre tabindex="0" aria-label={label}><span aria-hidden="true">$ </span><code>{command}</code></pre>
+  <p class="copy-help">You can also select and copy the command above.</p>
+</div>
+<script>
+  import { copyWithFeedback } from '../lib/clipboard';
+  document.querySelectorAll<HTMLElement>('[data-command-snippet]').forEach(snippet => {
+    const button = snippet.querySelector<HTMLButtonElement>('[data-command-copy]');
+    const label = snippet.querySelector<HTMLElement>('[data-copy-label]');
+    const code = snippet.querySelector('code');
+    if (button && label && code) button.addEventListener('click', () => {
+      void copyWithFeedback(code.textContent ?? '', button, label);
+    });
+  });
+</script>

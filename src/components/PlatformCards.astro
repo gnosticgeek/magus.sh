@@ -1,0 +1,12 @@
+---
+import { Icon } from 'astro-icon/components';
+import { PLATFORMS } from '../lib/platforms';
+---
+<div class="platform-grid">
+  {PLATFORMS.map(platform => <a class:list={['platform-card', { available: platform.available }]} href={platform.href}>
+    <div class="platform-top"><Icon name={platform.icon} aria-hidden="true" /><span class:list={['status-badge', { live: platform.available }]}>{platform.status}</span></div>
+    <h2>{platform.name}<span aria-hidden="true">↗</span></h2>
+    <p class="platform-detail">{platform.detail}</p>
+    <p>{platform.description}</p>
+  </a>)}
+</div>

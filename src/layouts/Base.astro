@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { DEFAULT_THEME, STORAGE_KEY_THEME, THEME_IDS } from '../lib/themes';
+import '../styles/site.css';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 
@@ -11,14 +11,13 @@ interface Props {
 }
 
 const {
-	title = 'magus.sh — SteamOS setup',
-	description = 'Pick SteamOS commands, copy a script, paste it into Konsole.',
+	title = 'Magus — Make your device yours',
+	description = 'An opinionated setup tool for Steam Deck and Steam Machine. Install Magus, choose your setup, and make your device yours.',
 	canonical,
 } = Astro.props;
 
 const GITHUB_URL = 'https://github.com/gnosticgeek/magus.sh';
 
-const nonDefaultThemes = THEME_IDS.filter((t) => t !== DEFAULT_THEME);
 const canonicalHref =
 	canonical ?? new URL(Astro.url.pathname, Astro.site ?? 'https://magus.sh').toString();
 ---
@@ -29,9 +28,8 @@ const canonicalHref =
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="description" content={description} />
-		<meta name="color-scheme" content="dark light" />
-		<meta name="theme-color" content="#1a1b26" media="(prefers-color-scheme: dark)" />
-		<meta name="theme-color" content="#f4ecdc" media="(prefers-color-scheme: light)" />
+		<meta name="color-scheme" content="dark" />
+		<meta name="theme-color" content="#0b0c0f" />
 		<meta name="format-detection" content="telephone=no, address=no, email=no" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -53,32 +51,17 @@ const canonicalHref =
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
 			rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Geist:wght@300..700&family=Geist+Mono:wght@300..700&family=IM+Fell+English:ital@0;1&family=JetBrains+Mono:wght@400..600&family=Major+Mono+Display&family=VT323&display=swap&subset=latin"
+			href="https://fonts.googleapis.com/css2?family=Geist:wght@400;450;500;550;600;650;700&family=Geist+Mono:wght@400;500;600&display=swap"
 		/>
 
 		<title>{title}</title>
 
-		<script is:inline define:vars={{ themeKey: STORAGE_KEY_THEME, defaultTheme: DEFAULT_THEME, validThemes: nonDefaultThemes }}>
-			(() => {
-				try {
-					const t = localStorage.getItem(themeKey);
-					if (t && t !== defaultTheme && validThemes.includes(t)) {
-						document.documentElement.setAttribute('data-theme', t);
-					}
-				} catch {}
-			})();
-		</script>
 	</head>
-	<body class="font-sans">
+	<body class:list={["font-sans", { "has-picker": Astro.url.pathname.replace(/\/+$/, "") === "/setup" }]}>
 		<Navbar githubUrl={GITHUB_URL} />
 		<main id="main" tabindex="-1">
 			<slot />
 		</main>
-		<Footer
-			version="v0.1 alpha"
-			githubUrl={GITHUB_URL}
-			lastUpdated="2026-05-11"
-			status="alpha"
-		/>
+		<Footer githubUrl={GITHUB_URL} />
 	</body>
 </html>

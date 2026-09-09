@@ -1,0 +1,5 @@
+---
+interface Props { href: string; secondary?: boolean; }
+const { href, secondary = false } = Astro.props;
+---
+<a href={href} class:list={['action-link', { secondary }]}><slot /><span aria-hidden="true">↗</span></a>

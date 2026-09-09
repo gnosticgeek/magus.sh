@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "./tokens.css";
-@import "./themes.css";
 @import "./keyframes.css";
 
 html {
@@ -37,44 +36,6 @@ body {
 	body {
 		padding-bottom: 0;
 	}
-}
-
-/* fixed grain overlay — subtle warmth in dark, parchment fibre in light */
-body::before {
-	content: "";
-	position: fixed;
-	inset: 0;
-	z-index: 200;
-	pointer-events: none;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-	opacity: 0.05;
-	mix-blend-mode: overlay;
-}
-
-/* parchment-specific fibre texture — longer-grain noise that reads as paper */
-:root[data-theme="grimoire"] body::before {
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65 0.95' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.32 0 0 0 0 0.18 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
-	opacity: 0.18;
-	mix-blend-mode: multiply;
-}
-
-/* honour reduced-data: skip the texture entirely */
-@media (prefers-reduced-data: reduce) {
-	body::before {
-		display: none;
-	}
-}
-
-/* radial vignette behind hero */
-body::after {
-	content: "";
-	position: fixed;
-	inset: 0;
-	z-index: -1;
-	pointer-events: none;
-	background:
-		radial-gradient(60% 50% at 12% 6%, var(--color-glow-primary), transparent 70%),
-		radial-gradient(40% 35% at 92% 4%, var(--color-glow-secondary), transparent 70%);
 }
 
 ::selection {
@@ -542,71 +503,6 @@ body::after {
 }
 .selection-bar button.copy-action.copied {
 	background: var(--color-accent-dim);
-}
-
-/* theme switcher — swatch row */
-.theme-switcher {
-	display: inline-flex;
-	align-items: center;
-	gap: 10px;
-	padding: 6px 12px;
-	border: 1px solid var(--color-border);
-	border-radius: 999px;
-	background: var(--color-surface);
-}
-.theme-switcher .label {
-	font-family: var(--font-mono);
-	font-size: 10px;
-	letter-spacing: 0.18em;
-	text-transform: uppercase;
-	color: var(--color-text-dim);
-	padding-right: 2px;
-}
-@media (max-width: 479px) {
-	.theme-switcher {
-		gap: 8px;
-		padding: 6px 10px;
-	}
-	.theme-switcher .label {
-		display: none;
-	}
-}
-.theme-swatch {
-	width: 18px;
-	height: 18px;
-	border-radius: 50%;
-	border: none;
-	cursor: pointer;
-	padding: 0;
-	position: relative;
-	transition:
-		transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
-		box-shadow 0.22s ease,
-		filter 0.22s ease;
-	filter: saturate(0.85);
-}
-/* expanded 36×36 tap area without enlarging visual */
-.theme-swatch::before {
-	content: "";
-	position: absolute;
-	inset: -9px;
-	border-radius: 50%;
-}
-@media (hover: hover) and (pointer: fine) {
-	.theme-swatch:hover {
-		transform: scale(1.15);
-		filter: saturate(1.1);
-	}
-}
-.theme-swatch:active {
-	transform: scale(0.9);
-}
-.theme-swatch[aria-pressed="true"] {
-	filter: saturate(1.05);
-}
-.theme-swatch:focus-visible {
-	outline: 2px solid var(--color-accent);
-	outline-offset: 3px;
 }
 
 /* search filter — cards matching the current query stay; others collapse out */

@@ -33,6 +33,7 @@ import { Icon } from 'astro-icon/components';
 </div>
 
 <script>
+	import { isStage } from '../lib/stages';
 	const input = document.getElementById('cmd-search-input') as HTMLInputElement | null;
 	const clearBtn = document.querySelector<HTMLButtonElement>('.cmd-search-clear');
 	const emptyState = document.getElementById('cmd-search-empty');
@@ -58,6 +59,9 @@ import { Icon } from 'astro-icon/components';
 			   regardless of which stage is "active" via the hash router. */
 			if (term === '') {
 				document.documentElement.classList.remove('searching');
+				const hash = location.hash.slice(1);
+				const stage = isStage(hash) ? hash : 'setup';
+				for (const section of sections) section.hidden = section.id !== stage;
 			} else {
 				document.documentElement.classList.add('searching');
 				for (const section of sections) {

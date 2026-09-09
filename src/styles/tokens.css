@@ -1,32 +1,26 @@
 @theme {
-	/* default — tokyo night (dark) */
-	--color-bg: #1a1b26;
-	--color-bg-elevated: #16161e;
-	--color-surface: #24283b;
-	--color-border: #2f3549;
-	--color-border-strong: #3b4261;
-	--color-text: #c0caf5;
-	--color-text-muted: #9aa5ce;
-	--color-text-dim: #565f89;
-	--color-accent: #7aa2f7;
-	--color-accent-dim: #5d87e3;
-	--color-accent-soft: rgba(122, 162, 247, 0.12);
-	--color-warn: #e0af68;
-	--color-danger: #f7768e;
-	--color-glow-primary: rgba(122, 162, 247, 0.07);
-	--color-glow-secondary: rgba(187, 154, 247, 0.04);
-	--color-bar-bg: rgba(22, 22, 30, 0.9);
+	/* One shared palette for the public website and its tools. */
+	--color-bg: #0b0c0f;
+	--color-bg-elevated: #111216;
+	--color-surface: #18191f;
+	--color-border: #25262e;
+	--color-border-strong: #44454f;
+	--color-text: #eeeef2;
+	--color-text-muted: #b0b0bb;
+	--color-text-dim: #9696a5;
+	--color-accent: #b5a0ff;
+	--color-accent-dim: #c6b6ff;
+	--color-accent-soft: rgba(181, 160, 255, 0.10);
+	--color-warn: #eac080;
+	--color-danger: #ff8eaa;
+	--color-glow-primary: transparent;
+	--color-glow-secondary: transparent;
+	--color-bar-bg: rgba(17, 18, 22, 0.97);
 	--color-scheme: dark;
-
-	--font-sans:
-		"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-		sans-serif;
-	--font-serif:
-		"Fraunces", ui-serif, "Iowan Old Style", Georgia, "Times New Roman", serif;
-	--font-mono:
-		"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-		monospace;
-	--font-crt: "VT323", "JetBrains Mono", ui-monospace, monospace;
+	--font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+	--font-serif: "Geist", ui-sans-serif, system-ui, sans-serif;
+	--font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+	--font-crt: "Geist Mono", ui-monospace, monospace;
 
 	/* touch target & spacing system */
 	--tap-min: 44px;

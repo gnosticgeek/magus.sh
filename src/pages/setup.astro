@@ -10,6 +10,7 @@ import CommandPeek from '../components/CommandPeek.astro';
 import CommandSearch from '../components/CommandSearch.astro';
 import ControllerHints from '../components/ControllerHints.astro';
 import { PRESETS, STAGES, matchPattern } from '../lib/stages';
+import { PLATFORMS } from '../lib/platforms';
 
 const all = await getCollection('commands');
 all.sort((a, b) => a.data.order - b.data.order);
@@ -32,9 +33,10 @@ const presetCards = PRESETS.map((preset) => ({
 ---
 
 <Base
-	title="magus.sh — Steam Deck setup"
+	title="Advanced Steam Deck command picker — Magus"
 	description="Pick a Steam Deck setup, review the script, and copy one command into Konsole."
 >
+	<p class="picker-intro">Advanced tools · Steam Deck only. Prefer a guided setup? <a href="/steam">Install the terminal tool ↗</a></p>
 	<div class="page-shell relative mx-auto max-w-7xl px-5 pt-5 sm:pt-6">
 		<aside class="page-rail rise rise-2" aria-label="Magus controls">
 			<header class="rail-brand">
@@ -56,7 +58,7 @@ const presetCards = PRESETS.map((preset) => ({
 					<Icon name="simple-icons:apple" class="device-mode-icon" />
 					<span>
 						<strong>Mac</strong>
-						<small>Beta</small>
+						<small>{PLATFORMS[2].status}</small>
 					</span>
 				</a>
 			</div>
@@ -154,14 +156,14 @@ const presetCards = PRESETS.map((preset) => ({
 				<span
 					class="spellbook-kicker font-mono text-[10px] uppercase tracking-[0.28em] text-[color:var(--color-accent-dim)]"
 				>
-					/ future spells
+					/ future ideas
 				</span>
 				<span class="spellbook-rule h-px flex-1"></span>
 				<h2
 					id="spellbook-heading"
 					class="spellbook-heading"
 				>
-					Still being conjured.
+					Ideas in progress.
 				</h2>
 				<span class="spellbook-meta font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-text-dim)]">
 					{spellbookEntries.length} drafts
@@ -229,7 +231,6 @@ const presetCards = PRESETS.map((preset) => ({
 	const activate = (stage: Stage, opts: { scroll?: boolean } = {}) => {
 		/* Don't switch stages while a search is active — search shows all stages. */
 		if (document.documentElement.classList.contains('searching')) {
-			runActivate(stage, opts);
 			return;
 		}
 		/* Use View Transitions when available for a soft cross-fade between stages. */
@@ -257,6 +258,11 @@ const presetCards = PRESETS.map((preset) => ({
 				e.preventDefault();
 				const stage = tab.dataset.stage;
 				if (!stage || !isStage(stage)) return;
+				const search = document.querySelector<HTMLInputElement>('#cmd-search-input');
+				if (search?.value) {
+					search.value = '';
+					search.dispatchEvent(new Event('input', { bubbles: true }));
+				}
 				const newHash = `#${stage}`;
 				if (location.hash !== newHash) {
 					history.pushState(null, '', newHash);

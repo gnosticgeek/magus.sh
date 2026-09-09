@@ -1,53 +1,54 @@
 # magus.sh
 
-> A fresh SteamOS install, opinionated in ten minutes.
+An open-source setup tool for SteamOS devices, with a website that guides users from installation to their first terminal setup.
 
-A curated, copy-paste-driven setup page for Steam Deck (and SteamOS in general). Open the page on the Deck, tick what you want, copy, paste into Konsole. Wraps the tools the community already trusts — CryoUtilities, Decky Loader, ProtonUp-Qt, Heroic, Lutris — with a consistent UX and no installer to trust blindly.
+## Product status
 
-## Status
+- **Steam devices:** Steam Deck and Steam Machine paths are available in alpha. Steam Machine hardware detection is unverified on real hardware; HDMI colour range, HDMI-CEC, and performance power profile preferences are not applied yet.
+- **Linux (Flatpaks)** and **Mac:** coming soon. These pages do not offer installers or release dates.
+- The separate desktop app and website Labs are experimental, not the primary product journey.
 
-`v0.1` alpha. Ships:
+## Website
 
-- **Performance** — sudo password, CryoUtilities, manual VM tuning, Decky Loader.
-- **App pack** — 10 essential Flatpaks (Heroic, Lutris, ProtonUp-Qt, Bitwarden, OBS, Spotify, Ludusavi, …).
+Astro + TypeScript + Tailwind. Pages share a single dark palette, Geist typography, and reusable product components. Platform names, status, and destinations live in `src/lib/platforms.ts`.
 
-Coming: emulation suite, theming, save sync / SteamOS-update resilience, productivity pack, Steam Machine support.
+| Route | Purpose |
+| --- | --- |
+| `/` | Product introduction and illustrative interactive workflow |
+| `/start` | Platform chooser |
+| `/steam` | Installation, launch, device limitations, troubleshooting |
+| `/setup` | Advanced Steam Deck command picker |
+| `/linux`, `/mac` | Coming-soon pages |
+| `/tui`, `/test` | Experimental Labs linked from the footer |
+| `/install`, `/run` | Plain-text installer; both use the same source script |
 
-## Why exists
+The install command only installs Magus. Run `magus run` separately in an interactive terminal to begin setup. See [the terminal tool documentation](magus/README.md) for the manifest and reconciler contracts.
 
-The right tools exist. The right *front door* doesn't. Tinkerer-class Deck owners currently bounce between five GitHub repos and a dozen Reddit threads. magus.sh collapses that into one page, with idempotent commands, transparent provenance, and zero installer to trust.
+## Develop and verify
+
+Requires Node 22.12 or later.
+
+```sh
+npm install
+npm run dev
+npm test
+npm run check
+npm run build
+```
+
+The development site opens at `http://localhost:4321`. Review at mobile widths, Steam Deck's **1280×800** display, and a wider desktop viewport. The existing Cloudflare build/deployment setup is retained. Deployment is separate from local review.
+
+Before publishing, verify GitHub Releases contains `magus-linux-amd64`, `magus-linux-arm64`, and `checksums.txt` for the advertised latest release. Browser testing does not verify Steam Machine hardware support.
+
+## Command catalogue
+
+Add Markdown under `src/content/commands/<category>/`; validation lives in `src/content.config.ts`. Commands should be repeatable, link to their upstream source, declare device support, and explain changes or reversal limitations. The web picker retains presets, search, selection, inspection, and generated script review.
 
 ## Principles
 
-- **Wrap, don't reinvent.** Every command points at an upstream tool that's already proven.
-- **Idempotent always.** Running twice is a no-op. Every entry passes this bar before merge.
-- **Static, no telemetry.** Pure HTML. No tracking, no analytics, no backend.
-- **SteamOS-first, not Deck-only.** Commands tagged with form factor so Steam Machine support is a tag, not a fork.
+- Build on established upstream tools.
+- Keep commands and configuration inspectable.
+- Keep availability and alpha limitations explicit.
+- No telemetry, account system, or waitlist backend.
 
-## Develop
-
-```bash
-npm install
-npm run dev
-```
-
-Opens at `http://localhost:4321`. The Deck's screen is **1280×800** — design at that viewport.
-
-## Adding a command
-
-Drop a Markdown file under `src/content/commands/<category>/`. Schema lives in `src/content.config.ts`. The bar to merge:
-
-1. Idempotent.
-2. Reversible (or honest about what it changes).
-3. Links upstream.
-4. Tagged with `supported_devices`.
-
-## Stack
-
-- Astro 6 + TypeScript (strict)
-- Tailwind v4 (via Vite plugin)
-- Static, hostable on Cloudflare Pages, GitHub Pages, anywhere
-
-## License
-
-MIT.
+MIT licensed.

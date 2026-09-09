@@ -1,0 +1,33 @@
+---
+import { Icon } from 'astro-icon/components';
+import Base from '../layouts/Base.astro';
+import CommandSnippet from '../components/CommandSnippet.astro';
+import { INSTALL_COMMAND, LAUNCH_COMMAND, PLATFORMS } from '../lib/platforms';
+const steam = PLATFORMS[0];
+---
+<Base title="Steam devices — Install Magus" description="Install and launch Magus on Steam Deck or Steam Machine. Read the alpha limitations, inspect the installer, and begin your guided terminal setup.">
+  <div class="site-frame inner-page">
+    <header class="page-intro"><a class="breadcrumb" href="/start">Platforms <span aria-hidden="true">/</span> {steam.name}</a><span class="status-badge live">{steam.status}</span><h1>A fresh start.<br /><span class="gradient-text">For your Steam device.</span></h1><p class="lede">Install the tool. Launch the setup. Make it yours.<br />For Steam Deck and Steam Machine running SteamOS.</p></header>
+    <div class="install-layout">
+      <div class="install-steps">
+        <section class="install-step"><span class="step-index">01</span><div><h2>Open a terminal.</h2><p>On Steam Deck, switch to Desktop Mode and open Konsole from the application launcher. On Steam Machine, open a terminal in the SteamOS desktop session.</p><p>Use your regular user account. You'll need an internet connection to download Magus and your chosen apps.</p></div></section>
+        <section class="install-step"><span class="step-index">02</span><div><h2>Install Magus.</h2><p>Paste this into your terminal. It downloads the released binary, attempts checksum verification, and installs it into <code>~/.local/bin</code>.</p><CommandSnippet command={INSTALL_COMMAND} label="Install command" /><a class="text-link" href="/install">Read the installer before running it ↗</a><p class="step-note">This installs the tool and stops. It may add its folder to your existing shell profile, but does not apply your app or desktop choices. Check that the output says “checksum verified” before launching.</p></div></section>
+        <section class="install-step"><span class="step-index">03</span><div><h2>Launch your setup.</h2><p>Open a new terminal after installation so it picks up any PATH change, then run this separate command. Follow the guided setup to choose your apps and preferences.</p><CommandSnippet command={LAUNCH_COMMAND} label="Launch command" /><p>If the command is not found, use <code>~/.local/bin/magus run</code> instead.</p><p>Your choices are saved in <code>~/.config/magus/manifest.toml</code>. Magus uses this manifest to apply your setup.</p></div></section>
+        <section class="install-step"><span class="step-index">04</span><div><h2>Come back when you need to.</h2><p><code>magus doctor</code> reports changes without applying them. Run <code>magus reconcile</code> to restore supported parts of your saved setup. Some changes need manual attention; read the result of each step.</p></div></section>
+      </div>
+      <aside class="device-notes" aria-label="Device support notes">
+        <div class="device-note"><Icon name="lucide:gamepad-2" aria-hidden="true" /><h2>Steam Deck</h2><span class="status-badge live">Alpha</span><p>LCD and OLED board names are recognised. The guided setup uses handheld-specific preferences.</p></div>
+        <div class="device-note"><Icon name="lucide:monitor" aria-hidden="true" /><h2>Steam Machine</h2><span class="status-badge">Alpha · Hardware unverified</span><p>The device path is implemented, but automatic detection has not been confirmed on real Steam Machine hardware.</p><p>HDMI colour range, HDMI-CEC, and the performance power profile are recorded but not applied yet.</p><a href="/test">Explore the hardware test bench ↗</a></div>
+        <div class="device-note"><h2>Still taking shape.</h2><p>Theming and some terminal choices are not implemented yet. Magus reports skipped steps and why they were skipped.</p><a href="https://github.com/gnosticgeek/magus.sh/releases">View releases ↗</a></div>
+      </aside>
+    </div>
+    <section class="troubleshooting site-section"><p class="eyebrow">IF SOMETHING GETS IN THE WAY</p><h2>A few quick checks.</h2><div class="faq-list">
+      <details><summary>“magus: command not found”<span aria-hidden="true">+</span></summary><p>Your shell may not include <code>~/.local/bin</code> in its PATH. If installation succeeded, launch it directly with <code>~/.local/bin/magus run</code>. If that file is missing, read the installer output for the failed step.</p></details>
+      <details><summary>The installer cannot find a release or download<span aria-hidden="true">+</span></summary><p>Check your connection and the <a href="https://github.com/gnosticgeek/magus.sh/releases">GitHub releases</a>. Installation needs a published binary for your architecture and its checksums file. If the assets are unavailable, stop here and check back for a release.</p></details>
+      <details><summary>The download fails its checksum check<span aria-hidden="true">+</span></summary><p>Do not bypass the check. Retry the installer to download a fresh copy. If it still fails, report the release version and error on the <a href="https://github.com/gnosticgeek/magus.sh/issues">issue tracker</a>.</p></details>
+      <details><summary>The wizard needs an interactive terminal<span aria-hidden="true">+</span></summary><p>Run <code>magus run</code> directly inside Konsole, after installation finishes. Do not pipe the launch command or run it through a background job.</p></details>
+      <details><summary>A step failed or my device was not recognised<span aria-hidden="true">+</span></summary><p>Read the reported reason before retrying. Steam Machine detection is still unverified; use the <a href="/test">hardware test bench</a> for investigation. General Linux and Mac setup paths are not supported in this release.</p></details>
+    </div></section>
+    <div class="page-note"><span class="note-mark" aria-hidden="true">↳</span><div><h2>Looking for individual tools?</h2><p>Use the <a href="/setup">advanced Steam Deck command picker ↗</a> to build and inspect your own script.</p></div></div>
+  </div>
+</Base>

@@ -1,0 +1,20 @@
+---
+import { Icon } from 'astro-icon/components';
+import Base from '../layouts/Base.astro';
+import ActionLink from './ActionLink.astro';
+import type { Platform } from '../lib/platforms';
+interface Props { platform: Platform; }
+const { platform } = Astro.props;
+---
+<Base title={`${platform.name} — Coming soon — Magus`} description={`${platform.description} ${platform.name} support is coming soon. Steam devices are available in alpha.`}>
+  <div class="site-frame coming-page">
+    <a class="breadcrumb" href="/start">Platforms <span aria-hidden="true">/</span> {platform.name}</a>
+    <div class="coming-icon"><Icon name={platform.icon} aria-hidden="true" /></div>
+    <span class="status-badge">{platform.status}</span>
+    <h1>A little magic.<br /><span class="gradient-text">Coming to {platform.name}.</span></h1>
+    <p class="lede">{platform.description}</p>
+    <p class="coming-detail">We're shaping this experience. There isn't a supported {platform.name} setup to install yet, and we haven't set a release date.</p>
+    <div class="action-row"><ActionLink href="/steam">Explore Steam devices</ActionLink><a class="text-link" href="/start">All platforms ↗</a></div>
+    <div class="coming-rule"><span></span><img src="/magus-mark.svg" width="28" height="32" alt="" /><span></span></div>
+  </div>
+</Base>
