@@ -2,10 +2,10 @@
 interface Props { compact?: boolean; }
 const { compact = false } = Astro.props;
 ---
-<div class:list={['terminal-preview', { compact }]} aria-label="Illustrative Magus terminal preview">
-  <div class="terminal-chrome"><span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>magus — SteamOS</span><span class="preview-label">Preview</span></div>
+<magus-terminal class:list={['terminal-preview', { compact }]} aria-label="Illustrative Magus terminal preview">
+  <div class="terminal-chrome"><span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>magus — SteamOS</span><button class="terminal-replay" type="button" aria-label="Replay terminal animation" hidden>↻ Replay</button><span class="preview-label">Preview</span></div>
   <div class="terminal-content">
-    <p class="terminal-command"><span>$</span> magus run</p>
+    <p class="terminal-command"><span aria-hidden="true">$</span> <span class="terminal-typed">magus run</span><i class="terminal-cursor" aria-hidden="true"></i></p>
     <div class="terminal-wordmark">magus<span>_</span></div>
     <p class="terminal-muted">A setup that feels like yours.</p>
     <div class="terminal-divider"></div>
@@ -19,4 +19,82 @@ const { compact = false } = Astro.props;
     <p class="terminal-hints"><span>↑ ↓ navigate</span><span>enter select</span><span>q quit</span></p>
   </div>
   <div class="terminal-bottom"><span><i aria-hidden="true"></i> Your choices. Your device.</span><span>No telemetry</span></div>
-</div>
+</magus-terminal>
+
+<style>
+  magus-terminal { display: block; position: relative; }
+  .terminal-command .terminal-typed { display: inline-block; color: #e4dfef; margin: 0; vertical-align: bottom; white-space: pre; }
+  .terminal-cursor { display: inline-block; width: 6px; height: 12px; margin-left: 3px; background: var(--color-accent); vertical-align: middle; opacity: 0; }
+  .terminal-replay { margin-left: auto; border: 0; background: transparent; color: #baadce; font: inherit; padding: 6px; border-radius: 3px; }
+  .terminal-replay:hover { color: #eee6ff; background: #262035; }
+  .terminal-replay:disabled { cursor: default; opacity: .45; }
+  .terminal-chrome .terminal-dots i:nth-child(1) { background: #cd777e; }
+  .terminal-chrome .terminal-dots i:nth-child(2) { background: #d4b77c; }
+  .terminal-chrome .terminal-dots i:nth-child(3) { background: #8abda2; }
+</style>
+
+<script>
+  // Astro-native adaptation of Magic UI's viewport-triggered terminal sequence.
+  // Keep the complete transcript in the DOM, including without JavaScript.
+  class MagusTerminal extends HTMLElement {
+    private observer?: IntersectionObserver;
+    private animations: Animation[] = [];
+    private motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    private replay?: HTMLButtonElement;
+    private reveal = () => {
+      this.animations.forEach(animation => animation.cancel());
+      this.animations = [];
+      if (this.replay) this.replay.disabled = false;
+    };
+    private onMotionChange = () => {
+      this.reveal();
+      if (this.replay) this.replay.hidden = this.motion.matches;
+    };
+    private play = () => {
+      this.reveal();
+      if (this.motion.matches) return;
+      if (this.replay) this.replay.disabled = true;
+      const typed = this.querySelector<HTMLElement>('.terminal-typed')!;
+      const cursor = this.querySelector<HTMLElement>('.terminal-cursor')!;
+      this.animations.push(typed.animate(
+        [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)' }],
+        { duration: 720, delay: 200, easing: 'steps(9, end)', fill: 'both' },
+      ));
+      this.animations.push(cursor.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 500, iterations: 8, easing: 'steps(2, end)' },
+      ));
+      const lines = Array.from(this.querySelectorAll<HTMLElement>('.terminal-content > :not(.terminal-command)'));
+      lines.forEach((line, index) => {
+        this.animations.push(line.animate(
+          [{ opacity: 0, transform: 'translateY(5px)', filter: 'blur(2px)' },
+           { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' }],
+          { duration: 280, delay: 1050 + index * 230, fill: 'both', easing: 'ease-out' },
+        ));
+      });
+      const last = this.animations[this.animations.length - 1];
+      last.finished.then(() => this.reveal()).catch(() => {});
+    };
+    connectedCallback() {
+      this.replay = this.querySelector<HTMLButtonElement>('.terminal-replay')!;
+      this.replay.hidden = this.motion.matches;
+      this.replay.addEventListener('click', this.play);
+      this.motion.addEventListener('change', this.onMotionChange);
+      if (this.motion.matches) return;
+      this.observer = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          this.observer?.disconnect();
+          this.play();
+        }
+      }, { threshold: .25 });
+      this.observer.observe(this);
+    }
+    disconnectedCallback() {
+      this.observer?.disconnect();
+      this.reveal();
+      this.replay?.removeEventListener('click', this.play);
+      this.motion.removeEventListener('change', this.onMotionChange);
+    }
+  }
+  if (!customElements.get('magus-terminal')) customElements.define('magus-terminal', MagusTerminal);
+</script>

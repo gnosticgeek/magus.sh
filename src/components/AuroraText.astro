@@ -1,0 +1,33 @@
+---
+interface Props { class?: string; }
+const { class: className } = Astro.props;
+---
+<span class:list={['aurora-text', className]}><slot /></span>
+
+<style>
+  /* CSS-native adaptation of Magic UI's Aurora Text for Astro. */
+  .aurora-text {
+    display: inline-block;
+    color: #c5b2ff;
+    background: linear-gradient(110deg, #c4b5fd 0%, #f0abfc 20%, #a78bfa 40%, #7dd3fc 60%, #e9d5ff 80%, #c4b5fd 100%);
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: aurora 8s ease-in-out infinite alternate;
+    /* Leave room for descenders so the g is never clipped. */
+    padding-block: .08em;
+    margin-block: -.08em;
+  }
+  @keyframes aurora {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aurora-text { animation: none; background-position: 50% 50%; }
+  }
+  @media (forced-colors: active) {
+    .aurora-text { background: none; -webkit-text-fill-color: currentColor; color: CanvasText; }
+  }
+</style>
