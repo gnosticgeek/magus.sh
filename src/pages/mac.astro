@@ -2,7 +2,7 @@
 import { Icon } from 'astro-icon/components';
 import Base from '../layouts/Base.astro';
 import CommandSnippet from '../components/CommandSnippet.astro';
-import { PLATFORMS } from '../lib/platforms';
+import { INSTALL_COMMAND, LAUNCH_COMMAND, PLATFORMS } from '../lib/platforms';
 
 const mac = PLATFORMS[2];
 const apps = [
@@ -12,13 +12,13 @@ const apps = [
 ];
 ---
 
-<Base title="Mac — Magus source alpha" description="Build the Magus Mac alpha, choose Homebrew apps and reversible settings, and apply portable setups for Ghostty, Zed, Firefox, Zsh and Raycast.">
+<Base title="Mac — Magus alpha" description="Install the Magus Mac alpha, choose Homebrew apps and reversible settings, and apply portable setups for Ghostty, Zed, Firefox, Zsh and Raycast.">
   <div class="site-frame inner-page">
     <header class="page-intro">
       <a class="breadcrumb" href="/start">Platforms <span aria-hidden="true">/</span> {mac.name}</a>
       <span class="status-badge live">{mac.status}</span>
       <h1>A fresh start.<br /><span class="gradient-text">For your Mac.</span></h1>
-      <p class="lede">Choose your essentials, review every change, and keep the setup portable. The Mac experience is available as a source alpha while its first binary release is prepared.</p>
+      <p class="lede">Choose your essentials, review every change, and keep the setup portable. The Mac alpha installs a native binary for Apple silicon and Intel Macs.</p>
     </header>
 
     <section class="site-section mac-feature-grid" aria-label="Mac alpha features">
@@ -34,15 +34,15 @@ const apps = [
     <div class="install-layout">
       <div class="install-steps">
         <section class="install-step"><span class="step-index">01</span><div>
-          <h2>Build the alpha.</h2>
-          <p>Install Go with Homebrew, clone Magus, then build the native terminal app. It runs on Apple silicon and Intel Macs.</p>
-          <CommandSnippet command="brew install go && git clone https://github.com/gnosticgeek/magus.sh.git && cd magus.sh/magus && go build -o magus ." label="Build from source" />
-          <p class="step-note">The one-line Magus installer will support macOS after the next tagged release publishes and verifies the new Darwin binaries.</p>
+          <h2>Install Magus.</h2>
+          <p>Paste this into Terminal. It downloads the right native binary, verifies its checksum, and installs it into <code>~/.local/bin</code>.</p>
+          <CommandSnippet command={INSTALL_COMMAND} label="Install command" />
+          <p class="step-note">The installer adds Magus only. It does not install apps or change settings.</p>
         </div></section>
         <section class="install-step"><span class="step-index">02</span><div>
           <h2>Open the menu.</h2>
-          <p>Launch Magus in an interactive terminal. It inspects this Mac before showing your basket.</p>
-          <CommandSnippet command="./magus run" label="Launch the Mac alpha" />
+          <p>Open a new Terminal window, then launch Magus. It inspects this Mac before showing your basket.</p>
+          <CommandSnippet command={LAUNCH_COMMAND} label="Launch Magus" />
           <p>Browse apps, tools, fonts, Mac settings, presets, updates, terminal choices and app setups. Nothing changes until you review and apply the basket.</p>
         </div></section>
         <section class="install-step"><span class="step-index">03</span><div>
@@ -57,7 +57,7 @@ const apps = [
       </div>
 
       <aside class="device-notes" aria-label="Mac alpha notes">
-        <div class="device-note"><Icon name="simple-icons:apple" aria-hidden="true" /><h2>Mac alpha</h2><span class="status-badge live">Source available</span><p>The menu, Homebrew catalogue, update review and reversible preferences are implemented and covered by automated macOS checks.</p></div>
+        <div class="device-note"><Icon name="simple-icons:apple" aria-hidden="true" /><h2>Mac alpha</h2><span class="status-badge live">Apple silicon &amp; Intel</span><p>The menu, Homebrew catalogue, update review and reversible preferences are implemented and covered by automated macOS checks.</p></div>
         <div class="device-note"><h2>App setups</h2><p>Ghostty, Zed, Firefox, Modern CLI and Raycast were ported from the earlier Machinist/Athanor work and adapted to Magus's review flow.</p></div>
         <div class="device-note"><h2>Alpha boundaries</h2><p>Live Zed and Firefox behaviour still needs wider testing. Firefox copies values from <code>user.js</code>, so restoring that file does not reset preferences it already loaded.</p><a href="https://github.com/gnosticgeek/magus.sh/blob/main/magus/APP_SETUPS.md">Read the setup notes ↗</a></div>
       </aside>

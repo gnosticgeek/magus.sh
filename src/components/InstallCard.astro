@@ -1,4 +1,6 @@
 ---
+import { RELEASE_VERSION } from '../lib/release';
+
 interface Props {
 	name?: string;
 	version?: string;
@@ -8,7 +10,7 @@ interface Props {
 
 const {
 	name = 'magus.sh',
-	version = 'v0.1',
+	version = RELEASE_VERSION,
 	command,
 	scriptHref = '#install-script',
 } = Astro.props;

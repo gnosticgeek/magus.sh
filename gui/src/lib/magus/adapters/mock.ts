@@ -126,8 +126,8 @@ export class MockClient implements MagusClient {
 			schema: SCHEMA,
 			command,
 			magus: {
-				version: 'v0.3.0',
-				manifest_schema: '0.3.0',
+				version: 'v0.4.1',
+				manifest_schema: '0.4.0',
 				dry_run: options.dryRun ?? command === 'doctor',
 			},
 			device: {
@@ -147,7 +147,7 @@ export class MockClient implements MagusClient {
 				path: '/home/deck/.config/magus/manifest.toml',
 				present: !this.opts.unconfigured,
 				valid: !this.opts.unconfigured,
-				schema: '0.3.0',
+				schema: '0.4.0',
 				device: isMachine ? 'steam-machine' : 'steam-deck',
 			},
 			steps: applied,

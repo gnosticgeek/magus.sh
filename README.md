@@ -5,8 +5,8 @@ An open-source terminal setup tool for SteamOS devices and a Mac-first local alp
 ## Product status
 
 - **Steam devices:** Steam Deck and Steam Machine paths are available in alpha. Steam Machine hardware detection is unverified on real hardware; HDMI colour range, HDMI-CEC, and performance power profile preferences are not applied yet.
-- **Mac:** source alpha implemented: 80 Homebrew apps/tools/fonts with 13 app categories, installed markers, one review basket, Update all, six reversible Finder preferences, and portable setups for Ghostty, Zed, Firefox, Zsh, and Raycast. See [build and test instructions](magus/MAC.md). Darwin assets publish with the next tagged release.
-- **Linux (Flatpaks):** coming soon. The Mac page documents its source alpha while general Linux remains unreleased.
+- **Mac:** alpha available: 80 Homebrew apps/tools/fonts with 13 app categories, installed markers, one review basket, Update all, six reversible Finder preferences, and portable setups for Ghostty, Zed, Firefox, Zsh, and Raycast. See [build and test instructions](magus/MAC.md). The installer supports Apple silicon and Intel release assets.
+- **Linux (Flatpaks):** coming soon. General Linux remains unreleased.
 - The separate desktop app and website Labs are experimental, not the primary product journey.
 
 ## Website

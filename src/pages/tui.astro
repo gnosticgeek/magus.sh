@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import { STAGES, STAGE_SIGILS, STAGE_GROUPS, PRESETS } from '../lib/stages';
+import { RELEASE_VERSION } from '../lib/release';
 
 const all = await getCollection('commands');
 all.sort((a, b) => a.data.order - b.data.order);
@@ -80,7 +81,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 					<p class="device-note">
 						Same flow, same manifest, different opinions —
 						<code>magus</code> branches on DMI, not on a separate build. The
-						v0.1 command picker still ships as <code>magus</code> with no
+						legacy command picker still ships as <code>magus</code> with no
 						arguments: <button type="button" class="flow-link" data-flow-toggle
 						>show it</button>.
 					</p>
@@ -211,9 +212,10 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	</div>
 
 	<script
+		is:inline
 		type="application/json"
 		id="lab-tui-data"
-		set:html={JSON.stringify({ stages, groups: STAGE_GROUPS, presets: PRESETS })}
+		set:html={JSON.stringify({ stages, groups: STAGE_GROUPS, presets: PRESETS, releaseVersion: RELEASE_VERSION })}
 	></script>
 </Base>
 
@@ -245,7 +247,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 	// things. Detection picks the opinions on real hardware; here a toggle does.
 	const WIZARD_STEPS: Step[] = ['splash', 'wizard', 'manifest', 'converge', 'doctor'];
 
-	// The v0.1 command picker still ships as `magus` with no arguments. It is
+	// The legacy command picker still ships as `magus` with no arguments. It is
 	// kept here as a second flow rather than deleted, because it is a real
 	// screen the binary can still show.
 	const PICKER_STEPS: Step[] = ['splash', 'pick', 'review', 'write', 'run'];
@@ -284,10 +286,12 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		stages,
 		groups: STAGE_GROUPS,
 		presets: PRESETS,
+		releaseVersion,
 	} = JSON.parse(dataEl.textContent) as {
 		stages: Stage[];
 		groups: Partial<Record<string, AppGroup[]>>;
 		presets: Preset[];
+		releaseVersion: string;
 	};
 
 	const flat: Array<{ stage: Stage; cmd: Cmd }> = [];
@@ -894,7 +898,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		const lines: Array<{ html: string; tight?: boolean }> = [
 			{ html: '' },
 			{ html: wide('███╗   ███╗  █████╗   ██████╗  ██╗   ██╗ ███████╗', boxBorder('┌', '┐')), tight: true },
-			{ html: wide('████╗ ████║ ██╔══██╗ ██╔════╝  ██║   ██║ ██╔════╝', boxRow('magus.sh', 'v0.1')), tight: true },
+			{ html: wide('████╗ ████║ ██╔══██╗ ██╔════╝  ██║   ██║ ██╔════╝', boxRow('magus.sh', releaseVersion)), tight: true },
 			{ html: wide('██╔████╔██║ ███████║ ██║  ███╗ ██║   ██║ ███████╗', boxRow('spells', spells)), tight: true },
 			{ html: wide('██║╚██╔╝██║ ██╔══██║ ██║   ██║ ██║   ██║ ╚════██║', boxRow('stages', stagesN)), tight: true },
 			{ html: wide('██║ ╚═╝ ██║ ██║  ██║ ╚██████╔╝ ╚██████╔╝ ███████║', boxRow('runtime', '~10 min')), tight: true },
@@ -1110,7 +1114,7 @@ const totalCount = stages.reduce((n, s) => n + s.items.length, 0);
 		const bundles = [...state.manifest.bundles].map((b) => `"${b}"`).join(', ');
 		return [
 			'[magus]',
-			'version = "0.3.0"',
+			'version = "0.4.0"',
 			`device  = "${state.device === 'machine' ? 'steam-machine' : 'steam-deck'}"`,
 			'',
 			'[choices]',

@@ -11,7 +11,6 @@ const { entries } = Astro.props;
 
 const installEntry = entries.find((e) => e.data.tags?.includes('prerequisite'));
 const plugins = entries.filter((e) => !e.data.tags?.includes('prerequisite'));
-const count = entries.length;
 const pluginCount = plugins.length;
 ---
 

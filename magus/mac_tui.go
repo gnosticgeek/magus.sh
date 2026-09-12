@@ -48,6 +48,14 @@ func hints(pairs ...string) macKeys {
 }
 
 type macRow struct{ ID, Name, Summary, Source, Note string }
+type macCatalogueFilter int
+
+const (
+	macCatalogueAll macCatalogueFilter = iota
+	macCatalogueAvailable
+	macCatalogueSelected
+)
+
 type macInventory struct {
 	states    map[string]string
 	brew      bool
@@ -78,6 +86,7 @@ type macModel struct {
 	width, height                                     int
 	screen, category                                  string
 	appGroup, searchReturnScreen                      string
+	catalogueFilter                                   macCatalogueFilter
 	groupCursor, searchReturnCursor                   int
 	cursor                                            int
 	selected                                          map[string]bool
@@ -268,10 +277,45 @@ func (m *macModel) rows() []macRow {
 	if m.searching {
 		rows = fuzzyMacRows(rows, m.search.Value())
 	}
-	if m.screen == "browse" && m.category == "settings" && !m.searching {
+	if m.screen == "browse" {
+		rows = m.filterCatalogueRows(rows)
+	}
+	if m.screen == "browse" && m.category == "settings" && !m.searching && m.catalogueFilter == macCatalogueAll {
 		rows = append(rows, macRow{ID: "restore", Name: "Restore Magus settings", Summary: "Restore the original values saved by Magus. Settings changed outside Magus are left alone."})
 	}
 	return rows
+}
+
+func (m *macModel) catalogueFilterLabel() string {
+	switch m.catalogueFilter {
+	case macCatalogueAvailable:
+		return "Not installed"
+	case macCatalogueSelected:
+		return "Selected only"
+	default:
+		return "All items"
+	}
+}
+
+func (m *macModel) filterCatalogueRows(rows []macRow) []macRow {
+	if m.catalogueFilter == macCatalogueAll {
+		return rows
+	}
+	filtered := make([]macRow, 0, len(rows))
+	for _, row := range rows {
+		if m.catalogueFilter == macCatalogueSelected && m.selected[row.ID] {
+			filtered = append(filtered, row)
+		}
+		if m.catalogueFilter == macCatalogueAvailable && m.needsSelection(row.ID) {
+			filtered = append(filtered, row)
+		}
+	}
+	return filtered
+}
+
+func (m *macModel) cycleCatalogueFilter() {
+	m.catalogueFilter = (m.catalogueFilter + 1) % 3
+	m.cursor = 0
 }
 func (m *macModel) selectionManifest() Manifest {
 	n := newMacManifest()
@@ -732,6 +776,11 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.screen, m.cursor = "menu", 0
 			}
 			m.notice = ""
+		case "f":
+			if m.screen == "browse" {
+				m.cycleCatalogueFilter()
+				return m, m.flash("Filter: " + m.catalogueFilterLabel())
+			}
 		case "ctrl+s":
 			return m, m.selectAllResults()
 		case "up", "down", "left", "right", "pgup", "pgdown", "home", "end":
@@ -951,6 +1000,41 @@ func (m *macModel) activeName() string {
 	}
 	return m.notice
 }
+
+func (m *macModel) outcomeCounts() map[string]int {
+	counts := map[string]int{"installed": 0, "already present": 0, "skipped": 0, "failed": 0}
+	for _, outcome := range m.outcomes {
+		if _, ok := counts[outcome.Status]; ok {
+			counts[outcome.Status]++
+		}
+	}
+	return counts
+}
+
+func (m *macModel) failureDiagnostic() string {
+	if m.active < 0 || m.active >= len(m.outcomes) {
+		return ""
+	}
+	o := m.outcomes[m.active]
+	if o.Status != "failed" {
+		return ""
+	}
+	return fmt.Sprintf("Failed: %s\n%s\n\nRetry with r, skip with s, or inspect full logs with l.\nDiagnostic: Magus %s | %s | %s", o.Name, o.Detail, buildVersion, m.inventory.osVersion, o.ID)
+}
+
+func (m *macModel) summaryNextAction() string {
+	counts := m.outcomeCounts()
+	switch {
+	case counts["failed"] > 0:
+		return "Next: inspect logs with l, then reopen Magus to retry failed items."
+	case m.needsFinder && !m.preview:
+		return "Next: press f to refresh Finder, or return to the menu."
+	case m.preview:
+		return "Preview complete. Return to the menu to review and apply these choices."
+	default:
+		return "Next: return to the menu, or run magus doctor whenever you want to check this setup."
+	}
+}
 func (m *macModel) endBootstrap() {
 	if m.bootstrapCancel != nil {
 		m.bootstrapCancel()
@@ -1055,10 +1139,16 @@ func (m *macModel) viewContent() string {
 					body += sMuted.Render(ansi.Truncate(m.latestLog, w, "…")) + "\n"
 				}
 			} else {
+				counts := m.outcomeCounts()
 				body = heading + fmt.Sprintf("\n%d / %d items finished · elapsed %s\n", done, len(m.outcomes), time.Since(m.started).Round(time.Second))
+				body += fmt.Sprintf("%d installed · %d already present · %d skipped · %d failed\n", counts["installed"], counts["already present"], counts["skipped"], counts["failed"])
+				body += sMuted.Render(m.summaryNextAction()) + "\n"
 				if len(m.outcomes) > 0 {
 					body += m.progress.ViewAs(float64(done)/float64(len(m.outcomes))) + "\n"
 				}
+			}
+			if m.screen == "install" && m.failed {
+				body += "\n" + m.failureDiagnostic() + "\n"
 			}
 			if m.showLogs {
 				body += "\n" + m.logs.View()
@@ -1109,8 +1199,8 @@ func (m *macModel) viewContent() string {
 				if group, ok := appCategory(m.appGroup); ok && m.category == "apps" {
 					prefix += sDim.Render("  /  ") + group.style().Render(group.Name)
 				}
-				prefix += "\n\n"
-				keys = hints("enter/space", "select", "ctrl+s", "all/none", "tab", "details", "/", "search", "esc", "back")
+				prefix += sDim.Render("  /  "+m.catalogueFilterLabel()) + "\n\n"
+				keys = hints("enter/space", "select", "f", "filter", "/", "search", "?", "help")
 			}
 			if m.screen == "review" {
 				prefix = "Review your selection\n"

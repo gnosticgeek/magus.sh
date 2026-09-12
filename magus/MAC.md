@@ -1,12 +1,19 @@
 # Magus for Mac — local alpha
 
 A single basket for Mac apps, terminal tools, and six reversible Finder preferences.
-The Mac implementation is available to build and test locally. No Mac release has
-been published by this change; the public download requires Darwin release assets.
+The Mac alpha is available from the verified installer for Apple silicon and Intel
+machines; local builds remain useful for development.
 
 ## Try it
 
-With Go 1.26.3 or later, from the repository's `magus` directory:
+Install a published build:
+
+```sh
+curl -fsSL https://magus.sh/install | sh
+magus run
+```
+
+Or build locally with Go 1.26.3 or later, from the repository's `magus` directory:
 
 ```sh
 go build -o dist/magus .

@@ -172,5 +172,5 @@ func (m *macModel) contextualKeys() macKeys {
 	if m.screen == "summary" {
 		return hints("↑↓", "scroll", "enter", "menu", "l", "logs", "q", "quit")
 	}
-	return hints("←↑↓→", "move", "pgup/pgdown", "page", "home/end", "first/last", "enter/space", "select item", "ctrl+s", "select/deselect all results", "tab", "focus details", "/", "fuzzy search", "esc", "back", "?", "help")
+	return hints("←↑↓→", "move", "pgup/pgdown", "page", "home/end", "first/last", "enter/space", "select item", "ctrl+s", "select/deselect all results", "f", "filter catalogue", "tab", "focus details", "/", "fuzzy search", "esc", "back", "?", "help")
 }

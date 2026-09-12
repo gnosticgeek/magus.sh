@@ -16,7 +16,7 @@ const faqs = [
   ['What is Magus?', 'Magus is an open-source setup tool for SteamOS devices and Mac. It brings selected apps and preferences into a guided terminal flow, with a saved manifest for repeatable setup.'],
   ['Does the install command change my settings?', 'It downloads and verifies the Magus binary. On Mac it can open the menu when a terminal is available; settings and apps still change only after you review and apply your choices.'],
   ['Is Steam Machine support ready?', 'The Steam Machine path is available in alpha. Hardware detection is still unverified on real Steam Machine hardware. HDMI colour range, HDMI-CEC, and the performance power profile are recorded preferences but are not applied yet.'],
-  ['Can I use it on Linux or Mac?', 'The Mac source alpha includes Homebrew apps, updates, reversible settings and portable app setups. General Linux support is still coming soon; a Linux-compatible binary is not a promise of support for every distribution.'],
+  ['Can I use it on Linux or Mac?', 'The Mac alpha includes Homebrew apps, updates, reversible settings and portable app setups. General Linux support is still coming soon; a Linux-compatible binary is not a promise of support for every distribution.'],
   ['Can I choose individual commands instead?', 'Yes. The advanced Steam Deck command picker lets you select tools, inspect their commands, and review a generated script. It remains a separate option from the guided terminal setup.'],
   ['Is there a desktop app?', 'A desktop interface is being explored. It is not part of this release; the terminal tool is the main setup experience.'],
 ];
@@ -50,7 +50,7 @@ const faqs = [
       <SectionHeading eyebrow="A FEW THINGS TO KNOW" title="Before you begin." description="Small tool. Clear expectations." />
       <div class="faq-list">{faqs.map(([question, answer]) => <details><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div>
     </section>
-    <section class="closing-cta"><span class="eyebrow">READY WHEN YOU ARE</span><h2>Make yourself at home.</h2><p>Your next setup starts with Magus.</p><ActionLink href="/start">Get started with Magus</ActionLink><small>Steam devices in alpha. Mac source alpha available. General Linux support on the way.</small></section>
+    <section class="closing-cta"><span class="eyebrow">READY WHEN YOU ARE</span><h2>Make yourself at home.</h2><p>Your next setup starts with Magus.</p><ActionLink href="/start">Get started with Magus</ActionLink><small>Steam devices and Mac in alpha. General Linux support on the way.</small></section>
   </div>
 </Base>
 

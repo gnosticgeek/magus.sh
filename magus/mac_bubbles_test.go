@@ -113,6 +113,50 @@ func TestBrowserFuzzyPagingAndDetails(t *testing.T) {
 	}
 }
 
+func TestCatalogueFiltersKeepTheBasketIntact(t *testing.T) {
+	c := macTestContext(t)
+	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
+	m.screen, m.category = "browse", "tools"
+	m.inventory.states["git"] = "installed"
+	m.selected["ripgrep"] = true
+
+	m.catalogueFilter = macCatalogueAvailable
+	for _, row := range m.rows() {
+		if row.ID == "git" {
+			t.Fatal("not-installed filter included an installed tool")
+		}
+	}
+	m.cycleCatalogueFilter()
+	if m.catalogueFilterLabel() != "Selected only" || len(m.rows()) != 1 || m.rows()[0].ID != "ripgrep" {
+		t.Fatalf("selected filter = %q, rows = %+v", m.catalogueFilterLabel(), m.rows())
+	}
+	if !m.selected["ripgrep"] {
+		t.Fatal("changing the catalogue filter changed the basket")
+	}
+}
+
+func TestSummaryAndFailureDiagnosticAreActionable(t *testing.T) {
+	c := macTestContext(t)
+	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
+	m.inventory.osVersion = "macOS test / arm64"
+	m.outcomes = []macOutcome{
+		{ID: "package:jq", Name: "jq", Status: "installed"},
+		{ID: "package:git", Name: "Git", Status: "already present"},
+		{ID: "package:bad", Name: "Bad package", Status: "failed", Detail: "brew exited 1"},
+	}
+	m.active = 2
+	counts := m.outcomeCounts()
+	if counts["installed"] != 1 || counts["already present"] != 1 || counts["failed"] != 1 {
+		t.Fatal(counts)
+	}
+	if diagnostic := m.failureDiagnostic(); !strings.Contains(diagnostic, "package:bad") || !strings.Contains(diagnostic, "Retry with r") {
+		t.Fatal(diagnostic)
+	}
+	if next := m.summaryNextAction(); !strings.Contains(next, "inspect logs") {
+		t.Fatal(next)
+	}
+}
+
 func TestLogsKeepScrollPositionWhenOutputArrives(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
