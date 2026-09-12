@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -98,13 +99,18 @@ func (m *macModel) inspect() tea.Cmd {
 	return func() tea.Msg {
 		defer cancel()
 		brew := findBrew()
-		inv := macInventory{states: map[string]string{}, brew: brew != "", osVersion: runtime.GOOS + " / " + runtime.GOARCH}
+		inv := macInventory{states: map[string]string{}, brew: brew != "", appleSilicon: runtime.GOARCH == "arm64", osVersion: runtime.GOOS + " / " + runtime.GOARCH}
 		if runtime.GOOS != "darwin" {
 			return macInventoryResult{inv, generation}
 		}
 		c := &Context{Paths: paths, Brew: brew, Parent: ctx, Timeout: 30 * time.Second, Report: &Reporter{Out: io.Discard}}
 		if v, err := c.macCommand("/usr/bin/sw_vers", "-productVersion"); err == nil {
-			inv.osVersion = "macOS " + strings.TrimSpace(v) + " / " + runtime.GOARCH
+			version := strings.TrimSpace(v)
+			inv.osVersion = "macOS " + version + " / " + runtime.GOARCH
+			inv.osMajor = macVersionMajor(version)
+		}
+		if v, err := c.macCommand("/usr/bin/xcodebuild", "-version"); err == nil {
+			inv.xcodeMajor = macVersionMajor(strings.TrimPrefix(strings.TrimSpace(strings.SplitN(v, "\n", 2)[0]), "Xcode "))
 		}
 		// Snapshot each package kind once for browsing. Execution always probes anew.
 		outputs := map[string]string{}
@@ -136,4 +142,10 @@ func (m *macModel) inspect() tea.Cmd {
 		}
 		return macInventoryResult{inv, generation}
 	}
+}
+
+func macVersionMajor(version string) int {
+	major, _, _ := strings.Cut(version, ".")
+	n, _ := strconv.Atoi(major)
+	return n
 }

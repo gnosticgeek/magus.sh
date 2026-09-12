@@ -161,7 +161,8 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.notice = "Finder refreshed."
 		}
 	case macUpdatesDone:
-		m.screen, m.cursor = macScreenMenu, 6
+		m.screen, m.cursor = macScreenMenu, 4
+		m.history = nil
 		m.notice = "Homebrew updates completed."
 		if v.err != nil {
 			m.notice = "Updates stopped or failed; completed updates are kept. Open Update all to retry. " + v.err.Error()
@@ -170,7 +171,8 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.inspect()
 	case macSelfUpdateDone:
 		if v.err != nil {
-			m.screen, m.cursor = macScreenMenu, 7
+			m.screen, m.cursor = macScreenMenu, 5
+			m.history = nil
 			m.notice = "Magus update failed; the existing executable is unchanged. " + v.err.Error()
 			return m, nil
 		}

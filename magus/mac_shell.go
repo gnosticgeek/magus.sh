@@ -252,7 +252,7 @@ func (m *macModel) shellRows() []macRow {
 		}
 		rows = append(rows, macRow{ID: "shell-option:" + o.ID, Name: check + o.Name, Summary: o.Summary})
 	}
-	return append(rows, macRow{ID: "shell-review", Name: "Review & apply", Summary: "Install required tools and apply your choices."}, macRow{ID: "shell-undo", Name: "Undo modern terminal commands", Summary: "Remove Magus’s shell block after review. Tools stay installed. Open a new terminal afterwards."})
+	return append(rows, macRow{ID: "shell-review", Name: "Review & install", Summary: "Install required tools and apply your choices."}, macRow{ID: "shell-undo", Name: "Undo modern terminal commands", Summary: "Remove Magus’s shell block after review. Tools stay installed. Open a new terminal afterwards."})
 }
 
 // Track only dependencies added by this screen; preset/manual picks stay selected.

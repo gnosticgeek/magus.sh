@@ -48,7 +48,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			if m.updateReview.cancel != nil {
 				m.updateReview.cancel()
 			}
-			m.screen, m.cursor = macScreenMenu, 6
+			m.goBack()
 		case "enter":
 			if m.screen == macScreenUpdateConfirm {
 				return m, m.updateAll()
@@ -74,7 +74,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.screen == macScreenSelfUpdate {
 		switch k {
 		case "esc":
-			m.screen, m.cursor = macScreenMenu, 7
+			m.goBack()
 		case "enter":
 			return m, m.updateMagus()
 		case "q":
@@ -154,6 +154,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 		if k == "enter" || k == "esc" {
 			m.screen = macScreenMenu
+			m.history = nil
 			m.cursor = 0
 			m.restoring = false
 			m.notice = ""
@@ -193,7 +194,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 	if m.screen == macScreenTerminalRestore {
 		if k == "esc" {
-			m.screen = macScreenTerminal
+			m.goBack()
 			return m, nil
 		}
 		if k == "enter" {
@@ -228,7 +229,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 	if m.screen == macScreenRestore {
 		if k == "esc" {
-			m.screen = macScreenBrowse
+			m.goBack()
 			m.restoring = false
 			return m, nil
 		}
@@ -251,9 +252,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, m.search.Focus()
 		}
 	case "esc":
-		if m.screen == macScreenBrowse && m.category == "apps" {
-			m.screen, m.cursor = macScreenCategories, m.groupCursor
-		} else {
+		if !m.goBack() {
 			m.screen, m.cursor = macScreenMenu, 0
 		}
 		m.notice = ""
@@ -305,18 +304,23 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		row := rows[m.cursor]
 		if m.screen == macScreenMenu {
 			m.cursor = 0
-			if row.ID == "review" || row.ID == "updates" || row.ID == "self-update" || row.ID == "terminal" || row.ID == "app-configs" {
-				m.screen = macScreen(row.ID)
+			if row.ID == "developer" || row.ID == "review" || row.ID == "updates" || row.ID == "self-update" {
+				m.navigate(macScreen(row.ID), "", "", 0)
 				if row.ID == "updates" {
 					return m, m.checkUpdates(false)
 				}
 			} else {
-				m.category = row.ID
-				m.screen = macScreenBrowse
+				m.navigate(macScreenBrowse, row.ID, "", 0)
 				if row.ID == "apps" {
 					m.screen = macScreenCategories
-					m.appGroup = ""
 				}
+			}
+		} else if m.screen == macScreenDeveloper {
+			switch row.ID {
+			case "tools", "fonts":
+				m.navigate(macScreenBrowse, row.ID, "", 0)
+			default:
+				m.navigate(macScreen(row.ID), m.category, m.appGroup, 0)
 			}
 		} else if m.screen == macScreenAppConfigs || m.screen == macScreenRaycast {
 			if strings.HasPrefix(row.ID, "export:") {
@@ -352,7 +356,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			if row.ID == "restore" {
 				m.restoring = true
 			}
-			m.screen, m.cursor = macScreen(row.ID), 0
+			m.navigate(macScreen(row.ID), m.category, m.appGroup, 0)
 			return m, nil
 		} else if m.screen == macScreenShell {
 			switch row.ID {
@@ -360,9 +364,9 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.shellSettings.Enabled = !m.shellSettings.Enabled
 			case "shell-undo":
 				m.shellSettings.Enabled = false
-				m.screen, m.cursor = macScreenReview, 0
+				m.navigate(macScreenReview, m.category, m.appGroup, 0)
 			case "shell-review":
-				m.screen, m.cursor = macScreenReview, 0
+				m.navigate(macScreenReview, m.category, m.appGroup, 0)
 			default:
 				id := strings.TrimPrefix(row.ID, "shell-option:")
 				if oneOf(id, m.shellSettings.Commands) {
@@ -382,15 +386,15 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		} else if m.screen == macScreenTerminal {
 			if row.ID == "shell" {
-				m.screen, m.cursor = macScreenShell, 0
+				m.navigate(macScreenShell, m.category, m.appGroup, 0)
 				return m, nil
 			}
 			if row.ID == "terminal-review" {
-				m.screen, m.cursor = macScreenReview, 0
+				m.navigate(macScreenReview, m.category, m.appGroup, 0)
 				return m, nil
 			}
 			if row.ID == "terminal-restore" {
-				m.screen = macScreenTerminalRestore
+				m.navigate(macScreenTerminalRestore, m.category, m.appGroup, 0)
 				return m, nil
 			}
 			if row.ID == "terminal-export" {
@@ -424,10 +428,12 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 					m.selected[id] = true
 				}
 			}
-			return m, m.flash("Added " + row.Name + ". Choose Review & apply setup below to apply it.")
+			return m, m.flash("Added " + row.Name + ". Choose Review & install to apply it.")
 		} else if m.screen == macScreenCategories {
 			m.groupCursor = m.cursor
-			m.appGroup, m.category, m.screen, m.cursor = row.ID, "apps", macScreenBrowse, 0
+			m.navigate(macScreenBrowse, "apps", row.ID, 0)
+		} else if m.screen == macScreenBrowse && m.category == "tools" && row.ID == macDeveloperToolsGroup {
+			m.navigate(macScreenBrowse, "tools", macDeveloperToolsGroup, 0)
 		} else if m.screen == macScreenPresets {
 			presetIndex, err := strconv.Atoi(row.ID)
 			if err != nil || presetIndex < 0 || presetIndex >= len(macPresets) {
@@ -440,9 +446,12 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			}
 			return m, m.flash("Added " + row.Name + ". Your other picks are kept.")
 		} else if row.ID == "restore" {
-			m.screen = macScreenRestore
+			m.navigate(macScreenRestore, m.category, m.appGroup, 0)
 			m.restoring = true
 		} else {
+			if reason := m.selectionBlockReason(row.ID); reason != "" {
+				return m, m.flash(reason)
+			}
 			if !m.needsSelection(row.ID) {
 				delete(m.selected, row.ID)
 				return m, m.flash(row.Name + " is already present; nothing to install.")

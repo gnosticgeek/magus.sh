@@ -43,8 +43,8 @@ func buildMacAppCategories() []macAppCategory {
 		macAppCategory{"audio", "Audio & Music", "Explore audio & music apps.", "#347866", "#99dec6", []string{"audacity", "spotify"}},
 		macAppCategory{"design", "Design & Graphics", "Explore design & graphics apps.", "#347866", "#99dec6", []string{"affinity", "bambu-studio", "shottr", "upscayl"}},
 		macAppCategory{"cloud", "Cloud & Storage", "Explore cloud & storage apps.", "#347866", "#99dec6", []string{"proton-drive"}},
-		macAppCategory{"security", "Security & Privacy", "Explore security & privacy apps.", "#347866", "#99dec6", []string{"protonvpn"}},
-		macAppCategory{"games", "Games", "Explore games apps.", "#347866", "#99dec6", []string{"es-de", "retroarch-metal"}},
+		macAppCategory{"security", "Security & Privacy", "Passwords, network control and startup inspection.", "#347866", "#99dec6", []string{"protonvpn", "1password", "bitwarden", "keepassxc", "lulu", "knockknock"}},
+		macAppCategory{"games", "Games", "Launch, organise, emulate and stream your games.", "#347866", "#99dec6", []string{"es-de", "retroarch-metal", "steam", "heroic", "moonlight"}},
 		macAppCategory{"menubar", "Menu Bar", "Monitors, menu organisers and everyday controls.", "#347866", "#99dec6", []string{"stats", "jordanbaird-ice", "mos", "hiddenbar", "swiftbar", "thaw", "codexbar", "vorssaint", "aldente"}},
 		macAppCategory{"utilities", "Utilities", "Explore utilities apps.", "#347866", "#99dec6", []string{"balenaetcher", "caskhub", "dockflow", "keka", "monocle-app"}},
 	)

@@ -38,7 +38,7 @@ func (m *macModel) viewContent() string {
 			body = m.updateReviewView(w, h)
 			keys = hints("↑↓", "rows", "enter", "review", "r", "refresh", "?", "help", "esc", "back")
 		case macScreenUpdateConfirm:
-			body = fmt.Sprintf("Update %d reviewed apps and tools?\n\nClose the affected apps before continuing.\nHomebrew may also update required dependencies.\nIts live output and password prompts take over the terminal.\nCtrl+C stops; completed updates remain.\n\nOnly the reviewed package list is requested.\nNo automatic cleanup is requested.", len(m.updateReview.items))
+			body = macWarning.Render("Attention: close affected apps before continuing.") + fmt.Sprintf("\n\nUpdate %d reviewed apps and tools?\n\nHomebrew may also update required dependencies.\nIts live output and password prompts take over the terminal.\nCtrl+C stops; completed updates remain.\n\nOnly the reviewed package list is requested.\nNo automatic cleanup is requested.", len(m.updateReview.items))
 			body = confirmationOverlay(m.updateReviewView(w, h), body, w, h)
 			keys = hints("enter", "update reviewed", "esc", "back to versions")
 		case macScreenSelfUpdate:
@@ -81,14 +81,22 @@ func (m *macModel) viewContent() string {
 			} else {
 				counts := m.outcomeCounts()
 				body = heading + fmt.Sprintf("\n%d / %d items finished · elapsed %s\n", done, len(m.outcomes), time.Since(m.started).Round(time.Second))
-				body += fmt.Sprintf("%d installed · %d already present · %d skipped · %d failed\n", counts["installed"], counts["already present"], counts["skipped"], counts["failed"])
+				body += lipgloss.JoinHorizontal(lipgloss.Left,
+					macStatusStyle(macStatusSuccess).Render(fmt.Sprintf("%d Installed", counts["installed"])),
+					sMuted.Render(" · "),
+					macStatusStyle(macStatusInfo).Render(fmt.Sprintf("%d Already present", counts["already present"])),
+					sMuted.Render(" · "),
+					macStatusStyle(macStatusWarning).Render(fmt.Sprintf("%d Skipped", counts["skipped"])),
+					sMuted.Render(" · "),
+					macStatusStyle(macStatusDanger).Render(fmt.Sprintf("%d Failed", counts["failed"])),
+				) + "\n"
 				body += sMuted.Render(m.summaryNextAction()) + "\n"
 				if len(m.outcomes) > 0 {
 					body += m.progress.ViewAs(float64(done)/float64(len(m.outcomes))) + "\n"
 				}
 			}
 			if m.screen == macScreenInstall && m.failed {
-				body += "\n" + m.failureDiagnostic() + "\n"
+				body += "\n" + macDanger.Render("Action needed") + "\n" + m.failureDiagnostic() + "\n"
 			}
 			if m.showLogs {
 				body += "\n" + m.logs.View()
@@ -100,7 +108,8 @@ func (m *macModel) viewContent() string {
 				}
 				for i := start; i < len(m.outcomes) && i < start+available; i++ {
 					o := m.outcomes[i]
-					line := fmt.Sprintf("%-16s %s", o.Status, o.Name)
+					label, status := macOutcomeStatus(o.Status)
+					line := macStatusStyle(status).Render(fmt.Sprintf("%-16s", label)) + " " + o.Name
 					if m.screen == macScreenSummary && i == m.cursor {
 						line = "> " + line
 					}
@@ -130,6 +139,9 @@ func (m *macModel) viewContent() string {
 				if m.height >= 26 {
 					prefix = macAccent.Render("Make yourself at home") + "\n"
 				}
+			} else if m.screen == macScreenDeveloper {
+				prefix = macAccent.Render("Developer & Terminal") + sMuted.Render("  /  tools, setup and customisation") + "\n\n"
+				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
 			} else if m.screen == macScreenCategories {
 				prefix = macAccent.Render("Apps") + sMuted.Render("  /  find your essentials") + "\n\n"
 				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
@@ -138,6 +150,9 @@ func (m *macModel) viewContent() string {
 				prefix = macAccent.Render(label)
 				if group, ok := appCategory(m.appGroup); ok && m.category == "apps" {
 					prefix += sDim.Render("  /  ") + group.style().Render(group.Name)
+				}
+				if m.category == "tools" && m.appGroup == macDeveloperToolsGroup {
+					prefix += sDim.Render("  /  Developer environments")
 				}
 				prefix += sDim.Render("  /  "+m.catalogueFilterLabel()) + "\n\n"
 				if m.category == "settings" {
@@ -176,8 +191,12 @@ func (m *macModel) viewContent() string {
 				prefix = "Presets\n\n"
 				keys = hints("enter", "add preset", "esc", "back")
 			}
-			available := max(1, h-lipgloss.Height(prefix))
 			columns, leftW, split := m.browserLayout()
+			if !m.searching && !m.details && !split && len(rows) > 0 && (m.screen == macScreenMenu || m.screen == macScreenDeveloper || m.screen == macScreenBrowse) {
+				focused := rows[m.cursor]
+				prefix += sMuted.Render(ansi.Truncate(focused.Summary, w, "…")) + "\n\n"
+			}
+			available := max(1, h-lipgloss.Height(prefix))
 			m.browserHeight = max(1, available-1)
 			browser := m.browserList(rows, leftW, m.browserHeight)
 			left := browser.View()

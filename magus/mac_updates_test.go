@@ -90,20 +90,24 @@ func TestInstalledBadgeIsIndependentOfBasket(t *testing.T) {
 	m.screen, m.category, m.appGroup = macScreenBrowse, "apps", "browsers"
 	m.inventory.states["firefox"] = "installed"
 	view := stripTerminal(m.View().Content)
-	if strings.Contains(view, "[ ] Firefox") || !strings.Contains(view, "installed") {
+	if strings.Contains(view, "[ ] Firefox") || !strings.Contains(view, "Installed") {
 		t.Fatal(view)
 	}
 	m.selected["firefox"] = true
 	view = stripTerminal(m.View().Content)
-	if strings.Contains(view, "[x] Firefox") || !strings.Contains(view, "installed") {
+	if strings.Contains(view, "[x] Firefox") || !strings.Contains(view, "Installed") {
 		t.Fatal(view)
 	}
-	for _, st := range []string{"not installed", "inspection failed", "needs Homebrew"} {
-		if installedBadge(st) != "" {
-			t.Fatalf("false installed badge for %s", st)
-		}
+	if installedBadge("not installed") != "" {
+		t.Fatal("not-installed package should not have a badge")
 	}
-	if !strings.Contains(stripTerminal(installedBadge("outside Homebrew")), "external") {
+	if !strings.Contains(stripTerminal(installedBadge("inspection failed")), "Check failed") {
+		t.Fatal("failed inspection status missing")
+	}
+	if !strings.Contains(stripTerminal(installedBadge("needs Homebrew")), "Needs Homebrew") {
+		t.Fatal("missing Homebrew status missing")
+	}
+	if !strings.Contains(stripTerminal(installedBadge("outside Homebrew")), "External") {
 		t.Fatal("unmanaged status missing")
 	}
 }

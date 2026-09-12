@@ -95,6 +95,9 @@ func (m *macModel) selectAllResults() tea.Cmd {
 		if !m.needsSelection(r.ID) {
 			continue
 		}
+		if m.selectionBlockReason(r.ID) != "" {
+			continue
+		}
 		ids = append(ids, r.ID)
 		if !m.selected[r.ID] {
 			all = false

@@ -30,6 +30,10 @@ usage:
   magus uninstall          reverse what magus installed
   magus preview            browse the Mac menu without making changes
   magus restore            restore Mac settings recorded by Magus
+  magus profile list       list saved Mac setup profiles
+  magus profile save NAME  save the current Mac selection as NAME.toml
+  magus profile show NAME  print a saved profile
+  magus profile use NAME   open NAME in Review & install before applying it
   magus version            print the binary and manifest schema versions
 
 flags:
@@ -80,8 +84,8 @@ func runCLI(args []string) int {
 	if err != nil {
 		rep.Die("cannot resolve home directory: %v", err)
 	}
-	if runtime.GOOS == "darwin" || verb == "preview" {
-		return runMacCLI(verb, paths, *manifestPath, *defaults, *dryRun, *asJSON, *plain, *timeout)
+	if runtime.GOOS == "darwin" || verb == "preview" || verb == "profile" {
+		return runMacCLI(verb, fs.Args(), paths, *manifestPath, *defaults, *dryRun, *asJSON, *plain, *timeout)
 	}
 	if err := prepareLinuxPaths(paths, verb, *dryRun); err != nil {
 		rep.Die("cannot create %s: %v", paths.Config, err)

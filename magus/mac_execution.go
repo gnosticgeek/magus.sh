@@ -227,7 +227,7 @@ func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, ti
 	return session
 }
 
-func runMacCLI(verb string, paths Paths, path string, defaults, dry, asJSON, plain bool, timeout time.Duration) int {
+func runMacCLI(verb string, positionals []string, paths Paths, path string, defaults, dry, asJSON, plain bool, timeout time.Duration) int {
 	if path == "" {
 		path = paths.ManifestPath()
 	}
@@ -256,6 +256,8 @@ func runMacCLI(verb string, paths Paths, path string, defaults, dry, asJSON, pla
 		fmt.Printf("magus %s (manifest schema %s)\n", buildVersion, Version)
 		return 0
 	case "run", "preview", "reconcile", "doctor", "restore", "uninstall":
+	case "profile":
+		return runMacProfileCLI(positionals, paths, path, dry, asJSON, plain, timeout)
 	default:
 		return fail(2, fmt.Errorf("unknown command %q", verb))
 	}

@@ -45,6 +45,11 @@ func hints(pairs ...string) macKeys {
 }
 
 type macRow struct{ ID, Name, Summary, Source, Note string }
+
+const macDeveloperToolsGroup = "developer"
+
+var macDeveloperToolIDs = []string{"container", "node", "python@3.14", "uv", "go", "rust", "docker", "colima"}
+
 type macCatalogueFilter int
 
 const (
@@ -54,9 +59,10 @@ const (
 )
 
 type macInventory struct {
-	states    map[string]string
-	brew      bool
-	osVersion string
+	states              map[string]string
+	brew, appleSilicon  bool
+	osVersion           string
+	osMajor, xcodeMajor int
 }
 type macInventoryResult struct {
 	inventory  macInventory
@@ -87,6 +93,7 @@ type macModel struct {
 	width, height                                     int
 	screen                                            macScreen
 	category, appGroup                                string
+	history                                           []macNavigationPoint
 	searchReturnScreen                                macScreen
 	catalogueFilter                                   macCatalogueFilter
 	groupCursor, searchReturnCursor                   int
@@ -121,6 +128,84 @@ type macModel struct {
 	bootstrapUnlock                                   func()
 	bootstrapCancel                                   context.CancelFunc
 	bootstrapFile                                     string
+}
+
+// macNavigationPoint is a typed snapshot of a browsable location. It keeps
+// Escape deterministic even when a user reaches a screen through search or a
+// nested setup flow.
+type macNavigationPoint struct {
+	screen             macScreen
+	category, appGroup string
+	cursor             int
+}
+
+func (m *macModel) navigate(screen macScreen, category, appGroup string, cursor int) {
+	m.history = append(m.history, macNavigationPoint{m.screen, m.category, m.appGroup, m.cursor})
+	m.screen, m.category, m.appGroup, m.cursor = screen, category, appGroup, cursor
+}
+
+func (m *macModel) goBack() bool {
+	if len(m.history) == 0 {
+		return false
+	}
+	last := m.history[len(m.history)-1]
+	m.history = m.history[:len(m.history)-1]
+	m.screen, m.category, m.appGroup, m.cursor = last.screen, last.category, last.appGroup, last.cursor
+	return true
+}
+
+func (m *macModel) breadcrumb() string {
+	points := append(append([]macNavigationPoint{}, m.history...), macNavigationPoint{m.screen, m.category, m.appGroup, m.cursor})
+	labels := make([]string, 0, len(points))
+	for _, point := range points {
+		label := navigationLabel(point)
+		if label != "" && (len(labels) == 0 || labels[len(labels)-1] != label) {
+			labels = append(labels, label)
+		}
+	}
+	if len(labels) > 3 {
+		labels = append([]string{"…"}, labels[len(labels)-2:]...)
+	}
+	return strings.Join(labels, " / ")
+}
+
+func navigationLabel(point macNavigationPoint) string {
+	switch point.screen {
+	case macScreenMenu:
+		return "Home"
+	case macScreenDeveloper:
+		return "Developer & Terminal"
+	case macScreenCategories:
+		return "Apps"
+	case macScreenBrowse:
+		if point.category == "apps" {
+			if group, ok := appCategory(point.appGroup); ok {
+				return group.Name
+			}
+			return "Apps"
+		}
+		if point.category == "tools" && point.appGroup == macDeveloperToolsGroup {
+			return "Developer environments"
+		}
+		return map[string]string{"tools": "Terminal tools", "fonts": "Fonts", "settings": "Mac settings"}[point.category]
+	case macScreenTerminal:
+		return "Terminal setup"
+	case macScreenShell:
+		return "Modern commands"
+	case macScreenAppConfigs:
+		return "App setups"
+	case macScreenRaycast:
+		return "Raycast setup"
+	case macScreenReview:
+		return "Review & install"
+	case macScreenUpdates:
+		return "Update all"
+	case macScreenSelfUpdate:
+		return "Update Magus"
+	case macScreenRestore:
+		return "Restore settings"
+	}
+	return ""
 }
 
 func newMacModel(paths Paths, path string, m Manifest, preview bool, timeout time.Duration) *macModel {
@@ -171,14 +256,19 @@ func (m *macModel) rows() []macRow {
 	if m.screen == macScreenMenu {
 		return []macRow{
 			{ID: "apps", Name: "Apps", Summary: "Find your essentials by category.", Note: "Browsers · Developer tools · AI · Productivity · Media · Communication"},
-			{ID: "tools", Name: "Terminal tools", Summary: "Developer tools and utilities you run from the terminal."},
-			{ID: "fonts", Name: "Fonts", Summary: "Eight handpicked fonts for writing, design and coding.", Note: "Atkinson Hyperlegible Next · Cascadia Code · Fraunces · Inter · JetBrains Mono · Newsreader · Source Serif 4 · Space Grotesk"},
+			{ID: "developer", Name: "Developer & Terminal", Summary: "Set up your terminal, fonts, app integrations and command-line tools.", Note: "Tools · Developer environments · Fonts · Terminal setup · App setups"},
 			{ID: "settings", Name: "Mac settings", Summary: "Six reversible Finder preferences.", Note: "For a broader set of live Mac utilities, we recommend Vorssaint in Apps > Menu Bar."},
-			{ID: "app-configs", Name: "App setups", Summary: "Ghostty, Zed, Firefox, modern commands and Raycast presets."},
-			{ID: "review", Name: fmt.Sprintf("Review & install (%d)", len(m.selected)), Summary: "See your complete basket before anything changes."},
+			{ID: "review", Name: m.reviewMenuName(), Summary: "See your complete basket before anything changes."},
 			{ID: "updates", Name: "Update all", Summary: "Update eligible Homebrew apps and terminal tools.", Note: "Includes packages installed outside Magus. Review the scope before continuing."},
 			{ID: "self-update", Name: "Update Magus", Summary: m.magUpdateSummary(), Note: "Downloads, verifies and installs the latest release, then quits Magus."},
+		}
+	}
+	if m.screen == macScreenDeveloper {
+		return []macRow{
+			{ID: "tools", Name: "Terminal tools", Summary: "Developer runtimes, containers and utilities you run from the terminal.", Note: "Developer environments · Modern commands · Git and shell utilities"},
+			{ID: "fonts", Name: "Fonts", Summary: "Eight handpicked fonts for writing, design and coding.", Note: "Atkinson Hyperlegible Next · Cascadia Code · Fraunces · Inter · JetBrains Mono · Newsreader · Source Serif 4 · Space Grotesk"},
 			{ID: "terminal", Name: "Terminal setup", Summary: "Ghostty themes, fonts and configurable modern commands."},
+			{ID: "app-configs", Name: "App setups", Summary: "Ghostty, Zed, Firefox, modern commands and Raycast presets."},
 		}
 	}
 	if m.screen == macScreenCategories {
@@ -195,6 +285,9 @@ func (m *macModel) rows() []macRow {
 		return rows
 	}
 	var rows []macRow
+	if !m.searching && m.screen == macScreenBrowse && m.category == "tools" && m.appGroup == "" {
+		rows = append(rows, macRow{ID: macDeveloperToolsGroup, Name: "Developer environments", Summary: "Languages, package managers and container runtimes.", Note: "Apple Container · Node.js & npm · Python · uv · Go · Rust · Docker CLI · Colima"})
+	}
 	for _, p := range macPackages {
 		if !m.searching && m.screen != macScreenReview && ((m.category == "apps" && (p.Kind != "cask" || strings.HasPrefix(p.ID, "font-"))) || (m.category == "fonts" && !strings.HasPrefix(p.ID, "font-")) || (m.category == "tools" && p.Kind != "formula") || m.category == "settings") {
 			continue
@@ -204,6 +297,9 @@ func (m *macModel) rows() []macRow {
 			if !ok || !oneOf(p.ID, group.Packages) {
 				continue
 			}
+		}
+		if !m.searching && m.screen == macScreenBrowse && m.category == "tools" && m.appGroup == macDeveloperToolsGroup && !oneOf(p.ID, macDeveloperToolIDs) {
+			continue
 		}
 		if m.screen == macScreenReview && !m.selected[p.ID] {
 			continue
@@ -262,6 +358,33 @@ func (m *macModel) catalogueFilterLabel() string {
 	default:
 		return "All items"
 	}
+}
+
+func (m *macModel) reviewMenuName() string {
+	if len(m.selected) == 0 {
+		return "Review & install"
+	}
+	return fmt.Sprintf("Review %d selection%s", len(m.selected), map[bool]string{true: "", false: "s"}[len(m.selected) == 1])
+}
+
+func (m *macModel) selectionBlockReason(id string) string {
+	if id != "container" {
+		return ""
+	}
+	var missing []string
+	if !m.inventory.appleSilicon {
+		missing = append(missing, "Apple Silicon")
+	}
+	if m.inventory.osMajor < 26 {
+		missing = append(missing, "macOS 26+")
+	}
+	if m.inventory.xcodeMajor < 26 {
+		missing = append(missing, "Xcode 26+")
+	}
+	if len(missing) == 0 {
+		return ""
+	}
+	return "Apple Container requires " + strings.Join(missing, ", ")
 }
 
 func (m *macModel) filterCatalogueRows(rows []macRow) []macRow {
@@ -325,7 +448,7 @@ func (m *macModel) toggle(id string) {
 		if id == "shell:configure" {
 			m.syncShellPackages()
 		}
-	} else if m.needsSelection(id) {
+	} else if m.needsSelection(id) && m.selectionBlockReason(id) == "" {
 		m.selected[id] = true
 	}
 }

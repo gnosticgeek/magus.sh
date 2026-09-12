@@ -25,6 +25,9 @@ The Mac TUI follows Bubble Tea's model/update/view boundary:
 - `mac_bootstrap.go` owns the Homebrew temporary-file and lock lifecycle.
 - `mac_async.go` supplies generation tokens that reject superseded results.
 - `mac_execution.go` owns installation sessions and machine mutations.
+- `mac_profiles.go` owns named, portable Mac selection profiles. Profiles are
+  validated Darwin manifests in `~/.config/magus/profiles/`; loading one must
+  still pass through Review & install before any mutation.
 
 Do not replace `macScreen`, `macEventKind`, or generation tokens with free-form
 strings. New asynchronous subsystems must identify their result and reject it
@@ -34,6 +37,8 @@ after cancellation, replacement, or navigation out of scope.
 
 - Preview and dry-run modes must not write, install, refresh metadata, or launch
   external setup pages.
+- Profile names must remain constrained to a single safe filename, and saving a
+  profile must never overwrite an existing file.
 - Keep review and confirmation separate from execution.
 - Restore only content Magus can prove it created or backed up.
 - External applications and packages remain outside Magus ownership.

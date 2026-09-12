@@ -32,6 +32,8 @@ func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.I
 		style := sText
 		if index == l.Index() {
 			style = macAccent.Background(adaptiveColor{Light: "#eee8fa", Dark: "#302b45"})
+		} else if r.ID == "review" && len(m.selected) > 0 {
+			style = macAccent
 		}
 		if r.ID == "self-update" && m.magUpdateAvailable {
 			available := lipgloss.NewStyle().Foreground(adaptiveColor{Light: "#237342", Dark: "#86d9a0"}).Bold(true).Render(" · update available")
@@ -47,7 +49,8 @@ func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.I
 		mark = "> "
 	}
 	check := ""
-	if (m.screen == macScreenBrowse || m.screen == macScreenReview) && r.ID != "restore" && m.needsSelection(r.ID) {
+	blocked := m.selectionBlockReason(r.ID)
+	if (m.screen == macScreenBrowse || m.screen == macScreenReview) && r.ID != "restore" && m.needsSelection(r.ID) && blocked == "" {
 		check = "[ ] "
 		if m.selected[r.ID] {
 			check = "[x] "
@@ -65,12 +68,17 @@ func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.I
 		label = fmt.Sprintf("%s%-20s %d/%d >", mark, r.Name, picked, len(group.Packages))
 	}
 	badge := installedBadge(m.inventory.states[r.ID])
+	if blocked != "" {
+		badge = macStatusBadge("Unavailable", macStatusWarning)
+	}
 	label = ansi.Truncate(label, max(1, l.Width()-lipgloss.Width(badge)), "…")
 	style := sText
 	if index == l.Index() {
 		style = m.rowStyle(r.ID)
 	} else if m.screen == macScreenCategories {
 		style = m.rowStyle(r.ID).Bold(false)
+	} else if blocked != "" {
+		style = sMuted
 	}
 	fmt.Fprint(w, style.Render(label)+badge)
 }

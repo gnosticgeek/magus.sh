@@ -24,7 +24,19 @@ func terminalTestContext(t *testing.T) *Context {
 func TestTerminalMenuSelectionAndPersistence(t *testing.T) {
 	c := terminalTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.cursor = 8
+	for i, row := range m.rows() {
+		if row.ID == "developer" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	for i, row := range m.rows() {
+		if row.ID == "terminal" {
+			m.cursor = i
+			break
+		}
+	}
 	press(m, "enter")
 	if m.screen != macScreenTerminal {
 		t.Fatal(m.screen)
@@ -72,8 +84,8 @@ func TestTerminalMenuSelectionAndPersistence(t *testing.T) {
 			if lipgloss.Width(view) > size[0] || lipgloss.Height(view) > size[1] {
 				t.Fatal("overflow", size, screen)
 			}
-			if screen == "menu" && size[0] == 80 && !strings.Contains(view, "App setups") {
-				t.Fatal("app setups menu item hidden")
+			if screen == "menu" && size[0] == 80 && !strings.Contains(view, "Developer & Terminal") {
+				t.Fatal("developer hub menu item hidden")
 			}
 		}
 	}

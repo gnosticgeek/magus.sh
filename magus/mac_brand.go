@@ -45,34 +45,29 @@ func auroraText(text string) string {
 	return strings.Join(lines, "\n")
 }
 
-// Plain ASCII keeps the wordmark readable with the terminal's existing font.
-const macWordmark = `    __  ___  ___    ______ __  __ _____
-   /  |/  / /   |  / ____// / / // ___/
-  / /|_/ / / /| | / / __ / / / / \__ \
- / /  / / / ___ |/ /_/ // /_/ / ___/ /
-/_/  /_/ /_/  |_|\____/ \____/ /____/`
+// Plain ASCII keeps the Magus sigil and wordmark readable in every terminal.
+const macSigil = "/M\\"
+
+const macWordmark = `     /\
+    /M \     MAGUS
+    \  /     Set up your Mac with intent.
+     \/`
 
 func (m *macModel) headerView(width int) string {
 	title := "magus"
 	home := m.screen == macScreenMenu && !m.showHelp
 	if home {
-		title = "<>  M A G U S"
+		title = macSigil + "  MAGUS"
 	}
 	if m.preview {
 		title += " / PREVIEW — no changes"
 	}
 	metadata := sMuted.Render("Magus " + buildVersion + "  ·  " + m.inventory.osVersion)
-	if home && m.height >= 24 && width >= max(60, lipgloss.Width(macWordmark)) {
-		lines := strings.Split(macWordmark, "\n")
-		seal := []string{"    /\\    ", "   /  \\   ", "  < /\\ >  ", "   \\  /   ", "    \\/    "}
-		for i := range lines {
-			lines[i] = seal[i] + "  " + lines[i]
-		}
-		tagline := "A little magic for your Mac."
-		if m.preview {
-			tagline += "  / PREVIEW — no changes"
-		}
-		return auroraText(strings.Join(lines, "\n")) + "\n" + sMuted.Render(tagline) + "\n" + metadata
+	if !home && m.breadcrumb() != "" {
+		metadata += "\n" + sDim.Render(m.breadcrumb())
+	}
+	if home && m.height >= 22 && width >= 42 {
+		return auroraText(macWordmark) + "\n" + metadata
 	}
 	return auroraText(title) + "\n" + metadata
 }

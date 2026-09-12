@@ -149,16 +149,16 @@ func (m *macModel) resizeUpdateTable(width, height int) {
 
 func (m *macModel) updateReviewView(width, height int) string {
 	if m.updateReview.loading {
-		return m.spinner.View() + " Checking installed versions…"
+		return m.spinner.View() + " " + macStatusStyle(macStatusInfo).Render("Checking updates…")
 	}
 	if m.updateReview.err != nil {
-		return "Could not check updates.\n\n" + lipgloss.NewStyle().Width(width).Render(cleanLog(m.updateReview.err.Error())) + "\n\nPress r to refresh and retry; Escape returns."
+		return macDanger.Render("Check failed") + "\n\n" + lipgloss.NewStyle().Width(width).Render(cleanLog(m.updateReview.err.Error())) + "\n\nPress r to refresh and retry; Escape returns."
 	}
 	if !m.updateReview.ready {
 		return "Open Update all to inspect available versions."
 	}
 	if len(m.updateReview.items) == 0 {
-		return "No eligible updates in local Homebrew metadata.\n\nPress r to refresh metadata and check again.\nPinned and self-updating apps follow Homebrew exclusions."
+		return macSuccess.Render("Up to date") + "\n\nNo eligible updates in local Homebrew metadata.\n\nPress r to refresh metadata and check again.\nPinned and self-updating apps follow Homebrew exclusions."
 	}
 	m.resizeUpdateTable(width, max(2, height-9))
 	row := m.updateReview.table.Cursor()

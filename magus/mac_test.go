@@ -280,7 +280,7 @@ func TestMacBackspaceNavigatesBackButEditsSearch(t *testing.T) {
 	m.screen, m.category = macScreenBrowse, "tools"
 	press(m, "backspace")
 	if m.screen != macScreenMenu {
-		t.Fatal("backspace did not return to menu")
+		t.Fatal("backspace without history did not return home")
 	}
 	press(m, "/")
 	press(m, "a")
@@ -436,7 +436,12 @@ func TestMacTerminalFitsAndFocusScrolls(t *testing.T) {
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
 	m.screen = macScreenBrowse
 	m.category = "tools"
-	m.cursor = 14
+	for i, row := range m.rows() {
+		if row.ID == "tmux" {
+			m.cursor = i
+			break
+		}
+	}
 	for _, size := range [][2]int{{80, 24}, {72, 20}, {120, 35}} {
 		m.Update(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
 		v := m.View().Content
@@ -483,7 +488,7 @@ func TestMacInstallShowsContinuousHonestActivity(t *testing.T) {
 }
 
 func TestMacCataloguePresetIDs(t *testing.T) {
-	if len(macPackages) != 82 || len(macSettings) != 6 {
+	if len(macPackages) != 98 || len(macSettings) != 6 {
 		t.Fatal("unexpected starter catalogue size")
 	}
 	for _, preset := range macPresets {
@@ -492,6 +497,64 @@ func TestMacCataloguePresetIDs(t *testing.T) {
 		if err := m.Validate(); err != nil {
 			t.Fatalf("%s: %v", preset.Name, err)
 		}
+	}
+}
+
+func TestReviewMenuExplainsWhenSelectionsAreReady(t *testing.T) {
+	m := newMacModel(macTestContext(t).Paths, "", newMacManifest(), true, time.Second)
+	if got := m.reviewMenuName(); got != "Review & install" {
+		t.Fatal(got)
+	}
+	m.selected["firefox"] = true
+	if got := m.reviewMenuName(); got != "Review 1 selection" {
+		t.Fatal(got)
+	}
+	m.selected["git"] = true
+	if got := m.reviewMenuName(); got != "Review 2 selections" {
+		t.Fatal(got)
+	}
+}
+
+func TestEscapeUsesNavigationHistoryAndBreadcrumbs(t *testing.T) {
+	m := newMacModel(macTestContext(t).Paths, "", newMacManifest(), true, time.Second)
+	for i, row := range m.rows() {
+		if row.ID == "developer" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	for i, row := range m.rows() {
+		if row.ID == "tools" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	if got := m.breadcrumb(); got != "Home / Developer & Terminal / Terminal tools" {
+		t.Fatal(got)
+	}
+	for i, row := range m.rows() {
+		if row.ID == macDeveloperToolsGroup {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	if m.appGroup != macDeveloperToolsGroup {
+		t.Fatal("developer environments did not open")
+	}
+	press(m, "esc")
+	if m.screen != macScreenBrowse || m.category != "tools" || m.appGroup != "" {
+		t.Fatal("escape did not return to terminal tools")
+	}
+	press(m, "esc")
+	if m.screen != macScreenDeveloper {
+		t.Fatal("escape did not return to developer hub")
+	}
+	press(m, "esc")
+	if m.screen != macScreenMenu {
+		t.Fatal("escape did not return to home")
 	}
 }
 
@@ -534,7 +597,7 @@ func TestMacEveryScreenFits(t *testing.T) {
 	}
 	for _, size := range [][2]int{{80, 24}, {72, 20}, {120, 35}} {
 		m.Update(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
-		for _, screen := range []macScreen{macScreenMenu, macScreenCategories, macScreenBrowse, macScreenPresets, macScreenReview, macScreenRestore, macScreenInstall, macScreenSummary, macScreenBootstrap, macScreenUpdates, macScreenAppConfigs, macScreenRaycast, macScreenTerminal, macScreenTerminalRestore, macScreenShell, macScreenUpdateConfirm} {
+		for _, screen := range []macScreen{macScreenMenu, macScreenDeveloper, macScreenCategories, macScreenBrowse, macScreenPresets, macScreenReview, macScreenRestore, macScreenInstall, macScreenSummary, macScreenBootstrap, macScreenUpdates, macScreenAppConfigs, macScreenRaycast, macScreenTerminal, macScreenTerminalRestore, macScreenShell, macScreenUpdateConfirm} {
 			m.screen = screen
 			m.category = "settings"
 			v := m.View().Content

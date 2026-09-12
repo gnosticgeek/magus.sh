@@ -11,6 +11,21 @@ func TestFontsMenuSelectionAndReview(t *testing.T) {
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
 	found := false
 	for i, row := range m.rows() {
+		if row.ID == "developer" {
+			m.cursor = i
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("Developer & Terminal missing from main menu")
+	}
+	press(m, "enter")
+	if m.screen != macScreenDeveloper {
+		t.Fatal("Developer & Terminal did not open")
+	}
+	found = false
+	for i, row := range m.rows() {
 		if row.ID == "fonts" {
 			m.cursor = i
 			found = true
@@ -18,7 +33,7 @@ func TestFontsMenuSelectionAndReview(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Fatal("Fonts missing from main menu")
+		t.Fatal("Fonts missing from Developer & Terminal")
 	}
 	press(m, "enter")
 	if m.screen != macScreenBrowse || m.category != "fonts" || len(m.rows()) != 8 {
@@ -35,8 +50,12 @@ func TestFontsMenuSelectionAndReview(t *testing.T) {
 		t.Fatal("select all did not select eight fonts")
 	}
 	press(m, "esc")
+	if m.screen != macScreenDeveloper {
+		t.Fatal("Fonts did not return to Developer & Terminal")
+	}
+	press(m, "esc")
 	if m.screen != macScreenMenu {
-		t.Fatal("Fonts did not return to menu")
+		t.Fatal("Developer & Terminal did not return to menu")
 	}
 	m.screen = macScreenReview
 	if len(m.rows()) != 8 {

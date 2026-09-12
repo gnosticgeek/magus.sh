@@ -1,2 +1,2 @@
 /** The release currently advertised by the website and release workflow. */
-export const RELEASE_VERSION = 'v0.4.6';
+export const RELEASE_VERSION = 'v0.4.7';

@@ -2,8 +2,8 @@ package main
 
 import "fmt"
 
-// MacPackage carries identity independently from its delivery provider. The
-// descriptions and preset approach are adapted from Machinist's AthanorKit.
+// MacPackage carries identity independently from its delivery provider. Summary
+// is the concise catalogue description rendered in the Mac TUI.
 type MacPackage struct {
 	ID, Name, Summary, Kind, AppBundle, Note string
 }
@@ -70,13 +70,29 @@ var macPackages = []MacPackage{
 	{"notion", "Notion", "App to write, plan, collaborate, and get organised", "cask", "Notion.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"proton-drive", "Proton Drive", "Client for Proton Drive", "cask", "Proton Drive.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"protonvpn", "ProtonVPN", "VPN client focusing on security", "cask", "ProtonVPN.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
+	{"1password", "1Password", "Polished password manager for logins, passkeys and secure documents.", "cask", "1Password.app", "Requires macOS 12 or later and a 1Password account; continued use requires a subscription."},
+	{"bitwarden", "Bitwarden", "Open-source password manager with cross-device sync.", "cask", "Bitwarden.app", "Requires macOS 12 or later. Sign in or create an account after installation; paid features are optional."},
+	{"keepassxc", "KeePassXC", "Offline, open-source password manager for local encrypted vaults.", "cask", "KeePassXC.app", "Requires macOS 12 or later. You are responsible for backing up and syncing your vault file."},
+	{"lulu", "LuLu", "Free, open-source firewall for controlling outgoing connections.", "cask", "LuLu.app", "Approve the required Network Extension in System Settings after installation."},
+	{"knockknock", "KnockKnock", "Inspect software that starts persistently on your Mac.", "cask", "KnockKnock.app", "This is an inspection tool, not an antivirus. Review results before removing or changing anything."},
 	{"retroarch-metal", "RetroArch", "Frontend for emulators, game engines and media players (Metal graphics API)", "cask", "RetroArch.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
+	{"steam", "Steam", "Game store, library and community from Valve.", "cask", "Steam.app", "The Mac client is Intel-only and requires Rosetta 2 on Apple Silicon. Installing Rosetta is a separate, difficult-to-reverse choice."},
+	{"heroic", "Heroic Games Launcher", "Open-source launcher for Epic, GOG and Amazon game libraries.", "cask", "Heroic.app", "Requires macOS 12 or later. Sign in to the stores you want to use after installation."},
+	{"moonlight", "Moonlight", "Open-source client for streaming games from another computer.", "cask", "Moonlight.app", "Pair it with a compatible host such as Sunshine after installation."},
 	{"shottr", "Shottr", "Screenshot measurement and annotation tool", "cask", "Shottr.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"spotify", "Spotify", "Music streaming service", "cask", "Spotify.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"unsloth", "Unsloth Desktop", "Desktop application for Unsloth Studio", "cask", "Unsloth.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"upscayl", "Upscayl", "AI image upscaler", "cask", "Upscayl.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"vorssaint", "Vorssaint", "Free, open-source menu bar toolkit for monitoring, window management and everyday Mac utilities.", "cask", "Vorssaint.app", "Apple Silicon and macOS 14 or later. No account, telemetry or subscription. Features request only the macOS permissions they need."},
 	{"git", "Git", "Distributed version control.", "formula", "", ""},
+	{"container", "Apple Container", "Create and run Linux containers with Apple's lightweight virtual machines.", "formula", "", "Requires Apple Silicon, macOS 26 or later and Xcode 26 or later. After installation, choose a kernel with `container system kernel set --recommended`."},
+	{"node", "Node.js & npm", "JavaScript runtime with the npm package manager and npx runner.", "formula", "", "Install a project-specific version manager separately if you need to switch Node versions often."},
+	{"python@3.14", "Python", "Current Python 3 runtime with pip for installing Python packages.", "formula", "", "Provides python3 and pip3. Use a virtual environment or uv for project dependencies."},
+	{"uv", "uv", "Fast Python package and project manager.", "formula", "", "Use uv to create and manage project environments; it can also install Python versions."},
+	{"go", "Go", "Go programming language toolchain with gofmt.", "formula", "", "Requires macOS 12 or later."},
+	{"rust", "Rust", "Rust compiler, Cargo package manager and formatter.", "formula", "", "If you use rustup, follow Homebrew's guidance to avoid PATH conflicts."},
+	{"docker", "Docker CLI", "Command-line client for building and running container images.", "formula", "", "Needs a compatible container runtime such as Colima or Docker Desktop to run containers."},
+	{"colima", "Colima", "Lightweight local container runtime for Docker-compatible workflows.", "formula", "", "Run `colima start` after installation. It uses a Linux virtual machine and may download an image."},
 	{"jq", "jq", "Terminal-based JSON processor.", "formula", "", ""},
 	{"yq", "yq", "Portable YAML / JSON / XML processor.", "formula", "", ""},
 	{"ripgrep", "ripgrep", "Blazing-fast recursive search (rg).", "formula", "", ""},

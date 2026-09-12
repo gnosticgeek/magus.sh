@@ -4,6 +4,15 @@
 `magus run` now open the same basket-based menu. `magus preview` inspects without
 installing. The older SteamOS flow described below is retained.
 
+The Mac menu groups terminal tools, fonts, terminal setup and app setups under a
+single **Developer & Terminal** hub; **Update Magus** remains the final menu item.
+Selected work is promoted as **Review N selections** before anything is installed.
+The Mac TUI uses consistent semantic status labels across browsing, updates and
+installation: Installed/Configured, External, Needs Homebrew/Unavailable, and
+Check failed/Failed.
+Mac browsing also records a typed navigation history, so Escape and Backspace
+return to the actual prior screen and the header shows the current breadcrumb.
+
 
 One statically-linked binary with two faces:
 
@@ -47,10 +56,25 @@ magus uninstall          # reverse what magus installed
 magus <verb> --dry-run   # report what would change without changing it
 ```
 
+### Reusable Mac profiles
+
+Mac selections can be saved as small, editable TOML files in
+`~/.config/magus/profiles/`. They are intentionally portable: keep them in a
+dotfiles repository or copy one to a new Mac, then use it as a reviewed starting
+point. Loading a profile adds its packages, preferences and app setups to the
+current manifest; a terminal or shell preference in the profile takes precedence.
+
+```bash
+magus profile save work-dev
+magus profile list
+magus profile show work-dev
+magus profile use work-dev  # opens Review & install; it does not install immediately
+```
+
 ### Machine-readable output
 
-Every verb takes `--json`. The document goes to **stdout**; the human log stays
-on **stderr** and is silenced, so the two can be captured separately.
+The reconciler verbs take `--json`. The document goes to **stdout**; the human
+log stays on **stderr** and is silenced, so the two can be captured separately.
 
 ```bash
 magus doctor --json | jq '.steps[] | select(.needs_attention)'

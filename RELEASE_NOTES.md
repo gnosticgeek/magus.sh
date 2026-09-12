@@ -1,38 +1,31 @@
-# Magus v0.4.6
+# Magus v0.4.7
 
-This bug-fix release tightens read-only behavior, uninstall ownership, and Mac
-update validation. The catalogue and manifest format are unchanged from v0.4.5.
+This Mac alpha release makes a fresh-Mac setup faster to browse, easier to
+navigate, and reusable across machines. The manifest schema remains `0.4.0`.
 
 ## Highlights
 
-- **Strict release versions.** The updater now accepts only complete
-  `vMAJOR.MINOR.PATCH` release tags. A malformed or unexpected latest-release
-  response is ignored instead of being presented as an update.
-- **Truly read-only checks.** Linux help, version, doctor, unknown commands, and
-  every dry run no longer create Magus directories or sweep temporary files.
-- **Ownership-safe uninstall.** Magus now records the Flatpaks it installs and
-  marks kitty and GE-Proton directories it creates. Uninstall leaves unmarked
-  external installations and launcher files untouched.
-- **Reliable cancellation.** Linux probes and mutations now inherit the active
-  run's cancellation context, and timeouts stop the complete subprocess group,
-  so interrupted installers cannot continue changing the machine in background.
-- **Shell-safe GE-Proton downloads.** Release metadata is parsed as JSON, assets
-  must belong to the expected upstream release path, and download/extraction use
-  direct process arguments instead of interpolating a URL into a shell command.
-
-## Notes
-
-Mac remains an alpha. The built-in updater downloads from GitHub, verifies the
-published SHA-256 checksum, and replaces the executable atomically. Preview mode
-does not download or write anything.
+- **Broader catalogue.** Games and Security & Privacy have stronger, more
+  useful app choices, and every selectable app and command-line tool now has a
+  concise description in its detail view.
+- **Developer & Terminal hub.** Terminal tools, fonts, terminal setup and app
+  setup now share a compact menu. It also includes Developer environments for
+  Apple Container, Node.js and npm, Python, uv, Go, Rust, Docker CLI and Colima.
+- **Clearer review flow.** Review & install is part of the selection journey,
+  with consistent labels and colours for installed, external, unavailable and
+  failed states across the app.
+- **Reliable navigation.** Breadcrumbs show the active path, and Escape or
+  Backspace follows the screen history rather than guessing a parent screen.
+- **Reusable profiles.** Save a named, human-readable TOML selection with
+  `magus profile save NAME`; list, inspect and load it later. Loading always
+  opens Review & install and never overwrites an existing profile.
 
 ## Upgrade
 
-Choose **Update Magus** from the Mac menu, or run the usual installer:
+Choose **Update Magus** from the Mac menu, or run:
 
 ```sh
 curl -fsSL https://magus.sh/install | sh
 ```
 
-After a built-in update, launch Magus again to use the new binary. Existing
-manifests remain on schema `0.4.0`; v0.4.6 does not require a manifest migration.
+Existing manifests continue to work unchanged; no migration is required.

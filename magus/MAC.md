@@ -24,6 +24,26 @@ go build -o dist/magus .
 `magus run` opens the same menu, including after a previous setup. Picks are
 restored from the last confirmed manifest, then installed/already-applied items
 are removed from the basket after inspection. A new machine starts with no picks.
+
+## Reusable setup profiles
+
+Save a named selection as a compact, human-readable TOML file, then keep it in
+your dotfiles or transfer it to another Mac. Profiles live at
+`~/.config/magus/profiles/NAME.toml`; names use lowercase letters, numbers and
+hyphens. Magus will never overwrite a profile by accident.
+
+```sh
+magus profile save work-dev
+magus profile list
+magus profile show work-dev
+magus profile use work-dev
+```
+
+`use` opens the normal interactive review rather than installing immediately.
+It adds the profile's packages, Finder preferences and app setups to the current
+saved selection, while an included terminal or shell setup becomes the selected
+one. `--dry-run` with `save` only reports the profile file it would create.
+
 The home screen uses the website's lavender, pink and ice-blue gradient across
 an ASCII seal and wordmark, with a compact mark in shorter terminals. Colours
 adapt to light backgrounds and plain terminals.
@@ -36,19 +56,38 @@ Fuzzy search spans all categories and also matches their names. Bubbles List
 provides paging, result counts and custom rows with a separate basket. The AI category adds
 Ollama and LM Studio alongside desktop assistants; model downloads remain separate.
 
-The catalogue includes 53 apps, eight fonts and 21 terminal tools, including Mole.
+The catalogue includes 61 apps, eight fonts and 29 terminal tools, including Mole.
 **Fonts** opens a handpicked selection: Inter, Source Serif 4, Newsreader, Fraunces,
 Space Grotesk and JetBrains Mono. Select fonts individually or use Ctrl+S for all
 six, then review and install through the shared basket. Choose the installed font
 in your app; some apps need reopening.
 
-The main menu calls this section **Terminal tools**. App and tool browsing
+The main menu groups terminal-related work under **Developer & Terminal**. Its
+hub contains Terminal tools, Fonts, Terminal setup and App setups. Terminal tools
+includes a **Developer environments** submenu with Apple Container, Node.js with
+npm, Python, uv, Go, Rust, the Docker CLI and Colima. Apple Container requires
+Apple Silicon, macOS 26 or later, and Xcode 26 or later; Magus presents those
+requirements and keeps it unavailable until they are met, but does not install
+Xcode or start container services. When selections are ready, the main menu
+changes to **Review N selections** so the next safety checkpoint is clear. App
+and tool browsing
 uses columns at 80 columns wide, with a side preview from 120 columns and a
 single list below 80. Tab opens details at any size. Arrow keys move between
 cells; Page Up/Down change pages. During search, Left/Right edit the query.
 **Ctrl+S** selects all results in the current category or search, across pages;
 press it again to deselect those results. Installed items are excluded from
 individual selection and select-all. Other selections stay untouched.
+
+State is consistent across the Mac TUI: **Installed** and **Configured** use
+success green; **External** uses informational blue; **Needs Homebrew** and
+**Unavailable** use amber; and **Check failed** and **Failed** use pink-red.
+The same labels appear in catalogue badges, update checks and installation
+summaries.
+
+Every non-Home browsable screen carries a breadcrumb. Escape and Backspace follow the
+actual route taken through apps, the Developer & Terminal hub and setup screens;
+after an installation or update completes, Magus returns to Home with a fresh
+navigation history.
 Enter on an app or tool opens details; only Space toggles an individual selection.
 Mole is installed only; its cleanup and removal actions must be started separately.
 Installed entries show a
@@ -76,7 +115,8 @@ reports the action without downloading or writing anything. Only a complete
 numeric `vMAJOR.MINOR.PATCH` release tag is offered by the update check.
 
 - Arrows move, Page Up/Down change pages, Home/End jump to first/last.
-  Space selects, Enter opens, Escape or Backspace goes back. Selection notices clear after
+  Space selects, Enter opens, Escape or Backspace goes back. Terminal-related
+  screens return to the Developer & Terminal hub before the main menu. Selection notices clear after
   three seconds without clearing newer error messages.
 - `/` searches across all categories. Letters—including `r`, `q`, and `?`—are
   text while searching. Space toggles the focused result.

@@ -224,7 +224,7 @@ func (m *macModel) terminalRows() []macRow {
 	for _, theme := range terminalThemes {
 		rows = append(rows, macRow{ID: terminalID(theme), Name: "Ghostty / " + theme, Summary: "Install Ghostty and JetBrains Mono. Apply a light/dark theme, 14pt text, comfortable padding and clearly visible blurred transparency.", Source: terminalPath(m.paths), Note: "Enter adds this setup to Review & install. Existing config.ghostty is backed up before replacement; edited Magus files and conflicting configs are left alone.\n\n" + "```\n" + terminalConfig(theme) + "```"})
 	}
-	rows = append(rows, macRow{ID: "terminal-review", Name: "Review & apply setup", Summary: "Review your basket, then press Enter to install and apply the selected Ghostty theme."})
+	rows = append(rows, macRow{ID: "terminal-review", Name: "Review & install", Summary: "Review your basket, then press Enter to install and apply the selected Ghostty theme."})
 	rows = append(rows, macRow{ID: "terminal-export", Name: "Export selected Ghostty dotfile", Summary: "Save the selected theme (Catppuccin by default) under the Magus config directory without changing Ghostty."})
 	rows = append(rows, macRow{ID: "terminal-restore", Name: "Restore previous Ghostty settings", Summary: "Restore the saved configuration without removing Ghostty or fonts. Enter opens confirmation."})
 	return append(rows, macRow{ID: "shell", Name: "Modern commands", Summary: "Choose which modern tools to use in your Zsh terminal, or undo the setup."})
