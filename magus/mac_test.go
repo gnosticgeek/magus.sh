@@ -310,6 +310,39 @@ func TestMacMenuOmitsPresetsAndOffersSelfUpdate(t *testing.T) {
 	}
 }
 
+func TestMacSelfUpdateQuitsOnlyAfterSuccess(t *testing.T) {
+	c := macTestContext(t)
+	m := newMacModel(c.Paths, "", newMacManifest(), false, time.Second)
+	model, cmd := m.Update(macSelfUpdateDone{})
+	if model != m || cmd == nil {
+		t.Fatal("successful self-update did not return a quit command")
+	}
+	if _, ok := cmd().(tea.QuitMsg); !ok {
+		t.Fatal("successful self-update did not quit Magus")
+	}
+
+	model, cmd = m.Update(macSelfUpdateDone{err: errors.New("download interrupted")})
+	if model != m || cmd != nil || m.screen != macScreenMenu || !strings.Contains(m.notice, "existing executable is unchanged") {
+		t.Fatal("failed self-update should keep Magus open and preserve the existing executable")
+	}
+}
+
+func TestMacSelfUpdateConfirmationIsConcise(t *testing.T) {
+	c := macTestContext(t)
+	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
+	m.screen = macScreenSelfUpdate
+	m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	view := stripTerminal(m.View().Content)
+	for _, want := range []string{"Update to the latest Magus release?", "Magus will quit when the update completes.", "yes, update"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("self-update confirmation missing %q:\n%s", want, view)
+		}
+	}
+	if strings.Contains(view, "SHA-256") || strings.Contains(view, "atomically") {
+		t.Fatalf("self-update confirmation is too verbose:\n%s", view)
+	}
+}
+
 func TestMagusVersionNewer(t *testing.T) {
 	for _, test := range []struct {
 		latest, current string

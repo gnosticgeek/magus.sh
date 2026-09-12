@@ -177,7 +177,7 @@ func (m *macModel) rows() []macRow {
 			{ID: "app-configs", Name: "App setups", Summary: "Ghostty, Zed, Firefox, modern commands and Raycast presets."},
 			{ID: "review", Name: fmt.Sprintf("Review & install (%d)", len(m.selected)), Summary: "See your complete basket before anything changes."},
 			{ID: "updates", Name: "Update all", Summary: "Update eligible Homebrew apps and terminal tools.", Note: "Includes packages installed outside Magus. Review the scope before continuing."},
-			{ID: "self-update", Name: "Update Magus", Summary: m.magUpdateSummary(), Note: "Replaces the current executable atomically. Restart Magus afterwards to use the new version."},
+			{ID: "self-update", Name: "Update Magus", Summary: m.magUpdateSummary(), Note: "Downloads, verifies and installs the latest release, then quits Magus."},
 			{ID: "terminal", Name: "Terminal setup", Summary: "Ghostty themes, fonts and configurable modern commands."},
 		}
 	}

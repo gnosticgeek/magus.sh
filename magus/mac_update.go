@@ -169,12 +169,12 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.inspecting = true
 		return m, m.inspect()
 	case macSelfUpdateDone:
-		m.screen, m.cursor = macScreenMenu, 7
 		if v.err != nil {
+			m.screen, m.cursor = macScreenMenu, 7
 			m.notice = "Magus update failed; the existing executable is unchanged. " + v.err.Error()
-		} else {
-			m.notice = "Magus updated successfully. Restart it to use the new version."
+			return m, nil
 		}
+		return m, tea.Quit
 	case tea.PasteMsg:
 		if m.searching {
 			var cmd tea.Cmd

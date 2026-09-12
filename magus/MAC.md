@@ -70,8 +70,9 @@ Real upgrades have not been run as part of development validation.
 
 **Update Magus** downloads the latest release through the project installer,
 verifies its published GitHub checksum, and atomically replaces the running
-executable. Restart Magus to use the new binary. Preview reports the action
-without downloading or writing anything.
+executable. After a verified update, Magus quits so the next launch uses the new
+binary. A failed update keeps the existing executable and session open. Preview
+reports the action without downloading or writing anything.
 
 - Arrows move, Page Up/Down change pages, Home/End jump to first/last.
   Space selects, Enter opens, Escape or Backspace goes back. Selection notices clear after
