@@ -12,6 +12,9 @@ import (
 // machine work to commands and leaves asynchronous publication to Update.
 func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	k := v.String()
+	if k == "backspace" && !m.searching {
+		k = "esc"
+	}
 	if k == "ctrl+c" {
 		if m.session != nil {
 			m.session.cancel()
@@ -64,6 +67,17 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.updateReview.table, cmd = m.updateReview.table.Update(v)
 				return m, cmd
 			}
+		}
+		return m, nil
+	}
+	if m.screen == macScreenSelfUpdate {
+		switch k {
+		case "esc":
+			m.screen, m.cursor = macScreenMenu, 7
+		case "enter":
+			return m, m.updateMagus()
+		case "q":
+			return m, tea.Quit
 		}
 		return m, nil
 	}
@@ -290,7 +304,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		row := rows[m.cursor]
 		if m.screen == macScreenMenu {
 			m.cursor = 0
-			if row.ID == "review" || row.ID == "presets" || row.ID == "updates" || row.ID == "terminal" || row.ID == "app-configs" {
+			if row.ID == "review" || row.ID == "updates" || row.ID == "self-update" || row.ID == "terminal" || row.ID == "app-configs" {
 				m.screen = macScreen(row.ID)
 				if row.ID == "updates" {
 					return m, m.checkUpdates(false)

@@ -262,6 +262,8 @@ func press(m *macModel, k string) {
 		msg = tea.KeyPressMsg{Code: tea.KeyEnter}
 	case "esc":
 		msg = tea.KeyPressMsg{Code: tea.KeyEsc}
+	case "backspace":
+		msg = tea.KeyPressMsg{Code: tea.KeyBackspace}
 	case "down":
 		msg = tea.KeyPressMsg{Code: tea.KeyDown}
 	case "up":
@@ -270,6 +272,75 @@ func press(m *macModel, k string) {
 		msg = tea.KeyPressMsg{Code: []rune(k)[0], Text: k}
 	}
 	m.Update(msg)
+}
+
+func TestMacBackspaceNavigatesBackButEditsSearch(t *testing.T) {
+	c := macTestContext(t)
+	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
+	m.screen, m.category = macScreenBrowse, "tools"
+	press(m, "backspace")
+	if m.screen != macScreenMenu {
+		t.Fatal("backspace did not return to menu")
+	}
+	press(m, "/")
+	press(m, "a")
+	press(m, "backspace")
+	if !m.searching || m.search.Value() != "" {
+		t.Fatal("backspace should edit the active search field")
+	}
+}
+
+func TestMacMenuOmitsPresetsAndOffersSelfUpdate(t *testing.T) {
+	c := macTestContext(t)
+	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
+	foundUpdate := false
+	for _, row := range m.rows() {
+		if row.ID == "presets" {
+			t.Fatal("presets menu is still visible")
+		}
+		foundUpdate = foundUpdate || row.ID == "self-update"
+	}
+	if !foundUpdate {
+		t.Fatal("self-update menu is missing")
+	}
+	m.screen = macScreenSelfUpdate
+	press(m, "enter")
+	if m.screen != macScreenMenu || !strings.Contains(m.notice, "not updated") {
+		t.Fatal("preview self-update must not mutate the executable")
+	}
+}
+
+func TestMagusVersionNewer(t *testing.T) {
+	for _, test := range []struct {
+		latest, current string
+		want            bool
+	}{
+		{"v0.5.0", "v0.4.0", true},
+		{"v0.4.1", "v0.4.0", true},
+		{"v0.4.0", "v0.4.0", false},
+		{"v0.3.9", "v0.4.0", false},
+		{"v0.4.0", "dev", true},
+		{"invalid", "v0.4.0", false},
+	} {
+		if got := magusVersionNewer(test.latest, test.current); got != test.want {
+			t.Errorf("magusVersionNewer(%q, %q) = %t, want %t", test.latest, test.current, got, test.want)
+		}
+	}
+}
+
+func TestMagusUpdateCheckPublishesOnlyCurrentResult(t *testing.T) {
+	c := macTestContext(t)
+	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
+	old := m.selfUpdateGeneration.next()
+	current := m.selfUpdateGeneration.next()
+	m.Update(macSelfUpdateChecked{available: true, latest: "v0.5.0", generation: old})
+	if m.magUpdateAvailable {
+		t.Fatal("stale self-update check changed the menu")
+	}
+	m.Update(macSelfUpdateChecked{available: true, latest: "v0.5.0", generation: current})
+	if !m.magUpdateAvailable || m.magUpdateLatest != "v0.5.0" {
+		t.Fatal("current self-update check did not reach the menu")
+	}
 }
 func TestMacMenuBasketPresetsAndSearch(t *testing.T) {
 	c := macTestContext(t)

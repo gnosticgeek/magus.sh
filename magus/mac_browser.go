@@ -33,6 +33,12 @@ func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.I
 		if index == l.Index() {
 			style = macAccent.Background(adaptiveColor{Light: "#eee8fa", Dark: "#302b45"})
 		}
+		if r.ID == "self-update" && m.magUpdateAvailable {
+			available := lipgloss.NewStyle().Foreground(adaptiveColor{Light: "#237342", Dark: "#86d9a0"}).Bold(true).Render(" · update available")
+			label = ansi.Truncate(label, max(1, l.Width()-lipgloss.Width(available)), "…")
+			fmt.Fprint(w, style.Width(l.Width()-lipgloss.Width(available)).Render(label)+available)
+			return
+		}
 		fmt.Fprint(w, style.Width(l.Width()).Render(ansi.Truncate(label, l.Width(), "…")))
 		return
 	}

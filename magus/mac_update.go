@@ -70,6 +70,11 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.inventory = v.inventory
 		m.inspecting = false
 		m.pruneCompletedSelections()
+	case macSelfUpdateChecked:
+		if m.selfUpdateGeneration.current(v.generation) {
+			m.magUpdateAvailable = v.available
+			m.magUpdateLatest = v.latest
+		}
 	case macEvent:
 		if !m.sessionGeneration.current(v.generation) {
 			return m, nil
@@ -163,6 +168,13 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.inspecting = true
 		return m, m.inspect()
+	case macSelfUpdateDone:
+		m.screen, m.cursor = macScreenMenu, 7
+		if v.err != nil {
+			m.notice = "Magus update failed; the existing executable is unchanged. " + v.err.Error()
+		} else {
+			m.notice = "Magus updated successfully. Restart it to use the new version."
+		}
 	case tea.PasteMsg:
 		if m.searching {
 			var cmd tea.Cmd

@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -14,6 +18,124 @@ import (
 )
 
 type macUpdatesDone struct{ err error }
+type macSelfUpdateDone struct{ err error }
+
+type macSelfUpdateChecked struct {
+	available  bool
+	latest     string
+	generation asyncGeneration
+}
+
+const magusInstallerURL = "https://magus.sh/install"
+const magusLatestReleaseURL = "https://api.github.com/repos/gnosticgeek/magus.sh/releases/latest"
+
+func (m *macModel) checkMagusUpdate() tea.Cmd {
+	if m.selfUpdateCancel != nil {
+		m.selfUpdateCancel()
+	}
+	generation := m.selfUpdateGeneration.next()
+	ctx, cancel := context.WithCancel(context.Background())
+	m.selfUpdateCancel = cancel
+	return func() tea.Msg {
+		defer cancel()
+		checkCtx, timeout := context.WithTimeout(ctx, 10*time.Second)
+		defer timeout()
+		output, err := runMacCommand(checkCtx, nil, "/usr/bin/curl", "--proto", "=https", "--tlsv1.2", "-fsSL", magusLatestReleaseURL)
+		if err != nil {
+			return macSelfUpdateChecked{generation: generation}
+		}
+		var release struct {
+			TagName string `json:"tag_name"`
+		}
+		if json.Unmarshal([]byte(output), &release) != nil || release.TagName == "" {
+			return macSelfUpdateChecked{generation: generation}
+		}
+		return macSelfUpdateChecked{available: magusVersionNewer(release.TagName, buildVersion), latest: release.TagName, generation: generation}
+	}
+}
+
+func (m *macModel) magUpdateSummary() string {
+	if m.magUpdateAvailable {
+		return "Update available: " + m.magUpdateLatest
+	}
+	if m.magUpdateLatest != "" {
+		return "Magus is up to date (" + m.magUpdateLatest + ")."
+	}
+	return "Download and verify the latest Magus release from GitHub."
+}
+
+func magusVersionNewer(latest, current string) bool {
+	if current == "dev" {
+		return true
+	}
+	parse := func(version string) ([]int, bool) {
+		version = strings.TrimPrefix(strings.TrimSpace(version), "v")
+		var major, minor, patch int
+		if _, err := fmt.Sscanf(version, "%d.%d.%d", &major, &minor, &patch); err != nil {
+			return nil, false
+		}
+		return []int{major, minor, patch}, true
+	}
+	newer, okNewer := parse(latest)
+	running, okRunning := parse(current)
+	if !okNewer || !okRunning {
+		return false
+	}
+	for i := range newer {
+		if newer[i] != running[i] {
+			return newer[i] > running[i]
+		}
+	}
+	return false
+}
+
+type macSelfUpdateCommand struct {
+	timeout     time.Duration
+	in          io.Reader
+	out, errOut io.Writer
+}
+
+func (c *macSelfUpdateCommand) SetStdin(r io.Reader)  { c.in = r }
+func (c *macSelfUpdateCommand) SetStdout(w io.Writer) { c.out = w }
+func (c *macSelfUpdateCommand) SetStderr(w io.Writer) { c.errOut = w }
+func (c *macSelfUpdateCommand) Run() error {
+	parent, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	ctx, cancel := context.WithTimeout(parent, c.timeout)
+	defer cancel()
+	executable, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("locate current executable: %w", err)
+	}
+	download := exec.CommandContext(ctx, "/usr/bin/curl", "--proto", "=https", "--tlsv1.2", "-fsSL", magusInstallerURL)
+	var script bytes.Buffer
+	download.Stdout, download.Stderr = &script, c.errOut
+	if err := download.Run(); err != nil {
+		return fmt.Errorf("download installer: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, "/bin/sh")
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = bytes.NewReader(script.Bytes()), c.out, c.errOut
+	cmd.Env = append(os.Environ(), "MAGUS_BIN_DIR="+filepath.Dir(executable), "MAGUS_NO_PATH=1", "MAGUS_NO_LAUNCH=1")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("run verified installer: %w", err)
+	}
+	return nil
+}
+
+func (m *macModel) updateMagus() tea.Cmd {
+	if m.preview {
+		m.screen = macScreenMenu
+		m.notice = "Preview only — Magus was not updated."
+		return nil
+	}
+	timeout := m.timeout
+	if timeout <= 0 {
+		timeout = 10 * time.Minute
+	}
+	return tea.Exec(&macSelfUpdateCommand{timeout: timeout}, func(err error) tea.Msg {
+		return macSelfUpdateDone{err: err}
+	})
+}
 
 // Homebrew owns the terminal during maintenance, so prompts and download logs
 // remain visible. This deliberately does not use the installation basket.

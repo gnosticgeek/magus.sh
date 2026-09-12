@@ -13,6 +13,7 @@ const (
 	macScreenPresets         macScreen = "presets"
 	macScreenUpdates         macScreen = "updates"
 	macScreenUpdateConfirm   macScreen = "update-confirm"
+	macScreenSelfUpdate      macScreen = "self-update"
 	macScreenInstall         macScreen = "install"
 	macScreenSummary         macScreen = "summary"
 	macScreenBootstrap       macScreen = "bootstrap"

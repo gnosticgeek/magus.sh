@@ -48,7 +48,7 @@ single list below 80. Tab opens details at any size. Arrow keys move between
 cells; Page Up/Down change pages. During search, Left/Right edit the query.
 **Ctrl+S** selects all results in the current category or search, across pages;
 press it again to deselect those results. Installed items are excluded from
-individual selection, presets, and select-all. Other selections stay untouched.
+individual selection and select-all. Other selections stay untouched.
 Enter on an app or tool opens details; only Space toggles an individual selection.
 Mole is installed only; its cleanup and removal actions must be started separately.
 Installed entries show a
@@ -68,8 +68,13 @@ requested. Homebrew's default exclusions for pinned formulae and self-updating
 or unversioned casks apply. This does not update App Store or unmanaged apps.
 Real upgrades have not been run as part of development validation.
 
+**Update Magus** downloads the latest release through the project installer,
+verifies its published GitHub checksum, and atomically replaces the running
+executable. Restart Magus to use the new binary. Preview reports the action
+without downloading or writing anything.
+
 - Arrows move, Page Up/Down change pages, Home/End jump to first/last.
-  Space selects, Enter opens, Escape goes back. Selection notices clear after
+  Space selects, Enter opens, Escape or Backspace goes back. Selection notices clear after
   three seconds without clearing newer error messages.
 - `/` searches across all categories. Letters—including `r`, `q`, and `?`—are
   text while searching. Space toggles the focused result.

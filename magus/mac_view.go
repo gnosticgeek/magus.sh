@@ -41,6 +41,9 @@ func (m *macModel) viewContent() string {
 			body = fmt.Sprintf("Update %d reviewed apps and tools?\n\nClose the affected apps before continuing.\nHomebrew may also update required dependencies.\nIts live output and password prompts take over the terminal.\nCtrl+C stops; completed updates remain.\n\nOnly the reviewed package list is requested.\nNo automatic cleanup is requested.", len(m.updateReview.items))
 			body = confirmationOverlay(m.updateReviewView(w, h), body, w, h)
 			keys = hints("enter", "update reviewed", "esc", "back to versions")
+		case macScreenSelfUpdate:
+			body = "Update Magus itself?\n\nThe latest release will be downloaded from GitHub, verified against its published SHA-256 checksum, and atomically installed over the current executable.\n\nRestart Magus afterwards to run the new version."
+			keys = hints("enter", "update Magus", "esc", "back")
 		case macScreenBootstrap:
 			body = "Preparing the official Homebrew installer…\n\nThe terminal will be handed to Homebrew for its prompts.\nMagus will resume when it finishes."
 		case macScreenTerminalRestore:
