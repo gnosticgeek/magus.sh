@@ -36,13 +36,13 @@ Fuzzy search spans all categories and also matches their names. Bubbles List
 provides paging, result counts and custom rows with a separate basket. The AI category adds
 Ollama and LM Studio alongside desktop assistants; model downloads remain separate.
 
-The catalogue includes 53 apps, six fonts and 16 command-line tools, including Mole.
+The catalogue includes 53 apps, eight fonts and 21 terminal tools, including Mole.
 **Fonts** opens a handpicked selection: Inter, Source Serif 4, Newsreader, Fraunces,
 Space Grotesk and JetBrains Mono. Select fonts individually or use Ctrl+S for all
 six, then review and install through the shared basket. Choose the installed font
 in your app; some apps need reopening.
 
-The main menu calls this section **Command-line tools**. App and tool browsing
+The main menu calls this section **Terminal tools**. App and tool browsing
 uses columns at 80 columns wide, with a side preview from 120 columns and a
 single list below 80. Tab opens details at any size. Arrow keys move between
 cells; Page Up/Down change pages. During search, Left/Right edit the query.
@@ -194,7 +194,7 @@ verified solely from these tests. Before public release, manually exercise:
 
 1. One real formula and cask on a disposable Mac; rerun and confirm both skip.
 2. Apply/read back each Finder setting, visually confirm it, then restore it.
-3. Missing Homebrew and command-line tools in a disposable Mac environment.
+3. Missing Homebrew and terminal tools in a disposable Mac environment.
 4. The menu in macOS Terminal at 80×24 and larger, plus physical Intel testing.
 
 Linux catalogue expansion, shell themes, Brewfiles, App Store apps, and updates
@@ -260,5 +260,5 @@ configuration unmanaged. Accepted command IDs also include `atuin`.
 
 ## App setups
 
-The Mac menu includes **App setups** for Ghostty, Zed, Firefox, Modern CLI and
+The Mac menu includes **App setups** for Ghostty, Zed, Firefox, modern commands and
 Raycast. See [setup contents, exports and restore limitations](APP_SETUPS.md).

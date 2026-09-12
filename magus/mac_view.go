@@ -134,12 +134,15 @@ func (m *macModel) viewContent() string {
 				prefix = macAccent.Render("Apps") + sMuted.Render("  /  find your essentials") + "\n\n"
 				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
 			} else if m.screen == macScreenBrowse {
-				label := map[string]string{"apps": "Apps", "tools": "Command-line tools", "fonts": "Fonts", "settings": "Mac settings"}[m.category]
+				label := map[string]string{"apps": "Apps", "tools": "Terminal tools", "fonts": "Fonts", "settings": "Mac settings"}[m.category]
 				prefix = macAccent.Render(label)
 				if group, ok := appCategory(m.appGroup); ok && m.category == "apps" {
 					prefix += sDim.Render("  /  ") + group.style().Render(group.Name)
 				}
 				prefix += sDim.Render("  /  "+m.catalogueFilterLabel()) + "\n\n"
+				if m.category == "settings" {
+					prefix += sMuted.Render("For broader Mac utilities: Apps > Menu Bar > Vorssaint") + "\n\n"
+				}
 				keys = hints("enter/space", "select", "f", "filter", "/", "search", "?", "help")
 			}
 			if m.screen == macScreenReview {

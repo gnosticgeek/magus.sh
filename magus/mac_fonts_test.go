@@ -21,8 +21,8 @@ func TestFontsMenuSelectionAndReview(t *testing.T) {
 		t.Fatal("Fonts missing from main menu")
 	}
 	press(m, "enter")
-	if m.screen != macScreenBrowse || m.category != "fonts" || len(m.rows()) != 6 {
-		t.Fatal("Fonts did not open six choices")
+	if m.screen != macScreenBrowse || m.category != "fonts" || len(m.rows()) != 8 {
+		t.Fatal("Fonts did not open eight choices")
 	}
 	for _, row := range m.rows() {
 		p, ok := macPackage(row.ID)
@@ -31,15 +31,15 @@ func TestFontsMenuSelectionAndReview(t *testing.T) {
 		}
 	}
 	press(m, "ctrl+s")
-	if len(m.selected) != 6 {
-		t.Fatal("select all did not select six fonts")
+	if len(m.selected) != 8 {
+		t.Fatal("select all did not select eight fonts")
 	}
 	press(m, "esc")
 	if m.screen != macScreenMenu {
 		t.Fatal("Fonts did not return to menu")
 	}
 	m.screen = macScreenReview
-	if len(m.rows()) != 6 {
+	if len(m.rows()) != 8 {
 		t.Fatal("fonts missing from review")
 	}
 	if err := m.selectionManifest().Validate(); err != nil {

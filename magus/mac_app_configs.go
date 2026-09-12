@@ -236,7 +236,7 @@ func (s appConfigStep) Remove(c *Context) error {
 func (m *macModel) appConfigRows() []macRow {
 	rows := []macRow{
 		{ID: "terminal", Name: "Ghostty", Summary: "Themes, readability, rendering and shell integration. Open terminal setup."},
-		{ID: "shell", Name: "Modern CLI", Summary: "Choose shell integrations and aliases. Existing shell settings are preserved."},
+		{ID: "shell", Name: "Modern commands", Summary: "Choose shell integrations and aliases. Existing shell settings are preserved."},
 	}
 	for _, p := range appConfigPresets {
 		check := "[ ] "

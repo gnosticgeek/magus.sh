@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -170,10 +171,10 @@ func (m *macModel) rows() []macRow {
 	if m.screen == macScreenMenu {
 		return []macRow{
 			{ID: "apps", Name: "Apps", Summary: "Find your essentials by category.", Note: "Browsers · Developer tools · AI · Productivity · Media · Communication"},
-			{ID: "tools", Name: "Command-line tools", Summary: "Developer tools and utilities you run from the command line."},
-			{ID: "fonts", Name: "Fonts", Summary: "Six handpicked fonts for writing, design and coding.", Note: "Inter · Source Serif 4 · Newsreader · Fraunces · Space Grotesk · JetBrains Mono"},
-			{ID: "settings", Name: "Mac settings", Summary: "Six Finder preferences. Original values are saved before changes."},
-			{ID: "app-configs", Name: "App setups", Summary: "Ghostty, Zed, Firefox, Modern CLI and Raycast presets."},
+			{ID: "tools", Name: "Terminal tools", Summary: "Developer tools and utilities you run from the terminal."},
+			{ID: "fonts", Name: "Fonts", Summary: "Eight handpicked fonts for writing, design and coding.", Note: "Atkinson Hyperlegible Next · Cascadia Code · Fraunces · Inter · JetBrains Mono · Newsreader · Source Serif 4 · Space Grotesk"},
+			{ID: "settings", Name: "Mac settings", Summary: "Six reversible Finder preferences.", Note: "For a broader set of live Mac utilities, we recommend Vorssaint in Apps > Menu Bar."},
+			{ID: "app-configs", Name: "App setups", Summary: "Ghostty, Zed, Firefox, modern commands and Raycast presets."},
 			{ID: "review", Name: fmt.Sprintf("Review & install (%d)", len(m.selected)), Summary: "See your complete basket before anything changes."},
 			{ID: "updates", Name: "Update all", Summary: "Update eligible Homebrew apps and terminal tools.", Note: "Includes packages installed outside Magus. Review the scope before continuing."},
 			{ID: "self-update", Name: "Update Magus", Summary: m.magUpdateSummary(), Note: "Replaces the current executable atomically. Restart Magus afterwards to use the new version."},
@@ -188,6 +189,9 @@ func (m *macModel) rows() []macRow {
 		for i, p := range macPresets {
 			rows = append(rows, macRow{ID: fmt.Sprint(i), Name: p.Name, Summary: p.Description, Note: "Presets only add selections. Your existing picks are kept."})
 		}
+		sort.SliceStable(rows, func(i, j int) bool {
+			return strings.ToLower(rows[i].Name) < strings.ToLower(rows[j].Name)
+		})
 		return rows
 	}
 	var rows []macRow
@@ -236,6 +240,15 @@ func (m *macModel) rows() []macRow {
 	}
 	if m.screen == macScreenBrowse && m.category == "settings" && !m.searching && m.catalogueFilter == macCatalogueAll {
 		rows = append(rows, macRow{ID: "restore", Name: "Restore Magus settings", Summary: "Restore the original values saved by Magus. Settings changed outside Magus are left alone."})
+	}
+	if !m.searching {
+		end := len(rows)
+		if end > 0 && rows[end-1].ID == "restore" {
+			end--
+		}
+		sort.SliceStable(rows[:end], func(i, j int) bool {
+			return strings.ToLower(rows[i].Name) < strings.ToLower(rows[j].Name)
+		})
 	}
 	return rows
 }

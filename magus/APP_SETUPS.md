@@ -1,7 +1,7 @@
 # Mac app setups
 
 Open **App setups** in the Mac menu. This ports the Ghostty, Zed, Firefox,
-Modern CLI and Raycast setup work from Machinist / Athanor into Magus.
+modern commands and Raycast setup work from Machinist / Athanor into Magus.
 Selecting a preset adds it to **Review & apply**; nothing is applied just by
 opening a setup. Installing an app alone does not select its preset.
 
@@ -20,7 +20,7 @@ opening a setup. Installing an app alone does not select its preset.
   once and quit before applying. Magus resolves a single registered profile;
   for multiple profiles, export and use `about:profiles` to choose the destination.
   The five add-on links from Athanor are available for manual installation.
-- **Modern CLI:** adds zoxide's `z`, fd/bat-powered fzf previews, coloured man
+- **Modern commands:** adds zoxide's `z`, fd/bat-powered fzf previews, coloured man
   pages, thefuck and a bat alias to Magus's existing configurable shell setup.
   Retains Magus's btop replacement for top. Required tools are included in the
   review plan. Each integration is guarded for missing tools and only runs in

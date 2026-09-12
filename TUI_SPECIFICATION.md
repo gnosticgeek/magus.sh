@@ -12,7 +12,7 @@ The Mac implementation supersedes the historical stage-install and script-output
 flows below **on macOS**. The SteamOS implementation remains separate.
 Implementation and testing details: [Mac alpha guide](magus/MAC.md).
 
-- `magus` and interactive `magus run` open directly into Apps, Command-line tools,
+- `magus` and interactive `magus run` open directly into Apps, Terminal tools,
   Mac settings, Presets, and Review & install. There is no required splash.
 - One persistent basket spans categories and search. Presets only add picks.
   New manifests start empty; confirmed selections survive another launch.

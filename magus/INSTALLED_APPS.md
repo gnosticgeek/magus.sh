@@ -60,7 +60,7 @@ Read-only inventory: **35 Homebrew casks**. App bundles in /Applications also in
 ## menubar
 
 - **Ice** (`jordanbaird-ice`) — Menu bar manager.
-- **Vorssaint** (`vorssaint`) — Menu bar toolkit with keep-awake, system monitor and volume mixer.
+- **Vorssaint** (`vorssaint`) — Free, open-source menu bar toolkit for monitoring, window management and everyday Mac utilities.
 
 ## utilities
 

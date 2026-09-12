@@ -346,13 +346,31 @@ func TestMacMenuBasketPresetsAndSearch(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, c.Paths.ManifestPath(), newMacManifest(), true, time.Second)
 	press(m, "enter")
-	press(m, "enter") // Apps -> Browsers -> package list.
+	for i, row := range m.rows() {
+		if row.ID == "browsers" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	for i, row := range m.rows() {
+		if row.ID == "firefox" {
+			m.cursor = i
+			break
+		}
+	}
 	press(m, "space")
 	if !m.selected["firefox"] {
 		t.Fatal("selection missing")
 	}
 	press(m, "esc")
 	m.screen = macScreenPresets
+	for i, row := range m.rows() {
+		if row.Name == "Everyday" {
+			m.cursor = i
+			break
+		}
+	}
 	press(m, "enter")
 	if !m.selected["firefox"] || !m.selected["rectangle"] {
 		t.Fatal("preset removed earlier selection")
@@ -426,7 +444,7 @@ func TestMacInstallShowsContinuousHonestActivity(t *testing.T) {
 }
 
 func TestMacCataloguePresetIDs(t *testing.T) {
-	if len(macPackages) != 80 || len(macSettings) != 6 {
+	if len(macPackages) != 82 || len(macSettings) != 6 {
 		t.Fatal("unexpected starter catalogue size")
 	}
 	for _, preset := range macPresets {
@@ -434,6 +452,35 @@ func TestMacCataloguePresetIDs(t *testing.T) {
 		m.Mac.Packages = preset.IDs
 		if err := m.Validate(); err != nil {
 			t.Fatalf("%s: %v", preset.Name, err)
+		}
+	}
+}
+
+func TestMacCatalogueMenusAreAlphabetical(t *testing.T) {
+	c := macTestContext(t)
+	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
+	checks := []struct {
+		screen   macScreen
+		category string
+		group    string
+	}{
+		{macScreenCategories, "apps", ""},
+		{macScreenBrowse, "apps", "browsers"},
+		{macScreenBrowse, "fonts", ""},
+		{macScreenBrowse, "tools", ""},
+		{macScreenBrowse, "settings", ""},
+		{macScreenPresets, "", ""},
+	}
+	for _, check := range checks {
+		m.screen, m.category, m.appGroup = check.screen, check.category, check.group
+		rows := m.rows()
+		for i := 1; i < len(rows); i++ {
+			if rows[i].ID == "restore" {
+				continue
+			}
+			if strings.ToLower(rows[i-1].Name) > strings.ToLower(rows[i].Name) {
+				t.Fatalf("%s is not alphabetical: %q before %q", check.screen, rows[i-1].Name, rows[i].Name)
+			}
 		}
 	}
 }

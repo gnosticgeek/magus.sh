@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"strconv"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -428,7 +429,11 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.groupCursor = m.cursor
 			m.appGroup, m.category, m.screen, m.cursor = row.ID, "apps", macScreenBrowse, 0
 		} else if m.screen == macScreenPresets {
-			for _, id := range macPresets[m.cursor].IDs {
+			presetIndex, err := strconv.Atoi(row.ID)
+			if err != nil || presetIndex < 0 || presetIndex >= len(macPresets) {
+				return m, m.flash("That preset is no longer available.")
+			}
+			for _, id := range macPresets[presetIndex].IDs {
 				if m.needsSelection(id) {
 					m.selected[id] = true
 				}

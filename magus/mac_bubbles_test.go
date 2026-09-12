@@ -83,7 +83,7 @@ func TestBrowserFuzzyPagingAndDetails(t *testing.T) {
 		t.Fatal("page down did not move")
 	}
 	m.Update(tea.KeyPressMsg{Code: tea.KeyEnd})
-	if m.rows()[m.cursor].ID != "mole" {
+	if m.rows()[m.cursor].ID != "zoxide" {
 		t.Fatal("end failed")
 	}
 	press(m, "space")
@@ -97,7 +97,7 @@ func TestBrowserFuzzyPagingAndDetails(t *testing.T) {
 			found = true
 		}
 	}
-	if !found || !m.selected["mole"] {
+	if !found || !m.selected["zoxide"] {
 		t.Fatal("fuzzy search lost match or basket")
 	}
 	press(m, "esc")

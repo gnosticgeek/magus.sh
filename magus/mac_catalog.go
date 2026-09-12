@@ -9,7 +9,7 @@ type MacPackage struct {
 }
 
 var macPackages = []MacPackage{
-	{"thefuck", "thefuck", "Suggest corrections for mistyped shell commands.", "formula", "", "Enable in App setups > Modern CLI."},
+	{"thefuck", "thefuck", "Suggest corrections for mistyped shell commands.", "formula", "", "Enable in App setups > Modern commands."},
 	{"dust", "dust", "Find large folders with a visual disk-usage tree.", "formula", "", "Run dust; du keeps its original behaviour."},
 	{"duf", "duf", "Readable disk-space tables.", "formula", "", "Run duf; df keeps its original behaviour."},
 	{"atuin", "Atuin", "Searchable shell history with optional sync.", "formula", "", "Enable in Terminal setup > Modern commands. Account and sync setup are separate."},
@@ -20,6 +20,8 @@ var macPackages = []MacPackage{
 	{"font-fraunces", "Fraunces", "Warm, expressive serif for memorable headings, branding and invitations.", "cask", "", "Choose the font in your app after installation. You may need to reopen the app."},
 	{"font-space-grotesk", "Space Grotesk", "Distinctive geometric sans serif for headings, portfolios and modern branding.", "cask", "", "Choose the font in your app after installation. You may need to reopen the app."},
 	{"font-jetbrains-mono", "JetBrains Mono", "Clear, comfortable monospace for coding and terminals.", "cask", "", "Choose the font in your app after installation. You may need to reopen the app."},
+	{"font-atkinson-hyperlegible-next", "Atkinson Hyperlegible Next", "Highly legible sans serif designed to make similar characters easier to distinguish.", "cask", "", "Choose the font in your app after installation. You may need to reopen the app."},
+	{"font-cascadia-code", "Cascadia Code", "Friendly monospace with programming ligatures for terminals and code editors.", "cask", "", "Choose the font in your app after installation. You may need to reopen the app."},
 
 	{"stats", "Stats", "System monitor for the menu bar.", "cask", "Stats.app", "Requires macOS 12 or later."},
 	{"mos", "Mos", "Smooth scrolling with independent mouse scroll direction.", "cask", "Mos.app", "Conflicts with the Mos beta cask."},
@@ -73,13 +75,13 @@ var macPackages = []MacPackage{
 	{"spotify", "Spotify", "Music streaming service", "cask", "Spotify.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"unsloth", "Unsloth Desktop", "Desktop application for Unsloth Studio", "cask", "Unsloth.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"upscayl", "Upscayl", "AI image upscaler", "cask", "Upscayl.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
-	{"vorssaint", "Vorssaint", "Menu bar toolkit with keep-awake, system monitor and volume mixer", "cask", "Vorssaint.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
+	{"vorssaint", "Vorssaint", "Free, open-source menu bar toolkit for monitoring, window management and everyday Mac utilities.", "cask", "Vorssaint.app", "Apple Silicon and macOS 14 or later. No account, telemetry or subscription. Features request only the macOS permissions they need."},
 	{"git", "Git", "Distributed version control.", "formula", "", ""},
-	{"jq", "jq", "Command-line JSON processor.", "formula", "", ""},
+	{"jq", "jq", "Terminal-based JSON processor.", "formula", "", ""},
 	{"yq", "yq", "Portable YAML / JSON / XML processor.", "formula", "", ""},
 	{"ripgrep", "ripgrep", "Blazing-fast recursive search (rg).", "formula", "", ""},
 	{"fd", "fd", "Simple, fast alternative to find.", "formula", "", ""},
-	{"fzf", "fzf", "Command-line fuzzy finder.", "formula", "", "Enable shortcuts in Terminal setup > Modern commands."},
+	{"fzf", "fzf", "Terminal fuzzy finder.", "formula", "", "Enable shortcuts in Terminal setup > Modern commands."},
 	{"bat", "bat", "cat clone with syntax highlighting.", "formula", "", ""},
 	{"eza", "eza", "Modern, colourful replacement for ls.", "formula", "", ""},
 	{"btop", "btop", "Resource monitor with a gorgeous TUI.", "formula", "", ""},
@@ -99,7 +101,7 @@ type MacPreset struct {
 
 var macPresets = []MacPreset{
 	{"Everyday", "Window management, archives and media. Adds three apps.", []string{"rectangle", "the-unarchiver", "iina"}},
-	{"Developer", "A terminal, editor and useful command-line tools.", []string{"ghostty", "visual-studio-code", "git", "jq", "ripgrep", "fd", "fzf", "bat", "git-delta", "lazygit", "eza", "zoxide", "btop", "dust", "duf", "atuin", "tlrc"}},
+	{"Developer", "A terminal, editor and useful terminal tools.", []string{"ghostty", "visual-studio-code", "git", "jq", "ripgrep", "fd", "fzf", "bat", "git-delta", "lazygit", "eza", "zoxide", "btop", "dust", "duf", "atuin", "tlrc"}},
 }
 
 type MacSelection struct {

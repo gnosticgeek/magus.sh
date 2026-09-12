@@ -44,14 +44,25 @@ func (m *macModel) checkMagusUpdate() tea.Cmd {
 		if err != nil {
 			return macSelfUpdateChecked{generation: generation}
 		}
-		var release struct {
-			TagName string `json:"tag_name"`
-		}
-		if json.Unmarshal([]byte(output), &release) != nil || release.TagName == "" {
+		latest, ok := parseMagusLatestRelease([]byte(output))
+		if !ok {
 			return macSelfUpdateChecked{generation: generation}
 		}
-		return macSelfUpdateChecked{available: magusVersionNewer(release.TagName, buildVersion), latest: release.TagName, generation: generation}
+		return macSelfUpdateChecked{available: magusVersionNewer(latest, buildVersion), latest: latest, generation: generation}
 	}
+}
+
+// parseMagusLatestRelease keeps the network response boundary small and
+// testable. GitHub's /releases/latest endpoint is intentionally the sole
+// authority for an offered update.
+func parseMagusLatestRelease(data []byte) (string, bool) {
+	var release struct {
+		TagName string `json:"tag_name"`
+	}
+	if json.Unmarshal(data, &release) != nil || strings.TrimSpace(release.TagName) == "" {
+		return "", false
+	}
+	return strings.TrimSpace(release.TagName), true
 }
 
 func (m *macModel) magUpdateSummary() string {

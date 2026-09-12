@@ -9,6 +9,35 @@ import (
 	"time"
 )
 
+func TestParseMagusLatestRelease(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		data string
+		want string
+		ok   bool
+	}{
+		{"published v0.4.4", `{"tag_name":"v0.4.4"}`, "v0.4.4", true},
+		{"whitespace", `{"tag_name":" v0.4.4 "}`, "v0.4.4", true},
+		{"missing tag", `{}`, "", false},
+		{"empty tag", `{"tag_name":""}`, "", false},
+		{"malformed response", `not json`, "", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got, ok := parseMagusLatestRelease([]byte(test.data))
+			if got != test.want || ok != test.ok {
+				t.Fatalf("parseMagusLatestRelease(%q) = (%q, %t), want (%q, %t)", test.data, got, ok, test.want, test.ok)
+			}
+		})
+	}
+}
+
+func TestPublishedReleaseIsOfferedToOlderMagus(t *testing.T) {
+	latest, ok := parseMagusLatestRelease([]byte(`{"tag_name":"v0.4.4"}`))
+	if !ok || !magusVersionNewer(latest, "v0.4.3") {
+		t.Fatalf("%q was not offered to v0.4.3", latest)
+	}
+}
+
 func TestUpdateCommandSequenceAndFailure(t *testing.T) {
 	for _, fail := range []bool{false, true} {
 		t.Run(map[bool]string{false: "success", true: "refresh failure"}[fail], func(t *testing.T) {

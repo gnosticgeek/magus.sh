@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -88,6 +89,9 @@ func (m *macModel) categoryRows() []macRow {
 		rows = append(rows, macRow{ID: group.ID, Name: group.Name, Summary: group.Summary,
 			Source: fmt.Sprintf("%d apps  /  %d selected", len(group.Packages), picked), Note: strings.Join(names, " · ")})
 	}
+	sort.SliceStable(rows, func(i, j int) bool {
+		return strings.ToLower(rows[i].Name) < strings.ToLower(rows[j].Name)
+	})
 	return rows
 }
 

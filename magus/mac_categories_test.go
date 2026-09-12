@@ -37,17 +37,40 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 	if m.screen != macScreenCategories || len(m.rows()) != 13 {
 		t.Fatal("Apps did not open categories")
 	}
+	for i, row := range m.rows() {
+		if row.ID == "browsers" {
+			m.cursor = i
+			break
+		}
+	}
 	press(m, "enter")
+	for i, row := range m.rows() {
+		if row.ID == "firefox" {
+			m.cursor = i
+			break
+		}
+	}
 	press(m, "space")
 	if !m.selected["firefox"] || len(m.rows()) != 4 {
 		t.Fatal("Browsers contains wrong apps")
 	}
 	press(m, "esc")
-	press(m, "down")
-	press(m, "down")
+	aiCursor := 0
+	for i, row := range m.rows() {
+		if row.ID == "ai" {
+			m.cursor, aiCursor = i, i
+			break
+		}
+	}
 	press(m, "enter")
 	if m.appGroup != "ai" || len(m.rows()) != 8 {
 		t.Fatal("AI category missing")
+	}
+	for i, row := range m.rows() {
+		if row.ID == "ollama-app" {
+			m.cursor = i
+			break
+		}
 	}
 	press(m, "space")
 	press(m, "/")
@@ -62,7 +85,7 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 		t.Fatal("search lost its originating category")
 	}
 	press(m, "esc")
-	if m.screen != macScreenCategories || m.cursor != 2 {
+	if m.screen != macScreenCategories || m.cursor != aiCursor {
 		t.Fatal("back lost category focus")
 	}
 	m.screen = macScreenReview
