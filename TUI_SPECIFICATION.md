@@ -1032,6 +1032,28 @@ magus/
 The Astro `/tui` page remains the visual design source of truth — both
 implementations consume the same content collection and `STAGE_SIGILS`.
 
+The Mac interface has a separate catalogue but follows the same Bubble Tea
+boundary. Its implementation is split by ownership:
+
+```text
+magus/
+├── mac_tui.go        # model, catalogue projection, selection, lifecycle
+├── mac_state.go      # typed screens and installation-event kinds
+├── mac_update.go     # state transitions and asynchronous publication
+├── mac_key.go        # keyboard routing and user-intent transitions
+├── mac_view.go       # rendering only; no I/O or mutations
+├── mac_inventory.go  # read-only package and preference inspection
+├── mac_bootstrap.go  # Homebrew temporary file, cancellation, and lock
+├── mac_async.go      # generation tokens for superseded-result rejection
+└── mac_execution.go  # installation session worker and machine changes
+```
+
+An asynchronous result is accepted only when its generation still belongs to
+the current operation. This is part of the state-machine contract: cancellation
+or starting a replacement operation invalidates already-buffered old results.
+Package inspection is separately bounded to four concurrent filesystem/package
+probes after one Homebrew metadata snapshot; preference reads remain sequential.
+
 ### Testing Strategy
 1. Unit tests for state transitions (pick → install → done, escape chains)
 2. Integration tests for keyboard input → state changes
@@ -1105,3 +1127,4 @@ implementations consume the same content collection and `STAGE_SIGILS`.
 | 2026-05-14 | Pick Installing and Run Installing now share a Bubbles `progress` + `spinner` panel with elapsed/ETA metadata, current command, recent log, and failure actions. |
 | 2026-05-14 | Write screen changed to live script assembly preview with line numbers and syntax tinting. |
 | 2026-05-14 | Help overlay and preset-applied confirmation moved out of future enhancements into v1 prototype requirements. |
+| 2026-09-12 | Documented typed Mac screens/events, model-update-view file ownership, and generation-checked asynchronous results. |

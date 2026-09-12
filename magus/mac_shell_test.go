@@ -177,7 +177,7 @@ func TestModernShellMenuManifestAndPlan(t *testing.T) {
 	if m.selectionManifest().Mac.ModernShell != nil {
 		t.Fatal("enabled by default")
 	}
-	m.screen = "shell"
+	m.screen = macScreenShell
 	press(m, "enter")
 	if !m.shellSettings.Enabled || !m.selected["eza"] || !m.selected["shell:configure"] {
 		t.Fatal(m.selected)
@@ -203,17 +203,17 @@ func TestModernShellMenuManifestAndPlan(t *testing.T) {
 	for _, size := range [][2]int{{72, 20}, {80, 24}, {120, 35}} {
 		m.width, m.height = size[0], size[1]
 		for _, screen := range []string{"shell", "review"} {
-			m.screen = screen
+			m.screen = macScreen(screen)
 			view := m.viewContent()
 			if lipgloss.Width(view) > size[0] || lipgloss.Height(view) > size[1] {
 				t.Fatal("overflow", size, screen)
 			}
 		}
 	}
-	m.screen = "shell"
+	m.screen = macScreenShell
 	m.cursor = len(m.shellRows()) - 1
 	press(m, "enter")
-	if m.screen != "review" || m.selectionManifest().Mac.ModernShell.Enabled {
+	if m.screen != macScreenReview || m.selectionManifest().Mac.ModernShell.Enabled {
 		t.Fatal("undo not queued")
 	}
 	saved.Mac.ModernShell.Commands = []string{"grep"}
@@ -226,14 +226,14 @@ func TestModernShellDependencyBasketAndRestore(t *testing.T) {
 	c := shellTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
 	m.selected["fzf"] = true // A manual pick must survive disabling the shell.
-	m.screen = "shell"
+	m.screen = macScreenShell
 	press(m, "enter")
-	m.screen = "review"
+	m.screen = macScreenReview
 	m.toggle("eza")
 	if !m.selected["eza"] {
 		t.Fatal("required dependency removed")
 	}
-	m.screen = "shell"
+	m.screen = macScreenShell
 	m.cursor = 0
 	press(m, "enter")
 	if m.selected["eza"] || !m.selected["fzf"] {

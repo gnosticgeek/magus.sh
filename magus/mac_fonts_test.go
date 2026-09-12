@@ -21,7 +21,7 @@ func TestFontsMenuSelectionAndReview(t *testing.T) {
 		t.Fatal("Fonts missing from main menu")
 	}
 	press(m, "enter")
-	if m.screen != "browse" || m.category != "fonts" || len(m.rows()) != 6 {
+	if m.screen != macScreenBrowse || m.category != "fonts" || len(m.rows()) != 6 {
 		t.Fatal("Fonts did not open six choices")
 	}
 	for _, row := range m.rows() {
@@ -35,17 +35,17 @@ func TestFontsMenuSelectionAndReview(t *testing.T) {
 		t.Fatal("select all did not select six fonts")
 	}
 	press(m, "esc")
-	if m.screen != "menu" {
+	if m.screen != macScreenMenu {
 		t.Fatal("Fonts did not return to menu")
 	}
-	m.screen = "review"
+	m.screen = macScreenReview
 	if len(m.rows()) != 6 {
 		t.Fatal("fonts missing from review")
 	}
 	if err := m.selectionManifest().Validate(); err != nil {
 		t.Fatal(err)
 	}
-	m.screen, m.category, m.appGroup = "browse", "apps", ""
+	m.screen, m.category, m.appGroup = macScreenBrowse, "apps", ""
 	for _, row := range m.rows() {
 		if strings.HasPrefix(row.ID, "font-") {
 			t.Fatal("font leaked into apps")

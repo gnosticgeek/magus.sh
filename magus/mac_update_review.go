@@ -21,13 +21,13 @@ type macUpdateReview struct {
 	table          table.Model
 	loading, ready bool
 	err            error
-	generation     int
+	generation     asyncGeneration
 	cancel         context.CancelFunc
 }
 type macUpdatesChecked struct {
 	items      []macUpgrade
 	err        error
-	generation int
+	generation asyncGeneration
 }
 type macMetadataRefreshed struct{ err error }
 
@@ -125,8 +125,7 @@ func (m *macModel) checkUpdates(refresh bool) tea.Cmd {
 	if m.updateReview.cancel != nil {
 		m.updateReview.cancel()
 	}
-	m.updateReview.generation++
-	generation := m.updateReview.generation
+	generation := m.updateReview.generation.next()
 	m.updateReview.loading, m.updateReview.ready = true, false
 	m.updateReview.err = nil
 	m.updateReview.items = nil

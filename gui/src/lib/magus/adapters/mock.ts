@@ -126,7 +126,7 @@ export class MockClient implements MagusClient {
 			schema: SCHEMA,
 			command,
 			magus: {
-				version: 'v0.4.1',
+				version: 'v0.4.2',
 				manifest_schema: '0.4.0',
 				dry_run: options.dryRun ?? command === 'doctor',
 			},

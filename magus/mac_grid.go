@@ -11,7 +11,7 @@ import (
 // Keep readable columns at 80 columns; wider terminals also get a preview.
 func (m *macModel) browserLayout() (columns, width int, split bool) {
 	w := max(16, m.width-6)
-	grid := m.screen == "browse" && (m.searching || m.category == "apps" || m.category == "tools" || m.category == "fonts")
+	grid := m.screen == macScreenBrowse && (m.searching || m.category == "apps" || m.category == "tools" || m.category == "fonts")
 	if grid && m.width >= 80 {
 		width = w
 		split = m.width >= 120
@@ -77,7 +77,7 @@ func (m *macModel) moveGrid(key string, columns int) {
 }
 
 func (m *macModel) selectAllResults() tea.Cmd {
-	if m.screen != "browse" {
+	if m.screen != macScreenBrowse {
 		return nil
 	}
 	rows := m.rows()

@@ -86,6 +86,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
+      # The curated notes live in the tagged source tree rather than being
+      # reconstructed from commits after the binaries have been built.
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v7
         with:
           name: magus-binaries
@@ -98,7 +101,7 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             --repo "${{ github.repository }}" \
             --title "$GITHUB_REF_NAME" \
-            --generate-notes \
+            --notes-file RELEASE_NOTES.md \
             magus/dist/magus-linux-amd64 \
             magus/dist/magus-linux-arm64 \
             magus/dist/magus-darwin-amd64 \

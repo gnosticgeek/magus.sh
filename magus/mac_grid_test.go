@@ -11,7 +11,7 @@ import (
 func TestGridNavigationAndSizes(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen, m.category = "browse", "tools"
+	m.screen, m.category = macScreenBrowse, "tools"
 	for _, size := range [][2]int{{72, 20}, {80, 24}, {120, 35}, {180, 35}} {
 		m.Update(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
 		view := m.View().Content
@@ -38,7 +38,7 @@ func TestGridNavigationAndSizes(t *testing.T) {
 func TestSelectAllResultsPreservesOtherPicks(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen, m.category = "browse", "tools"
+	m.screen, m.category = macScreenBrowse, "tools"
 	m.selected["firefox"] = true
 	m.Update(tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl})
 	if !m.selected["mole"] || !m.selected["git"] {

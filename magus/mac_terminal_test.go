@@ -26,7 +26,7 @@ func TestTerminalMenuSelectionAndPersistence(t *testing.T) {
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
 	m.cursor = 8
 	press(m, "enter")
-	if m.screen != "terminal" {
+	if m.screen != macScreenTerminal {
 		t.Fatal(m.screen)
 	}
 	press(m, "enter")
@@ -54,7 +54,7 @@ func TestTerminalMenuSelectionAndPersistence(t *testing.T) {
 	if steps[len(steps)-1].ID() != terminalID("TokyoNight") {
 		t.Fatal("profile must run after packages")
 	}
-	m.screen = "review"
+	m.screen = macScreenReview
 	found := false
 	for _, r := range m.rows() {
 		if r.ID == terminalID("TokyoNight") {
@@ -67,7 +67,7 @@ func TestTerminalMenuSelectionAndPersistence(t *testing.T) {
 	for _, size := range [][2]int{{80, 24}, {72, 20}, {120, 35}} {
 		m.width, m.height = size[0], size[1]
 		for _, screen := range []string{"menu", "terminal", "review"} {
-			m.screen, m.cursor = screen, 0
+			m.screen, m.cursor = macScreen(screen), 0
 			view := m.viewContent()
 			if lipgloss.Width(view) > size[0] || lipgloss.Height(view) > size[1] {
 				t.Fatal("overflow", size, screen)
@@ -181,11 +181,11 @@ func TestTerminalApplyValidatesBeforeWriting(t *testing.T) {
 func TestTerminalReviewAction(t *testing.T) {
 	c := terminalTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen, m.cursor = "terminal", 2
+	m.screen, m.cursor = macScreenTerminal, 2
 	press(m, "enter")
 	m.cursor = 3
 	press(m, "enter")
-	if m.screen != "review" || m.selectionManifest().Mac.Terminal != "Rose Pine" {
+	if m.screen != macScreenReview || m.selectionManifest().Mac.Terminal != "Rose Pine" {
 		t.Fatal(m.screen, m.selected)
 	}
 }

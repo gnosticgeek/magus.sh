@@ -281,12 +281,12 @@ func TestMacMenuBasketPresetsAndSearch(t *testing.T) {
 		t.Fatal("selection missing")
 	}
 	press(m, "esc")
-	m.screen = "presets"
+	m.screen = macScreenPresets
 	press(m, "enter")
 	if !m.selected["firefox"] || !m.selected["rectangle"] {
 		t.Fatal("preset removed earlier selection")
 	}
-	m.screen = "menu"
+	m.screen = macScreenMenu
 	press(m, "/")
 	for _, k := range []string{"r", "q", "?"} {
 		press(m, k)
@@ -295,7 +295,7 @@ func TestMacMenuBasketPresetsAndSearch(t *testing.T) {
 		t.Fatal("search characters activated global shortcut")
 	}
 	press(m, "esc")
-	m.screen = "review"
+	m.screen = macScreenReview
 	if len(m.rows()) != 4 {
 		t.Fatalf("basket lost picks: %d", len(m.rows()))
 	}
@@ -306,7 +306,7 @@ func TestMacMenuBasketPresetsAndSearch(t *testing.T) {
 func TestMacTerminalFitsAndFocusScrolls(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen = "browse"
+	m.screen = macScreenBrowse
 	m.category = "tools"
 	m.cursor = 14
 	for _, size := range [][2]int{{80, 24}, {72, 20}, {120, 35}} {
@@ -333,7 +333,7 @@ func TestMacBoundedLogsStripEscapes(t *testing.T) {
 func TestMacInstallShowsContinuousHonestActivity(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen = "install"
+	m.screen = macScreenInstall
 	m.started = time.Now().Add(-2 * time.Second)
 	m.outcomes = []macOutcome{{ID: "package:jq", Name: "jq", Status: "unfinished"}}
 	m.active = 0
@@ -377,7 +377,7 @@ func TestMacEveryScreenFits(t *testing.T) {
 	}
 	for _, size := range [][2]int{{80, 24}, {72, 20}, {120, 35}} {
 		m.Update(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
-		for _, screen := range []string{"menu", "categories", "browse", "presets", "review", "restore", "install", "summary", "bootstrap", "updates", "app-configs", "raycast"} {
+		for _, screen := range []macScreen{macScreenMenu, macScreenCategories, macScreenBrowse, macScreenPresets, macScreenReview, macScreenRestore, macScreenInstall, macScreenSummary, macScreenBootstrap, macScreenUpdates, macScreenAppConfigs, macScreenRaycast, macScreenTerminal, macScreenTerminalRestore, macScreenShell, macScreenUpdateConfirm} {
 			m.screen = screen
 			m.category = "settings"
 			v := m.View().Content

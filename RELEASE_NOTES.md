@@ -1,29 +1,24 @@
-# Magus v0.4.1
+# Magus v0.4.2
 
-This point release makes the Mac alpha easier to install, browse, and recover
-from when something needs attention. It keeps the same careful review-first
-approach: Magus still changes nothing until you confirm your selection.
+This release makes the Mac TUI easier to evolve safely and more resilient when
+the system is slow. It does not broaden what Magus changes: the review-first
+flow, preview mode, and user-file protections remain the same.
 
 ## Highlights
 
-- **Mac installs are ready for release.** The verified installer now supports
-  both Apple silicon and Intel Mac binaries. It downloads the matching build,
-  checks it against the release checksum, and installs Magus without applying
-  any setup choices.
-- **Find the right apps faster.** In the Mac catalogue, press `f` to cycle
-  between all items, items not installed, and the current selection. Search,
-  categories, and your review basket keep working as before.
-- **Clearer help when an install fails.** The installation view names the item
-  that failed, shows the useful error detail, and includes the Magus version,
-  Mac version, and item ID needed for a useful bug report. Retry with `r`, skip
-  with `s`, or open the full log with `l`.
-- **A more useful finish line.** Completion now separates installed, already
-  present, skipped, and failed items, then points to the appropriate next step:
-  inspect logs, refresh Finder, return to the menu, or run `magus doctor`.
-- **One release number across the product.** The website, installer card,
-  package metadata, TUI prototype, and desktop-app fixture now identify this
-  release consistently. A test prevents the website and package versions from
-  drifting apart.
+- **Clearer Mac TUI boundaries.** The model, rendering, keyboard routing,
+  asynchronous updates, inventory checks, and Homebrew bootstrap lifecycle now
+  have distinct, documented owners. This is an internal improvement with no new
+  setup action or hidden behaviour.
+- **Safer in-flight work.** Inventory, update, notification, and installation
+  results carry an operation identity. If you leave a screen, refresh, or begin
+  a newer operation, an old buffered result cannot overwrite the current view.
+- **Bounded Mac inventory checks.** Magus takes one Homebrew metadata snapshot,
+  then runs no more than four package/filesystem checks at once. Starting a new
+  inspection cancels the old one; macOS preference checks remain sequential.
+- **Stronger regression coverage.** The test suite now covers late messages,
+  worker-pool bounds, typed screen capabilities, and all Mac screens at narrow
+  and wide terminal sizes.
 
 ## Notes
 
@@ -41,4 +36,4 @@ curl -fsSL https://magus.sh/install | sh
 ```
 
 Then open a new terminal and run `magus run`. Existing manifests remain on
-schema `0.4.0`; v0.4.1 does not require a manifest migration.
+schema `0.4.0`; v0.4.2 does not require a manifest migration.

@@ -138,7 +138,7 @@ func TestFirefoxProfileAmbiguityAndTraversal(t *testing.T) {
 func TestAppConfigMenuManifestExportAndRestorePlan(t *testing.T) {
 	c := terminalTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen = "app-configs"
+	m.screen = macScreenAppConfigs
 	for i, row := range m.rows() {
 		if row.ID == "config:zed" {
 			m.cursor = i

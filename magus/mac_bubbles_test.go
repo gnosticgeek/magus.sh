@@ -75,7 +75,7 @@ func TestReviewedUpgradeUsesExactTargetsAndRejectsChanges(t *testing.T) {
 func TestBrowserFuzzyPagingAndDetails(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen, m.category = "browse", "tools"
+	m.screen, m.category = macScreenBrowse, "tools"
 	m.Update(tea.WindowSizeMsg{Width: 72, Height: 20})
 	m.View()
 	m.Update(tea.KeyPressMsg{Code: tea.KeyPgDown})
@@ -116,7 +116,7 @@ func TestBrowserFuzzyPagingAndDetails(t *testing.T) {
 func TestCatalogueFiltersKeepTheBasketIntact(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen, m.category = "browse", "tools"
+	m.screen, m.category = macScreenBrowse, "tools"
 	m.inventory.states["git"] = "installed"
 	m.selected["ripgrep"] = true
 
@@ -177,7 +177,7 @@ func TestLogsKeepScrollPositionWhenOutputArrives(t *testing.T) {
 func TestUpdateReviewFitsAndRequiresConfirmation(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen = "updates"
+	m.screen = macScreenUpdates
 	items, _ := parseMacOutdated(outdatedFixture)
 	m.acceptUpdateReview(macUpdatesChecked{items: items})
 	for _, size := range [][2]int{{72, 20}, {80, 24}, {120, 35}} {
@@ -191,7 +191,7 @@ func TestUpdateReviewFitsAndRequiresConfirmation(t *testing.T) {
 		}
 	}
 	press(m, "enter")
-	if m.screen != "update-confirm" {
+	if m.screen != macScreenUpdateConfirm {
 		t.Fatal("confirmation missing")
 	}
 	press(m, "enter")
@@ -224,13 +224,13 @@ func TestNoticeExpiryPreservesNewerMessages(t *testing.T) {
 func TestStaleUpdateInspectionCannotReplaceNewReview(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen = "updates"
+	m.screen = macScreenUpdates
 	m.updateReview.generation = 2
 	m.Update(macUpdatesChecked{generation: 1})
 	if m.updateReview.ready {
 		t.Fatal("accepted old inspection")
 	}
-	m.screen = "menu"
+	m.screen = macScreenMenu
 	m.Update(macUpdatesChecked{generation: 2})
 	if m.updateReview.ready {
 		t.Fatal("inspection reopened exited review")

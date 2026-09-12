@@ -43,7 +43,7 @@ func TestUpdateCommandSequenceAndFailure(t *testing.T) {
 func TestUpdatePreviewDoesNotStartCommand(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen = "updates"
+	m.screen = macScreenUpdates
 	if cmd := m.updateAll(); cmd != nil {
 		t.Fatal("preview started updates")
 	}
@@ -58,7 +58,7 @@ func TestUpdatePreviewDoesNotStartCommand(t *testing.T) {
 func TestInstalledBadgeIsIndependentOfBasket(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen, m.category, m.appGroup = "browse", "apps", "browsers"
+	m.screen, m.category, m.appGroup = macScreenBrowse, "apps", "browsers"
 	m.inventory.states["firefox"] = "installed"
 	view := stripTerminal(m.View().Content)
 	if strings.Contains(view, "[ ] Firefox") || !strings.Contains(view, "installed") {

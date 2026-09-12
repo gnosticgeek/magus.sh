@@ -241,6 +241,26 @@ uses the shared Bubbles component. Details use Glamour Markdown rendering.
 Mac confirmations use layered dialogs when the terminal has room, with an
 ordinary page on smaller screens.
 
+### Mac implementation boundaries
+
+The Mac interface keeps machine work outside rendering. `mac_tui.go` owns the
+model and catalogue projection, `mac_update.go` owns asynchronous state
+transitions, `mac_key.go` owns keyboard routing, and `mac_view.go` owns
+rendering. Inventory inspection and Homebrew bootstrapping live in
+`mac_inventory.go` and `mac_bootstrap.go`; screen and event types live in
+`mac_state.go`.
+
+Inventory, update, notification, and installation results carry a generation
+from `mac_async.go`. The update loop accepts a result only while its generation
+is current, preventing canceled or superseded work from changing a newer screen.
+Installation identity is attached at the TUI channel boundary so the execution
+worker remains independent of navigation.
+
+Package inspection uses at most four concurrent filesystem/package probes after
+one Homebrew metadata snapshot. A new inspection cancels the previous probe;
+macOS preference reads remain sequential rather than competing for the same
+system service.
+
 The SteamOS `magus run` setup wizard uses Huh forms. Tab/Shift+Tab move through
 fields, and the final review offers Apply, Edit choices, or Cancel. For a
 screen-reader-friendly setup in an interactive terminal:

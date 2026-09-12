@@ -21,15 +21,20 @@ type macOutcome struct {
 	Detail string `json:"detail,omitempty"`
 }
 type macEvent struct {
-	Kind, Text string
+	Kind macEventKind
+	Text string
+	// generation is attached by the TUI channel adapter. The worker and
+	// headless session tests do not need to know about screen lifetimes.
+	generation asyncGeneration
 	Index      int
 	Outcome    macOutcome
 	Outcomes   []macOutcome
 }
 type macSession struct {
-	events    chan macEvent
-	decisions chan string
-	cancel    context.CancelFunc
+	events     chan macEvent
+	decisions  chan string
+	cancel     context.CancelFunc
+	generation asyncGeneration
 }
 
 func outcomeFor(r Result, dry bool) macOutcome {
@@ -102,7 +107,11 @@ func saveOutcomes(paths Paths, out []macOutcome) error {
 // pauses for a retry decision. The worker owns all mutations until it exits.
 func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, timeout time.Duration) *macSession {
 	parent, cancel := context.WithCancel(context.Background())
-	session := &macSession{make(chan macEvent, 64), make(chan string, 1), cancel}
+	session := &macSession{
+		events:    make(chan macEvent, 64),
+		decisions: make(chan string, 1),
+		cancel:    cancel,
+	}
 	go func() {
 		defer close(session.events)
 		defer cancel()
@@ -110,7 +119,7 @@ func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, ti
 		c := &Context{Paths: paths, Manifest: m, Device: Device{Kind: DeviceMac}, DryRun: dry, Timeout: timeout, Parent: parent, Report: &Reporter{Out: io.Discard, Plain: true}}
 		c.OnLog = func(line string) {
 			select {
-			case session.events <- macEvent{Kind: "log", Text: line}:
+			case session.events <- macEvent{Kind: macEventLog, Text: line}:
 			default:
 			}
 		}
@@ -123,7 +132,7 @@ func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, ti
 			}
 		}
 		if err != nil {
-			send(macEvent{Kind: "fatal", Text: err.Error()})
+			send(macEvent{Kind: macEventFatal, Text: err.Error()})
 			return
 		}
 		steps := macSteps(m)
@@ -134,7 +143,7 @@ func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, ti
 			err = m.Save(path)
 		}
 		if err != nil {
-			send(macEvent{Kind: "fatal", Text: err.Error()})
+			send(macEvent{Kind: macEventFatal, Text: err.Error()})
 			return
 		}
 		outcomes := make([]macOutcome, len(steps))
@@ -146,7 +155,7 @@ func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, ti
 				return true
 			}
 			if err := saveOutcomes(paths, outcomes); err != nil {
-				send(macEvent{Kind: "fatal", Text: "Could not save outcomes: " + err.Error()})
+				send(macEvent{Kind: macEventFatal, Text: "Could not save outcomes: " + err.Error()})
 				return false
 			}
 			return true
@@ -154,13 +163,13 @@ func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, ti
 		if !persist() {
 			return
 		}
-		send(macEvent{Kind: "plan", Outcomes: append([]macOutcome(nil), outcomes...)})
+		send(macEvent{Kind: macEventPlan, Outcomes: append([]macOutcome(nil), outcomes...)})
 		for i, s := range steps {
 			if parent.Err() != nil {
 				break
 			}
 			for {
-				send(macEvent{Kind: "active", Index: i, Text: s.Describe()})
+				send(macEvent{Kind: macEventActive, Index: i, Text: s.Describe()})
 				r := executeMacStep(c, s, restore)
 				o := outcomeFor(r, dry)
 				if restore && r.Err == nil {
@@ -187,18 +196,18 @@ func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, ti
 						m.Mac.ModernShell = nil
 					}
 					if err := m.Save(path); err != nil {
-						send(macEvent{Kind: "fatal", Text: err.Error()})
+						send(macEvent{Kind: macEventFatal, Text: err.Error()})
 						return
 					}
 				}
 				if !persist() {
 					return
 				}
-				send(macEvent{Kind: "result", Index: i, Outcome: o})
+				send(macEvent{Kind: macEventResult, Index: i, Outcome: o})
 				if r.Err == nil || parent.Err() != nil {
 					break
 				}
-				send(macEvent{Kind: "failure", Index: i, Text: o.Detail})
+				send(macEvent{Kind: macEventFailure, Index: i, Text: o.Detail})
 				choice := "stop"
 				select {
 				case choice = <-session.decisions:
@@ -213,7 +222,7 @@ func startMacSession(paths Paths, path string, m Manifest, restore, dry bool, ti
 				break
 			}
 		}
-		send(macEvent{Kind: "finished", Outcomes: outcomes})
+		send(macEvent{Kind: macEventFinished, Outcomes: outcomes})
 	}()
 	return session
 }

@@ -156,6 +156,26 @@ failure, unmanaged applications, dry runs, exact restoration, external edits,
 retry/stop, operation locks, child-process cancellation, manifest isolation,
 selection/search behavior, terminal sizes, and verified installer downloads.
 
+### TUI architecture and asynchronous state
+
+The Mac Bubble Tea implementation is divided by ownership. `mac_tui.go` contains
+the model and catalogue projection, `mac_update.go` contains message-driven
+asynchronous transitions, `mac_key.go` contains keyboard routing, and
+`mac_view.go` renders without starting I/O. Read-only inventory collection lives
+in `mac_inventory.go`, the Homebrew bootstrap lifecycle lives in
+`mac_bootstrap.go`, and installation workers remain in `mac_execution.go`.
+
+Screen destinations and installation event kinds are typed in `mac_state.go`.
+Every asynchronous UI subsystem uses the generation token in `mac_async.go`.
+Results from a canceled inventory probe, update check, notification timer, or
+previous installation session are ignored once a newer generation exists. Tests
+pin current-result acceptance, stale-result rejection, and terminal-size limits.
+
+Package inspection takes one Homebrew list snapshot, then uses no more than four
+concurrent package/filesystem probes. Starting a new inspection cancels the
+older one; preference inspection stays sequential because it uses macOS system
+preferences rather than the package-probe resource pool.
+
 `mac-catalogue-audit.json` records the official Homebrew metadata check for the
 original 32 package identifiers plus seven additional Menu Bar apps. Another 29 casks use locally installed
 Homebrew metadata, recorded in `mac-installed-catalogue-audit.json`.

@@ -34,7 +34,7 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
 	press(m, "enter")
-	if m.screen != "categories" || len(m.rows()) != 13 {
+	if m.screen != macScreenCategories || len(m.rows()) != 13 {
 		t.Fatal("Apps did not open categories")
 	}
 	press(m, "enter")
@@ -58,14 +58,14 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 		t.Fatal("search does not match category names")
 	}
 	press(m, "esc")
-	if m.screen != "browse" || m.appGroup != "ai" {
+	if m.screen != macScreenBrowse || m.appGroup != "ai" {
 		t.Fatal("search lost its originating category")
 	}
 	press(m, "esc")
-	if m.screen != "categories" || m.cursor != 2 {
+	if m.screen != macScreenCategories || m.cursor != 2 {
 		t.Fatal("back lost category focus")
 	}
-	m.screen = "review"
+	m.screen = macScreenReview
 	if len(m.rows()) != 2 || !m.selected["firefox"] || !m.selected["ollama-app"] {
 		t.Fatal("cross-category basket lost selections")
 	}

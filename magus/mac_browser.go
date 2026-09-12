@@ -23,7 +23,7 @@ func (d macRowDelegate) Update(tea.Msg, *list.Model) tea.Cmd { return nil }
 func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.Item) {
 	m := d.owner
 	r := item.(macRow)
-	if m.screen == "menu" {
+	if m.screen == macScreenMenu {
 		marker := "  "
 		if index == l.Index() {
 			marker = "› "
@@ -41,14 +41,14 @@ func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.I
 		mark = "> "
 	}
 	check := ""
-	if (m.screen == "browse" || m.screen == "review") && r.ID != "restore" && m.needsSelection(r.ID) {
+	if (m.screen == macScreenBrowse || m.screen == macScreenReview) && r.ID != "restore" && m.needsSelection(r.ID) {
 		check = "[ ] "
 		if m.selected[r.ID] {
 			check = "[x] "
 		}
 	}
 	label := mark + check + r.Name
-	if m.screen == "categories" {
+	if m.screen == macScreenCategories {
 		group, _ := appCategory(r.ID)
 		picked := 0
 		for _, id := range group.Packages {
@@ -63,7 +63,7 @@ func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.I
 	style := sText
 	if index == l.Index() {
 		style = m.rowStyle(r.ID)
-	} else if m.screen == "categories" {
+	} else if m.screen == macScreenCategories {
 		style = m.rowStyle(r.ID).Bold(false)
 	}
 	fmt.Fprint(w, style.Render(label)+badge)
@@ -108,13 +108,12 @@ func fuzzyMacRows(rows []macRow, query string) []macRow {
 }
 
 type macNoticeExpired struct {
-	generation int
+	generation asyncGeneration
 	text       string
 }
 
 func (m *macModel) flash(text string) tea.Cmd {
-	m.noticeGeneration++
-	generation := m.noticeGeneration
+	generation := m.noticeGeneration.next()
 	m.notice = text
 	return tea.Tick(3*time.Second, func(time.Time) tea.Msg { return macNoticeExpired{generation, text} })
 }
@@ -139,37 +138,37 @@ func (m *macModel) contextualKeys() macKeys {
 	if m.details {
 		return hints("↑↓", "scroll details", "pgup/pgdown", "page", "tab/esc", "back to list")
 	}
-	if m.screen == "install" {
+	if m.screen == macScreenInstall {
 		if m.failed {
 			return hints("r", "retry failure", "s", "skip failure", "l", "logs", "q/esc", "stop")
 		}
 		return hints("l", "toggle logs", "↑↓", "scroll logs", "home/end", "log start/live output", "q/esc", "stop")
 	}
-	if m.screen == "updates" {
+	if m.screen == macScreenUpdates {
 		return hints("↑↓", "choose row", "pgup/pgdown", "page", "enter", "review confirmation", "r", "refresh metadata", "esc", "back")
 	}
-	if m.screen == "update-confirm" {
+	if m.screen == macScreenUpdateConfirm {
 		return hints("enter", "update reviewed packages", "esc", "back to versions")
 	}
-	if m.screen == "shell" {
+	if m.screen == macScreenShell {
 		return hints("↑↓", "move", "enter/space", "toggle", "tab", "details", "esc", "menu")
 	}
-	if m.screen == "terminal" || m.screen == "app-configs" || m.screen == "raycast" {
+	if m.screen == macScreenTerminal || m.screen == macScreenAppConfigs || m.screen == macScreenRaycast {
 		return hints("↑↓", "move", "enter", "choose setup", "tab", "details", "esc", "menu")
 	}
-	if m.screen == "menu" || m.screen == "categories" {
+	if m.screen == macScreenMenu || m.screen == macScreenCategories {
 		return hints("↑↓", "move", "pgup/pgdown", "page", "home/end", "first/last", "enter", "open", "tab", "focus details", "/", "search", "esc", "back", "q", "quit")
 	}
-	if m.screen == "presets" {
+	if m.screen == macScreenPresets {
 		return hints("↑↓", "move", "enter", "add preset", "tab", "details", "esc", "back")
 	}
-	if m.screen == "restore" {
+	if m.screen == macScreenRestore {
 		return hints("enter", "restore recorded settings", "esc", "back")
 	}
-	if m.screen == "review" {
+	if m.screen == macScreenReview {
 		return hints("↑↓", "move", "space", "remove from basket", "enter", "install selected", "esc", "back")
 	}
-	if m.screen == "summary" {
+	if m.screen == macScreenSummary {
 		return hints("↑↓", "scroll", "enter", "menu", "l", "logs", "q", "quit")
 	}
 	return hints("←↑↓→", "move", "pgup/pgdown", "page", "home/end", "first/last", "enter/space", "select item", "ctrl+s", "select/deselect all results", "f", "filter catalogue", "tab", "focus details", "/", "fuzzy search", "esc", "back", "?", "help")

@@ -54,7 +54,7 @@ const macWordmark = `    __  ___  ___    ______ __  __ _____
 
 func (m *macModel) headerView(width int) string {
 	title := "magus"
-	home := m.screen == "menu" && !m.showHelp
+	home := m.screen == macScreenMenu && !m.showHelp
 	if home {
 		title = "<>  M A G U S"
 	}

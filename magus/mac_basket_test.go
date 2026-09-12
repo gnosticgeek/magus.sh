@@ -18,18 +18,18 @@ func TestInstalledSelectionsPrunedAndCannotBeReadded(t *testing.T) {
 	if m.selected["brave-browser"] {
 		t.Fatal("installed app selected")
 	}
-	m.screen, m.category = "browse", "tools"
+	m.screen, m.category = macScreenBrowse, "tools"
 	m.selectAllResults()
 	if m.selected["git"] {
 		t.Fatal("external app bulk selected")
 	}
-	m.screen = "presets"
+	m.screen = macScreenPresets
 	m.cursor = 1
 	press(m, "enter")
 	if m.selected["ghostty"] || m.selected["git"] {
 		t.Fatal("preset selected existing package")
 	}
-	m.screen = "review"
+	m.screen = macScreenReview
 	for _, r := range m.rows() {
 		if !m.needsSelection(r.ID) {
 			t.Fatal("installed app in review")
@@ -40,14 +40,14 @@ func TestInstalledSelectionsPrunedAndCannotBeReadded(t *testing.T) {
 func TestEnterSelectsAppAndTabOpensDetails(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen, m.category, m.appGroup = "browse", "apps", "ai"
+	m.screen, m.category, m.appGroup = macScreenBrowse, "apps", "ai"
 	for i, row := range m.rows() {
 		if row.ID == "lm-studio" {
 			m.cursor = i
 		}
 	}
 	press(m, "enter")
-	if !m.selected["lm-studio"] || m.details || m.screen != "browse" {
+	if !m.selected["lm-studio"] || m.details || m.screen != macScreenBrowse {
 		t.Fatal("Enter should select LM Studio without opening details or installing")
 	}
 	if m.notice != "Selected LM Studio" {

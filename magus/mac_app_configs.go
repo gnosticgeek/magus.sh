@@ -243,7 +243,7 @@ func (m *macModel) appConfigRows() []macRow {
 		if m.selected["config:"+p.ID] {
 			check = "[x] "
 		}
-		if m.screen == "review" {
+		if m.screen == macScreenReview {
 			check = ""
 		}
 		rows = append(rows, macRow{ID: "config:" + p.ID, Name: check + p.Name + " preset", Summary: p.Note, Note: "Enter toggles this preset in the review basket.\n\n```\n" + p.Body + "```"}, macRow{ID: "export:" + p.ID, Name: "Export " + p.Name + " preset", Summary: "Save a portable copy without changing the app.", Note: p.Note})

@@ -92,7 +92,7 @@ func (m *macModel) categoryRows() []macRow {
 }
 
 func (m *macModel) rowStyle(id string) lipgloss.Style {
-	if m.screen == "categories" {
+	if m.screen == macScreenCategories {
 		if g, ok := appCategory(id); ok {
 			return g.style()
 		}
