@@ -354,6 +354,12 @@ func TestMagusVersionNewer(t *testing.T) {
 		{"v0.3.9", "v0.4.0", false},
 		{"v0.4.0", "dev", true},
 		{"invalid", "v0.4.0", false},
+		{"invalid", "dev", false},
+		{"0.4.1", "v0.4.0", false},
+		{"v0.4.1.0", "v0.4.0", false},
+		{"v0.4.1-beta", "v0.4.0", false},
+		{"v-1.0.0", "v0.4.0", false},
+		{"v0.4", "v0.4.0", false},
 	} {
 		if got := magusVersionNewer(test.latest, test.current); got != test.want {
 			t.Errorf("magusVersionNewer(%q, %q) = %t, want %t", test.latest, test.current, got, test.want)

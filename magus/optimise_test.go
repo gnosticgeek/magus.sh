@@ -252,19 +252,46 @@ func TestProtonGEDetectsAnExistingInstall(t *testing.T) {
 	}
 }
 
-// Uninstall must take away GE-Proton without touching a compatibility tool
-// somebody else put there.
+func TestProtonGETarballURLIsRepositoryScoped(t *testing.T) {
+	want := "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton9-20/GE-Proton9-20.tar.gz"
+	data := `{"assets":[` +
+		`{"browser_download_url":"https://example.com/$(touch bad).tar.gz"},` +
+		`{"browser_download_url":"https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton9-20/checksum.sha512sum"},` +
+		`{"browser_download_url":"` + want + `"}]}`
+	if got, ok := protonGETarballURL([]byte(data)); !ok || got != want {
+		t.Fatalf("tarball = (%q, %t), want %q", got, ok, want)
+	}
+	for _, bad := range []string{
+		`not json`,
+		`{"assets":[]}`,
+		`{"assets":[{"browser_download_url":"https://example.com/GE-Proton.tar.gz"}]}`,
+	} {
+		if got, ok := protonGETarballURL([]byte(bad)); ok {
+			t.Fatalf("accepted untrusted tarball %q", got)
+		}
+	}
+}
+
+// Uninstall must take away only GE-Proton installations carrying Magus's
+// ownership marker, without touching external compatibility tools.
 func TestProtonGERemoveLeavesForeignTools(t *testing.T) {
 	c := testContext(t, DefaultManifest(Device{Kind: DeviceDeck}))
 	base := c.Paths.Home + "/.steam/root/compatibilitytools.d"
 	mkdirAll(t, base+"/GE-Proton9-20")
+	mkdirAll(t, base+"/GE-Proton9-21")
 	mkdirAll(t, base+"/Proton-Sarek")
+	if err := os.WriteFile(base+"/GE-Proton9-21/"+protonGEOwnershipMarker, []byte(protonGEOwnershipContents), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := (protonGEStep{}).Remove(c); err != nil {
 		t.Fatal(err)
 	}
-	if dirExists(base + "/GE-Proton9-20") {
-		t.Error("Remove left GE-Proton behind")
+	if !dirExists(base + "/GE-Proton9-20") {
+		t.Error("Remove deleted an external GE-Proton installation")
+	}
+	if dirExists(base + "/GE-Proton9-21") {
+		t.Error("Remove left Magus-owned GE-Proton behind")
 	}
 	if !dirExists(base + "/Proton-Sarek") {
 		t.Error("Remove deleted a compatibility tool magus did not install")

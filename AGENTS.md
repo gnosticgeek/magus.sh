@@ -37,6 +37,9 @@ after cancellation, replacement, or navigation out of scope.
 - Keep review and confirmation separate from execution.
 - Restore only content Magus can prove it created or backed up.
 - External applications and packages remain outside Magus ownership.
+- Remove Flatpaks, GE-Proton directories, or the kitty application directory
+  only when their Magus ownership receipt is present and valid; exact managed
+  links and launchers are handled separately.
 - Bound subprocesses with contexts and operation-specific timeouts.
 - A valid late result is still rejected unless it belongs to the current run.
 

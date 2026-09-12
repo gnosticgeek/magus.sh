@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -9,6 +11,7 @@ import (
 // ~/.local/share/flatpak, which is on /home and therefore survives an atomic
 // update; a system remote does not, and adding one needs root we do not take.
 const flathubRepo = "https://dl.flathub.org/repo/flathub.flatpakrepo"
+const flatpakOwnershipContents = "Installed by Magus.\n"
 
 // flathubStep ensures the user-scoped Flathub remote exists. Every flatpak step
 // depends on it, so it is ordered first in StepsFor.
@@ -61,31 +64,56 @@ func (s flatpakStep) Describe() string {
 	return fmt.Sprintf("install %s (%s) as a user flatpak", s.label, s.appID)
 }
 
-// Check asks flatpak itself rather than looking for a path. `flatpak info`
-// exiting zero is the authoritative answer to "is this installed for this user",
-// and it stays correct across flatpak's own layout changes.
+// Check asks Flatpak for the complete user application list. Unlike
+// `flatpak info`, this keeps "not installed" distinct from a broken probe, so a
+// read failure can never become permission to install and claim ownership.
 func (s flatpakStep) Check(c *Context) (State, error) {
 	if !have("flatpak") {
 		return StateNotApplicable, nil
 	}
-	if _, err := c.Output("flatpak", "info", "--user", s.appID); err != nil {
-		// A non-zero exit here means "not installed for this user". flatpak does
-		// not distinguish that from other failures by exit code, but every other
-		// failure mode (a broken installation, an unreadable repo) also warrants
-		// running install again, so treating it as missing is both safe and
-		// idempotent.
-		return StateMissing, nil
+	out, err := c.Output("flatpak", "list", "--user", "--app", "--columns=application")
+	if err != nil {
+		return StateUnknown, err
 	}
-	return StateOK, nil
+	for _, installed := range strings.Split(out, "\n") {
+		if strings.TrimSpace(installed) == s.appID {
+			return StateOK, nil
+		}
+	}
+	return StateMissing, nil
 }
 
 func (s flatpakStep) Apply(c *Context) error {
-	return c.Run("flatpak", "install", "--user", "--noninteractive", "--assumeyes", "flathub", s.appID)
+	if err := c.Run("flatpak", "install", "--user", "--noninteractive", "--assumeyes", "flathub", s.appID); err != nil {
+		return err
+	}
+	if c.DryRun {
+		return nil
+	}
+	return writeFileAtomic(flatpakOwnershipPath(c, s.appID), []byte(flatpakOwnershipContents), 0o600)
 }
 
 func (s flatpakStep) Remove(c *Context) error {
 	if !have("flatpak") {
 		return nil
 	}
-	return c.Run("flatpak", "uninstall", "--user", "--noninteractive", "--assumeyes", s.appID)
+	marker := flatpakOwnershipPath(c, s.appID)
+	owned, err := validOwnershipMarker(marker, flatpakOwnershipContents)
+	if err != nil {
+		return err
+	}
+	if !owned {
+		return errNotReversible
+	}
+	if err := c.Run("flatpak", "uninstall", "--user", "--noninteractive", "--assumeyes", s.appID); err != nil {
+		return err
+	}
+	if c.DryRun {
+		return nil
+	}
+	return os.Remove(marker)
+}
+
+func flatpakOwnershipPath(c *Context, appID string) string {
+	return filepath.Join(c.Paths.State, "ownership", "flatpak", appID)
 }

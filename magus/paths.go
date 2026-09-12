@@ -138,3 +138,23 @@ func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
 	}
 	return os.Rename(tmp, path)
 }
+
+// validOwnershipMarker accepts only a regular file with the exact contents
+// Magus writes. Symlinks and lookalike files are not evidence of ownership.
+func validOwnershipMarker(path, contents string) (bool, error) {
+	info, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if !info.Mode().IsRegular() {
+		return false, nil
+	}
+	body, err := os.ReadFile(path)
+	if err != nil {
+		return false, err
+	}
+	return string(body) == contents, nil
+}

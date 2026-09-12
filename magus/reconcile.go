@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -134,10 +135,10 @@ func (c *Context) Run(name string, args ...string) error {
 	if timeout == 0 {
 		timeout = 15 * time.Minute
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(c.parentContext(), timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, name, args...)
+	cmd := cancellableCommand(ctx, name, args...)
 	// The graphical session's PATH has no ~/.local/bin (§8), and a step may
 	// well need a binary an earlier step just installed there. Fix it up front
 	// rather than discovering it at the one call site that breaks.
@@ -159,13 +160,33 @@ func (c *Context) Output(name string, args ...string) (string, error) {
 	if timeout == 0 {
 		timeout = 2 * time.Minute
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(c.parentContext(), timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, name, args...)
+	cmd := cancellableCommand(ctx, name, args...)
 	cmd.Env = append(os.Environ(), "PATH="+c.Paths.Bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 	out, err := cmd.Output()
 	return strings.TrimSpace(string(out)), err
+}
+
+func (c *Context) parentContext() context.Context {
+	if c.Parent != nil {
+		return c.Parent
+	}
+	return context.Background()
+}
+
+func cancellableCommand(ctx context.Context, name string, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error {
+		if cmd.Process == nil {
+			return nil
+		}
+		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
+	cmd.WaitDelay = 2 * time.Second
+	return cmd
 }
 
 // Result is the outcome of one step in one run.

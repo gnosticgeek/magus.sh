@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
 	"time"
 )
 
@@ -80,12 +83,9 @@ func runCLI(args []string) int {
 	if runtime.GOOS == "darwin" || verb == "preview" {
 		return runMacCLI(verb, paths, *manifestPath, *defaults, *dryRun, *asJSON, *plain, *timeout)
 	}
-	if err := paths.EnsureDirs(); err != nil {
+	if err := prepareLinuxPaths(paths, verb, *dryRun); err != nil {
 		rep.Die("cannot create %s: %v", paths.Config, err)
 	}
-	// Clear temps left by a previous run that died mid-write, before anything
-	// else has a chance to add more.
-	paths.SweepTemps()
 
 	if *manifestPath == "" {
 		*manifestPath = paths.ManifestPath()
@@ -131,6 +131,21 @@ func runCLI(args []string) int {
 		fmt.Fprintf(os.Stderr, "magus: unknown command %q\n\n%s", verb, usage)
 		return 2
 	}
+}
+
+// Read-only commands must not create directories or sweep temporary files.
+// Real mutations prepare Magus-owned paths before loading or writing state.
+func prepareLinuxPaths(paths Paths, verb string, dryRun bool) error {
+	if dryRun || !oneOf(verb, []string{"run", "reconcile", "uninstall"}) {
+		return nil
+	}
+	if err := paths.EnsureDirs(); err != nil {
+		return err
+	}
+	// Clear temps left by a previous run that died mid-write, before anything
+	// else has a chance to add more.
+	paths.SweepTemps()
+	return nil
 }
 
 // cmdRun writes a manifest if there is not one already, then converges.
@@ -208,7 +223,9 @@ func cmdRun(rep *Reporter, paths Paths, device Device, path string, defaults, dr
 		return die(1, "%s", out.Manifest.Invalid)
 	}
 
-	ctx := &Context{Manifest: m, Device: device, Paths: paths, Report: rep, DryRun: dryRun, Timeout: timeout}
+	parent, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	ctx := &Context{Parent: parent, Manifest: m, Device: device, Paths: paths, Report: rep, DryRun: dryRun, Timeout: timeout}
 	steps := StepsFor(m)
 	rep.Section("converging %d steps", len(steps))
 	sum := Reconcile(ctx, steps)
@@ -290,7 +307,9 @@ func cmdDoctor(rep *Reporter, paths Paths, device Device, path string, asJSON bo
 			m.Magus.Device, device.Kind)
 	}
 
-	ctx := &Context{Manifest: m, Device: device, Paths: paths, Report: rep, DryRun: true, Timeout: timeout}
+	parent, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	ctx := &Context{Parent: parent, Manifest: m, Device: device, Paths: paths, Report: rep, DryRun: true, Timeout: timeout}
 	steps := StepsFor(m)
 	rep.Section("steps")
 	sum := Doctor(ctx, steps)
@@ -350,7 +369,9 @@ func withManifest(rep *Reporter, paths Paths, device Device, command, path strin
 		return die(1, "%s", out.Manifest.Invalid)
 	}
 
-	ctx := &Context{Manifest: m, Device: device, Paths: paths, Report: rep, DryRun: dryRun, Timeout: timeout}
+	parent, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	ctx := &Context{Parent: parent, Manifest: m, Device: device, Paths: paths, Report: rep, DryRun: dryRun, Timeout: timeout}
 	sum := action(ctx, StepsFor(m))
 	sum.Print(rep)
 	out.withSummary(sum)

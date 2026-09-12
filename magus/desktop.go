@@ -64,18 +64,30 @@ func escapeDesktopValue(v string) string {
 // a package wrote. Nothing without it is ever modified or deleted.
 const magusManagedMarker = "X-Magus-Managed=true"
 
+func isMagusManagedDesktopEntry(body string) bool {
+	for _, line := range strings.Split(body, "\n") {
+		if strings.TrimSuffix(line, "\r") == magusManagedMarker {
+			return true
+		}
+	}
+	return false
+}
+
 func writeDesktopEntry(c *Context, filename string, e desktopEntry) error {
 	path := filepath.Join(c.Paths.Apps, filename)
 	if c.DryRun {
 		c.Report.Detail("would write %s", path)
 		return nil
 	}
-	if existing, err := os.ReadFile(path); err == nil &&
-		!strings.Contains(string(existing), magusManagedMarker) {
+	existing, err := os.ReadFile(path)
+	if err == nil && !isMagusManagedDesktopEntry(string(existing)) {
 		// Someone else's launcher lives here. Overwriting it would be exactly the
 		// class of destruction the brief warns about: only remove what you can
 		// verify is yours.
 		return fmt.Errorf("%s exists and was not written by magus — leaving it alone", path)
+	}
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("inspect %s before writing: %w", path, err)
 	}
 	return writeFileAtomic(path, []byte(e.render()), 0o644)
 }
@@ -88,10 +100,25 @@ func desktopEntryCurrent(c *Context, filename, wantExec string) bool {
 		return false
 	}
 	body := string(b)
-	if !strings.Contains(body, magusManagedMarker) {
+	if !isMagusManagedDesktopEntry(body) {
 		// Not ours. Treating it as current is the right call — the step must not
 		// fight the user for the file, and writeDesktopEntry would refuse anyway.
 		return true
 	}
 	return strings.Contains(body, "Exec="+escapeDesktopValue(wantExec)+"\n")
+}
+
+func removeDesktopEntry(c *Context, filename string) error {
+	path := filepath.Join(c.Paths.Apps, filename)
+	body, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if !isMagusManagedDesktopEntry(string(body)) {
+		return nil
+	}
+	return removePath(c, path)
 }

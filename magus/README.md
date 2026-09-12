@@ -81,7 +81,12 @@ through identical code.
 filesystem rather than from a record of what it did last time, so a SteamOS
 atomic update that removes an artifact shows up as drift on the next `doctor`
 and is repaired by the next `reconcile`. There is no installed-version file to
-fall out of sync with reality.
+fall out of sync with reality. Narrow ownership receipts exist only to make
+uninstall safe: Magus records Flatpaks it installs and marks kitty and GE-Proton
+directories it creates. Unmarked packages and directories are treated as
+external and left in place. Read-only and dry-run commands do not create Magus
+directories or sweep temporary files. Linux subprocesses inherit the active
+run's cancellation context.
 
 Reconciler files:
 

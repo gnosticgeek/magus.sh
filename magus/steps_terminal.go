@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // kittyStep installs kitty into ~/.local/kitty.app via the official installer,
@@ -23,8 +22,15 @@ func (kittyStep) Describe() string { return "install kitty into ~/.local/kitty.a
 // $HOME and needs no root, which is why kitty is the default terminal.
 const kittyInstaller = "https://sw.kovidgoyal.net/kitty/installer.sh"
 
+const kittyOwnershipMarker = ".magus-owned"
+const kittyOwnershipContents = "Installed by Magus.\n"
+
 func (k kittyStep) binary(c *Context) string {
 	return filepath.Join(c.Paths.AppDir("kitty"), "bin", "kitty")
+}
+
+func (k kittyStep) ownershipMarker(c *Context) string {
+	return filepath.Join(c.Paths.AppDir("kitty"), kittyOwnershipMarker)
 }
 
 // Check derives state entirely from the filesystem: the binary, both symlinks,
@@ -64,6 +70,14 @@ func (k kittyStep) Apply(c *Context) error {
 			fmt.Sprintf("curl -fsSL %q | sh /dev/stdin launch=n", kittyInstaller)); err != nil {
 			return err
 		}
+		if !c.DryRun {
+			if !isExecutable(k.binary(c)) {
+				return fmt.Errorf("kitty installer completed without creating %s", k.binary(c))
+			}
+			if err := writeFileAtomic(k.ownershipMarker(c), []byte(kittyOwnershipContents), 0o600); err != nil {
+				return fmt.Errorf("record kitty ownership: %w", err)
+			}
+		}
 	}
 
 	for _, name := range []string{"kitty", "kitten"} {
@@ -86,17 +100,24 @@ func (k kittyStep) Apply(c *Context) error {
 func (k kittyStep) Remove(c *Context) error {
 	for _, name := range []string{"kitty", "kitten"} {
 		link := filepath.Join(c.Paths.Bin, name)
-		// Only remove links that point into our app dir. A real file at that
-		// path, or a link somewhere else, is the user's own and not ours to take.
+		// Only remove the exact links Magus creates. A similarly prefixed target
+		// can belong to another installation and is not proof of ownership.
 		if target, err := os.Readlink(link); err == nil &&
-			strings.HasPrefix(target, c.Paths.AppDir("kitty")) {
+			target == filepath.Join(c.Paths.AppDir("kitty"), "bin", name) {
 			if err := removePath(c, link); err != nil {
 				return err
 			}
 		}
 	}
-	if err := removePath(c, filepath.Join(c.Paths.Apps, "kitty.desktop")); err != nil {
+	if err := removeDesktopEntry(c, "kitty.desktop"); err != nil {
 		return err
+	}
+	owned, err := validOwnershipMarker(k.ownershipMarker(c), kittyOwnershipContents)
+	if err != nil {
+		return err
+	}
+	if !owned {
+		return nil
 	}
 	return removePath(c, c.Paths.AppDir("kitty"))
 }
@@ -152,6 +173,8 @@ func forceSymlink(c *Context, target, link string) error {
 		if err := os.Remove(link); err != nil {
 			return err
 		}
+	} else if !os.IsNotExist(err) {
+		return err
 	}
 	if err := os.MkdirAll(filepath.Dir(link), 0o755); err != nil {
 		return err

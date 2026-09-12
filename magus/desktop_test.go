@@ -49,6 +49,35 @@ func TestWriteDesktopEntryRefusesToClobberForeignEntries(t *testing.T) {
 	}
 }
 
+func TestDesktopOwnershipRequiresItsOwnMarkerLine(t *testing.T) {
+	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))
+	path := filepath.Join(c.Paths.Apps, "kitty.desktop")
+	foreign := "[Desktop Entry]\nName=Notes\nComment=X-Magus-Managed=true\nExec=/usr/bin/kitty\n"
+	if err := os.WriteFile(path, []byte(foreign), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeDesktopEntry(c, "kitty.desktop", desktopEntry{Name: "kitty", Exec: "/x"}); err == nil {
+		t.Fatal("ownership text inside another value was accepted as a marker")
+	}
+	if err := removeDesktopEntry(c, "kitty.desktop"); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(path)
+	if err != nil || string(body) != foreign {
+		t.Fatal("foreign desktop entry was removed")
+	}
+
+	if err := os.WriteFile(path, []byte((desktopEntry{Name: "kitty", Exec: "/x"}).render()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := removeDesktopEntry(c, "kitty.desktop"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatal("managed desktop entry was not removed")
+	}
+}
+
 // A foreign entry is not drift — the step must not fight the user for the file.
 func TestDesktopEntryCurrentIgnoresForeignEntries(t *testing.T) {
 	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))

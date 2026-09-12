@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,9 @@ import (
 // Entirely userland: the directory lives under $HOME and survives an atomic
 // update for the same reason everything else magus installs does.
 type protonGEStep struct{}
+
+const protonGEOwnershipMarker = ".magus-owned"
+const protonGEOwnershipContents = "Installed by Magus.\n"
 
 func (protonGEStep) ID() string { return "optimise:proton-ge" }
 func (protonGEStep) Describe() string {
@@ -75,6 +79,9 @@ func (protonGEStep) Check(c *Context) (State, error) {
 }
 
 func (protonGEStep) Apply(c *Context) error {
+	if installedProtonGE(c) != "" {
+		return nil
+	}
 	dir, ok := steamRoot(c)
 	if !ok {
 		return fmt.Errorf("no Steam installation found under %s", c.Paths.Home)
@@ -90,21 +97,62 @@ func (protonGEStep) Apply(c *Context) error {
 		return err
 	}
 
-	// Resolve the latest release tarball from the GitHub API, then stream it
-	// straight into tar — no temp file to clean up, and nothing left behind if
-	// the download fails part-way.
+	// Resolve the latest release tarball from the GitHub API. Download to a
+	// temporary archive so the URL is passed as a process argument rather than
+	// interpolated into a shell pipeline.
 	const api = "https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest"
-	url, err := c.Output("sh", "-c",
-		fmt.Sprintf(`curl -fsSL %q | grep -o '"browser_download_url": *"[^"]*\.tar\.gz"' | head -1 | cut -d'"' -f4`, api))
+	feed, err := c.Output("curl", "-fsSL", api)
 	if err != nil {
 		return fmt.Errorf("could not reach the GE-Proton release feed: %w", err)
 	}
-	url = strings.TrimSpace(url)
-	if !strings.HasPrefix(url, "https://") {
+	url, ok := protonGETarballURL([]byte(feed))
+	if !ok {
 		return fmt.Errorf("could not find a GE-Proton tarball in the latest release")
 	}
 	c.Report.Detail("downloading %s", filepath.Base(url))
-	return c.Run("sh", "-c", fmt.Sprintf(`curl -fsSL %q | tar -xzf - -C %q`, url, dir))
+	archive, err := os.CreateTemp("", "magus-proton-ge-*.tar.gz")
+	if err != nil {
+		return err
+	}
+	archivePath := archive.Name()
+	if err := archive.Close(); err != nil {
+		os.Remove(archivePath)
+		return err
+	}
+	defer os.Remove(archivePath)
+	if err := c.Run("curl", "-fsSL", "--output", archivePath, url); err != nil {
+		return err
+	}
+	if err := c.Run("tar", "-xzf", archivePath, "-C", dir); err != nil {
+		return err
+	}
+	if c.DryRun {
+		return nil
+	}
+	installed := installedProtonGE(c)
+	if installed == "" {
+		return fmt.Errorf("GE-Proton archive did not create an installation directory")
+	}
+	marker := filepath.Join(dir, installed, protonGEOwnershipMarker)
+	return writeFileAtomic(marker, []byte(protonGEOwnershipContents), 0o600)
+}
+
+func protonGETarballURL(data []byte) (string, bool) {
+	var release struct {
+		Assets []struct {
+			URL string `json:"browser_download_url"`
+		} `json:"assets"`
+	}
+	if json.Unmarshal(data, &release) != nil {
+		return "", false
+	}
+	const releasePrefix = "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/"
+	for _, asset := range release.Assets {
+		if strings.HasPrefix(asset.URL, releasePrefix) && strings.HasSuffix(asset.URL, ".tar.gz") {
+			return asset.URL, true
+		}
+	}
+	return "", false
 }
 
 func (protonGEStep) Remove(c *Context) error {
@@ -114,10 +162,17 @@ func (protonGEStep) Remove(c *Context) error {
 			continue
 		}
 		for _, e := range entries {
-			// Only remove GE-Proton directories. Anything else in here is a
-			// compatibility tool someone else installed.
-			if e.IsDir() && strings.HasPrefix(e.Name(), "GE-Proton") {
-				if err := removePath(c, filepath.Join(d, e.Name())); err != nil {
+			// The name identifies the tool; the marker proves Magus installed it.
+			if !e.IsDir() || !strings.HasPrefix(e.Name(), "GE-Proton") {
+				continue
+			}
+			path := filepath.Join(d, e.Name())
+			owned, markerErr := validOwnershipMarker(filepath.Join(path, protonGEOwnershipMarker), protonGEOwnershipContents)
+			if markerErr != nil {
+				return markerErr
+			}
+			if owned {
+				if err := removePath(c, path); err != nil {
 					return err
 				}
 			}

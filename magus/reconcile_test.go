@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // testContext builds a Context rooted at a temp home, so real steps can be
@@ -190,6 +192,113 @@ func TestDryRunNeverApplies(t *testing.T) {
 	}
 }
 
+func TestCancelledContextDoesNotStartCommands(t *testing.T) {
+	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))
+	parent, cancel := context.WithCancel(context.Background())
+	cancel()
+	c.Parent = parent
+	marker := filepath.Join(t.TempDir(), "started")
+	if err := c.Run("/bin/sh", "-c", "touch \"$1\"", "test", marker); err == nil {
+		t.Fatal("cancelled command reported success")
+	}
+	if _, err := c.Output("/bin/sh", "-c", "touch \"$1\"", "test", marker); err == nil {
+		t.Fatal("cancelled probe reported success")
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatal("cancelled context started a subprocess")
+	}
+}
+
+func TestCancellationStopsTheWholeCommandGroup(t *testing.T) {
+	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))
+	parent, cancel := context.WithCancel(context.Background())
+	c.Parent = parent
+	c.Timeout = 5 * time.Second
+	marker := filepath.Join(t.TempDir(), "child-survived")
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+	err := c.Run("/bin/sh", "-c", "(sleep 0.4; touch \"$1\") & wait", "test", marker)
+	if err == nil {
+		t.Fatal("cancelled process group reported success")
+	}
+	time.Sleep(500 * time.Millisecond)
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatal("a child process survived cancellation")
+	}
+}
+
+func TestFlatpakRemovalRequiresMagusOwnership(t *testing.T) {
+	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))
+	dir := t.TempDir()
+	log := filepath.Join(dir, "calls")
+	flatpak := filepath.Join(dir, "flatpak")
+	if err := os.WriteFile(flatpak, []byte("#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$MAGUS_TEST_CALLS\"\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir)
+	t.Setenv("MAGUS_TEST_CALLS", log)
+	step := flatpakStep{id: "browser", appID: "org.mozilla.firefox", label: "Firefox"}
+
+	if err := step.Remove(c); err != errNotReversible {
+		t.Fatalf("unmarked Flatpak removal = %v, want not reversible", err)
+	}
+	if _, err := os.Stat(log); !os.IsNotExist(err) {
+		t.Fatal("unmarked Flatpak invoked uninstall")
+	}
+	if err := step.Apply(c); err != nil {
+		t.Fatal(err)
+	}
+	marker := flatpakOwnershipPath(c, step.appID)
+	if body, err := os.ReadFile(marker); err != nil || string(body) != flatpakOwnershipContents {
+		t.Fatalf("ownership receipt = %q, %v", body, err)
+	}
+	if err := step.Remove(c); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatal("ownership receipt survived successful uninstall")
+	}
+	body, err := os.ReadFile(log)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"install --user --noninteractive --assumeyes flathub org.mozilla.firefox",
+		"uninstall --user --noninteractive --assumeyes org.mozilla.firefox",
+	} {
+		if !strings.Contains(string(body), want) {
+			t.Fatalf("missing command %q in %s", want, body)
+		}
+	}
+}
+
+func TestFlatpakProbeFailureDoesNotBecomeInstallPermission(t *testing.T) {
+	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))
+	dir := t.TempDir()
+	flatpak := filepath.Join(dir, "flatpak")
+	if err := os.WriteFile(flatpak, []byte("#!/bin/sh\nexit 1\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+"/bin")
+	step := flatpakStep{id: "browser", appID: "org.mozilla.firefox", label: "Firefox"}
+	if state, err := step.Check(c); state != StateUnknown || err == nil {
+		t.Fatalf("failed Flatpak probe = (%v, %v), want unknown error", state, err)
+	}
+
+	if err := os.WriteFile(flatpak, []byte("#!/bin/sh\nprintf '%s\\n' org.mozilla.firefox org.videolan.VLC\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if state, err := step.Check(c); state != StateOK || err != nil {
+		t.Fatalf("installed Flatpak = (%v, %v), want ok", state, err)
+	}
+	step.appID = "org.example.Missing"
+	if state, err := step.Check(c); state != StateMissing || err != nil {
+		t.Fatalf("absent Flatpak = (%v, %v), want missing", state, err)
+	}
+}
+
 func TestUninstallRunsInReverseOrder(t *testing.T) {
 	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))
 	var order []string
@@ -341,6 +450,67 @@ func TestKittyRemoveLeavesForeignSymlinks(t *testing.T) {
 	}
 	if _, err := os.Lstat(link); err != nil {
 		t.Error("Remove deleted a symlink pointing outside magus's app dir")
+	}
+}
+
+func TestKittyRemoveRequiresExactTargetsAndOwnership(t *testing.T) {
+	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))
+	k := kittyStep{}
+	foreignApp := c.Paths.AppDir("kitty") + "-foreign"
+	if err := os.MkdirAll(filepath.Join(foreignApp, "bin"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(c.Paths.Bin, "kitty")
+	target := filepath.Join(foreignApp, "bin", "kitty")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(c.Paths.AppDir("kitty"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	keep := filepath.Join(c.Paths.AppDir("kitty"), "user-owned")
+	if err := os.WriteFile(keep, []byte("keep"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := k.Remove(c); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := os.Readlink(link); err != nil || got != target {
+		t.Fatalf("similarly prefixed foreign symlink changed: %q, %v", got, err)
+	}
+	if _, err := os.Stat(keep); err != nil {
+		t.Fatal("unmarked kitty installation was removed")
+	}
+
+	if err := os.WriteFile(k.ownershipMarker(c), []byte(kittyOwnershipContents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := k.Remove(c); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(c.Paths.AppDir("kitty")); !os.IsNotExist(err) {
+		t.Fatalf("owned kitty installation was not removed: %v", err)
+	}
+}
+
+func TestKittyInstallerMustProduceBinaryBeforeOwnership(t *testing.T) {
+	c := testContext(t, DefaultManifest(Device{Kind: DeviceMachine}))
+	dir := t.TempDir()
+	curl := filepath.Join(dir, "curl")
+	if err := os.WriteFile(curl, []byte("#!/bin/sh\nprintf '#!/bin/sh\\nexit 0\\n'\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("HOME", c.Paths.Home)
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+"/bin")
+	k := kittyStep{}
+	if err := k.Apply(c); err == nil || !strings.Contains(err.Error(), "without creating") {
+		t.Fatalf("empty installer result = %v", err)
+	}
+	if _, err := os.Stat(k.ownershipMarker(c)); !os.IsNotExist(err) {
+		t.Fatal("failed install recorded ownership")
+	}
+	if _, err := os.Lstat(filepath.Join(c.Paths.Bin, "kitty")); !os.IsNotExist(err) {
+		t.Fatal("failed install created a launcher symlink")
 	}
 }
 

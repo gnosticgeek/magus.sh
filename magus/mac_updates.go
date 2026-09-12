@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -76,18 +77,38 @@ func (m *macModel) magUpdateSummary() string {
 }
 
 func magusVersionNewer(latest, current string) bool {
-	if current == "dev" {
-		return true
-	}
 	parse := func(version string) ([]int, bool) {
-		version = strings.TrimPrefix(strings.TrimSpace(version), "v")
-		var major, minor, patch int
-		if _, err := fmt.Sscanf(version, "%d.%d.%d", &major, &minor, &patch); err != nil {
+		version = strings.TrimSpace(version)
+		if !strings.HasPrefix(version, "v") {
 			return nil, false
 		}
-		return []int{major, minor, patch}, true
+		version = strings.TrimPrefix(version, "v")
+		parts := strings.Split(version, ".")
+		if len(parts) != 3 {
+			return nil, false
+		}
+		parsed := make([]int, len(parts))
+		for i, part := range parts {
+			if part == "" {
+				return nil, false
+			}
+			for _, r := range part {
+				if r < '0' || r > '9' {
+					return nil, false
+				}
+			}
+			value, err := strconv.Atoi(part)
+			if err != nil {
+				return nil, false
+			}
+			parsed[i] = value
+		}
+		return parsed, true
 	}
 	newer, okNewer := parse(latest)
+	if current == "dev" {
+		return okNewer
+	}
 	running, okRunning := parse(current)
 	if !okNewer || !okRunning {
 		return false
