@@ -20,10 +20,18 @@ func auroraText(text string) string {
 }
 
 func rainbowText(text string) string {
-	return gradientText(text, magusRainbowLight, magusRainbowDark)
+	return rainbowTextAt(text, 0)
+}
+
+func rainbowTextAt(text string, offset int) string {
+	return gradientTextAt(text, magusRainbowLight, magusRainbowDark, offset)
 }
 
 func gradientText(text string, lightStops, darkStops []string) string {
+	return gradientTextAt(text, lightStops, darkStops, 0)
+}
+
+func gradientTextAt(text string, lightStops, darkStops []string, offset int) string {
 	if terminalProfile == termenv.Ascii {
 		return text
 	}
@@ -45,7 +53,7 @@ func gradientText(text string, lightStops, darkStops []string) string {
 			if r == ' ' {
 				row.WriteRune(r)
 			} else {
-				row.WriteString(lipgloss.NewStyle().Bold(true).Foreground(gradient[min(x+y, len(gradient)-1)]).Render(string(r)))
+				row.WriteString(lipgloss.NewStyle().Bold(true).Foreground(gradient[(x+y+offset)%len(gradient)]).Render(string(r)))
 			}
 			x += lipgloss.Width(string(r))
 		}
@@ -58,10 +66,7 @@ func gradientText(text string, lightStops, darkStops []string) string {
 // Plain ASCII keeps the Magus sigil and wordmark readable in every terminal.
 const macSigil = "/M\\"
 
-const macWordmark = `     /\
-    /M \     MAGUS
-    \  /     Set up your Mac with intent.
-     \/`
+var macWordmark = strings.Join(magusWordmark, "\n")
 
 func (m *macModel) headerView(width int) string {
 	title := "magus"
@@ -77,7 +82,7 @@ func (m *macModel) headerView(width int) string {
 		metadata += "\n" + sDim.Render(m.breadcrumb())
 	}
 	if home && m.height >= 22 && width >= 42 {
-		return rainbowText(macWordmark) + "\n" + metadata
+		return rainbowTextAt(macWordmark, m.rainbowOffset) + "\n" + metadata
 	}
 	return rainbowText(title) + "\n" + metadata
 }

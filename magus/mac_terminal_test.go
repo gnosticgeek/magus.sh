@@ -66,6 +66,11 @@ func TestTerminalMenuSelectionAndPersistence(t *testing.T) {
 	if steps[len(steps)-1].ID() != terminalID("TokyoNight") {
 		t.Fatal("profile must run after packages")
 	}
+	press(m, "enter")
+	if m.selected[terminalID("TokyoNight")] || m.selectionManifest().Mac.Terminal != "" {
+		t.Fatal("selected Ghostty theme could not be removed")
+	}
+	m.selected[terminalID("TokyoNight")] = true
 	m.screen = macScreenReview
 	found := false
 	for _, r := range m.rows() {

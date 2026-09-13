@@ -52,6 +52,9 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(v)
+		if m.screen == macScreenMenu {
+			m.rainbowOffset = (m.rainbowOffset + 1) % max(1, len(magusRainbowDark))
+		}
 		return m, cmd
 	case activityTickMsg:
 		if m.screen == macScreenInstall && !m.failed {

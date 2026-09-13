@@ -502,7 +502,7 @@ func TestMacInstallShowsContinuousHonestActivity(t *testing.T) {
 }
 
 func TestMacCataloguePresetIDs(t *testing.T) {
-	if len(macPackages) != 118 || len(macSettings) != 6 {
+	if len(macPackages) != 128 || len(macSettings) != 6 {
 		t.Fatal("unexpected starter catalogue size")
 	}
 	for _, preset := range macPresets {
@@ -539,28 +539,14 @@ func TestEscapeUsesNavigationHistoryAndBreadcrumbs(t *testing.T) {
 	}
 	press(m, "enter")
 	for i, row := range m.rows() {
-		if row.ID == "tools" {
+		if row.ID == macLanguagesGroup {
 			m.cursor = i
 			break
 		}
 	}
 	press(m, "enter")
-	if got := m.breadcrumb(); got != "Home / Developer & Terminal / Terminal tools" {
+	if got := m.breadcrumb(); got != "Home / Developer & Terminal / Languages & runtimes" {
 		t.Fatal(got)
-	}
-	for i, row := range m.rows() {
-		if row.ID == macDeveloperToolsGroup {
-			m.cursor = i
-			break
-		}
-	}
-	press(m, "enter")
-	if m.appGroup != macDeveloperToolsGroup {
-		t.Fatal("developer environments did not open")
-	}
-	press(m, "esc")
-	if m.screen != macScreenBrowse || m.category != "tools" || m.appGroup != "" {
-		t.Fatal("escape did not return to terminal tools")
 	}
 	press(m, "esc")
 	if m.screen != macScreenDeveloper {

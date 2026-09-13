@@ -152,30 +152,57 @@ func TestThawReplacesIce(t *testing.T) {
 	}
 }
 
-func TestDeveloperEnvironmentMenuContainsCoreRuntimes(t *testing.T) {
-	for _, id := range []string{"container", "node", "python@3.14", "uv"} {
+func TestLanguagesMenuContainsCoreRuntimes(t *testing.T) {
+	for _, id := range []string{"node", "python@3.14", "uv", "go", "rust"} {
 		p, ok := macPackage(id)
-		if !ok || p.Kind != "formula" || !oneOf(id, macDeveloperToolIDs) {
-			t.Fatalf("developer environment is missing %s", id)
+		if !ok || p.Kind != "formula" || !oneOf(id, macLanguageToolIDs) {
+			t.Fatalf("languages menu is missing %s", id)
 		}
 	}
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen, m.category = macScreenBrowse, "tools"
+	m.screen = macScreenDeveloper
 	found := false
 	for i, row := range m.rows() {
-		if row.ID == macDeveloperToolsGroup {
+		if row.ID == macLanguagesGroup {
 			m.cursor = i
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Fatal("terminal tools did not expose the developer environment menu")
+		t.Fatal("developer menu did not expose languages")
 	}
 	press(m, "enter")
-	if m.appGroup != macDeveloperToolsGroup || len(m.rows()) != len(macDeveloperToolIDs) {
-		t.Fatal("developer environment menu did not show its packages")
+	if m.appGroup != macLanguagesGroup || len(m.rows()) != len(macLanguageToolIDs) {
+		t.Fatal("languages menu did not show its packages")
+	}
+}
+
+func TestAgentsMenuSeparatesSkillsFromAppSetups(t *testing.T) {
+	m := newMacModel(macTestContext(t).Paths, "", newMacManifest(), true, time.Second)
+	for i, row := range m.rows() {
+		if row.ID == "agents" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	if m.screen != macScreenAgents {
+		t.Fatal("AI & agents menu did not open")
+	}
+	for i, row := range m.rows() {
+		if row.ID == "skills" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	if m.screen != macScreenSkills {
+		t.Fatal("skills menu did not open")
+	}
+	if len(m.rows()) != len(agentSkills)+1 {
+		t.Fatal("skills menu has an unexpected catalogue")
 	}
 }
 
@@ -200,7 +227,7 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 		}
 	}
 	press(m, "space")
-	if !m.selected["firefox"] || len(m.rows()) != 4 {
+	if !m.selected["firefox"] || len(m.rows()) != 5 {
 		t.Fatal("Browsers contains wrong apps")
 	}
 	press(m, "esc")

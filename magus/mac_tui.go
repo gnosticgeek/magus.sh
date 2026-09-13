@@ -46,9 +46,9 @@ func hints(pairs ...string) macKeys {
 
 type macRow struct{ ID, Name, Summary, Source, Note string }
 
-const macDeveloperToolsGroup = "developer"
+const macLanguagesGroup = "languages"
 
-var macDeveloperToolIDs = []string{"container", "node", "python@3.14", "uv", "go", "rust", "docker", "colima"}
+var macLanguageToolIDs = []string{"node", "python@3.14", "uv", "go", "rust"}
 
 type macCatalogueFilter int
 
@@ -131,6 +131,7 @@ type macModel struct {
 	bootstrapFile                                     string
 	searchReturn                                      macNavigationPoint
 	actionCursor                                      int
+	rainbowOffset                                     int
 }
 
 // macNavigationPoint is a typed snapshot of a browsable location. It keeps
@@ -179,6 +180,10 @@ func navigationLabel(point macNavigationPoint) string {
 		return "Home"
 	case macScreenDeveloper:
 		return "Developer & Terminal"
+	case macScreenAgents:
+		return "AI & agents"
+	case macScreenSkills:
+		return "Skills"
 	case macScreenCategories:
 		return "Apps"
 	case macScreenBrowse:
@@ -188,8 +193,8 @@ func navigationLabel(point macNavigationPoint) string {
 			}
 			return "Apps"
 		}
-		if point.category == "tools" && point.appGroup == macDeveloperToolsGroup {
-			return "Developer environments"
+		if point.category == "tools" && point.appGroup == macLanguagesGroup {
+			return "Languages & runtimes"
 		}
 		return map[string]string{"tools": "Terminal tools", "fonts": "Fonts", "settings": "Mac settings"}[point.category]
 	case macScreenTerminal:
@@ -261,10 +266,14 @@ func (m *macModel) rows() []macRow {
 	if m.screen == macScreenTerminal {
 		return m.terminalRows()
 	}
+	if m.screen == macScreenSkills {
+		return append(agentSkillRows(m.selected), macRow{ID: "review", Name: "Review & install", Summary: "Review selected skills before installing them."})
+	}
 	if m.screen == macScreenMenu {
 		return []macRow{
 			{ID: "apps", Name: "Apps", Summary: "Find your essentials by category.", Note: "Browsers · Developer tools · AI · Productivity · Media · Communication"},
-			{ID: "developer", Name: "Developer & Terminal", Summary: "Set up your terminal, fonts, app integrations and command-line tools.", Note: "Tools · Developer environments · Fonts · Terminal setup · App setups"},
+			{ID: "agents", Name: "AI & agents", Summary: "AI apps, agent skills and skill design resources.", Note: "AI apps · Shared skills · Skills design"},
+			{ID: "developer", Name: "Developer & Terminal", Summary: "Set up languages, terminal tools, fonts and app integrations.", Note: "Languages & runtimes · Tools · Fonts · Terminal setup · App setups"},
 			{ID: "settings", Name: "Mac settings", Summary: "Six reversible Finder preferences.", Note: "For a broader set of live Mac utilities, we recommend Vorssaint in Apps > Menu Bar."},
 			{ID: "review", Name: m.reviewMenuName(), Summary: "See your complete basket before anything changes."},
 			{ID: "updates", Name: "Update all", Summary: "Update eligible Homebrew apps and terminal tools.", Note: "Includes packages installed outside Magus. Review the scope before continuing."},
@@ -273,10 +282,17 @@ func (m *macModel) rows() []macRow {
 	}
 	if m.screen == macScreenDeveloper {
 		return []macRow{
-			{ID: "tools", Name: "Terminal tools", Summary: "Developer runtimes, containers and utilities you run from the terminal.", Note: "Developer environments · Modern commands · Git and shell utilities"},
+			{ID: macLanguagesGroup, Name: "Languages & runtimes", Summary: "Python, Go, Node.js, Rust and their package tools in one place.", Note: "Node.js & npm · Python · uv · Go · Rust"},
+			{ID: "tools", Name: "Terminal tools", Summary: "Containers and useful utilities you run from the terminal.", Note: "Docker · Colima · Modern commands · Git and shell utilities"},
 			{ID: "fonts", Name: "Fonts", Summary: "Eight handpicked fonts for writing, design and coding.", Note: "Atkinson Hyperlegible Next · Cascadia Code · Fraunces · Inter · JetBrains Mono · Newsreader · Source Serif 4 · Space Grotesk"},
 			{ID: "terminal", Name: "Terminal setup", Summary: "Ghostty themes, fonts and configurable modern commands."},
-			{ID: "app-configs", Name: "App setups", Summary: "Shared AI skills, Ghostty, Zed, Firefox, modern commands and Raycast presets."},
+			{ID: "app-configs", Name: "App setups", Summary: "Ghostty, Zed, Firefox, modern commands and Raycast presets."},
+		}
+	}
+	if m.screen == macScreenAgents {
+		return []macRow{
+			{ID: "ai-apps", Name: "AI apps", Summary: "Local models, assistants and voice tools for your Mac."},
+			{ID: "skills", Name: "Skills", Summary: "Install shared Codex and Claude skills, including design and planning workflows."},
 		}
 	}
 	if m.screen == macScreenCategories {
@@ -293,9 +309,6 @@ func (m *macModel) rows() []macRow {
 		return rows
 	}
 	var rows []macRow
-	if !m.searching && m.screen == macScreenBrowse && m.category == "tools" && m.appGroup == "" {
-		rows = append(rows, macRow{ID: macDeveloperToolsGroup, Name: "Developer environments", Summary: "Languages, package managers and container runtimes.", Note: "Apple Container · Node.js & npm · Python · uv · Go · Rust · Docker CLI · Colima"})
-	}
 	for _, p := range macPackages {
 		if !m.searching && !basket && ((m.category == "apps" && (p.Kind != "cask" || strings.HasPrefix(p.ID, "font-"))) || (m.category == "fonts" && !strings.HasPrefix(p.ID, "font-")) || (m.category == "tools" && p.Kind != "formula") || m.category == "settings") {
 			continue
@@ -306,7 +319,7 @@ func (m *macModel) rows() []macRow {
 				continue
 			}
 		}
-		if !m.searching && m.screen == macScreenBrowse && m.category == "tools" && m.appGroup == macDeveloperToolsGroup && !oneOf(p.ID, macDeveloperToolIDs) {
+		if !m.searching && m.screen == macScreenBrowse && m.category == "tools" && m.appGroup == macLanguagesGroup && !oneOf(p.ID, macLanguageToolIDs) {
 			continue
 		}
 		if basket && !m.selected[p.ID] {

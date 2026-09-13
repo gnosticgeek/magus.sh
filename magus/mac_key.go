@@ -329,7 +329,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		row := rows[m.cursor]
 		if m.screen == macScreenMenu {
 			m.cursor = 0
-			if row.ID == "developer" || row.ID == "review" || row.ID == "updates" || row.ID == "self-update" {
+			if row.ID == "developer" || row.ID == "agents" || row.ID == "review" || row.ID == "updates" || row.ID == "self-update" {
 				m.navigate(macScreen(row.ID), "", "", 0)
 				if row.ID == "updates" {
 					return m, m.checkUpdates(false)
@@ -342,10 +342,28 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			}
 		} else if m.screen == macScreenDeveloper {
 			switch row.ID {
+			case macLanguagesGroup:
+				m.navigate(macScreenBrowse, "tools", macLanguagesGroup, 0)
 			case "tools", "fonts":
 				m.navigate(macScreenBrowse, row.ID, "", 0)
 			default:
 				m.navigate(macScreen(row.ID), m.category, m.appGroup, 0)
+			}
+		} else if m.screen == macScreenAgents {
+			switch row.ID {
+			case "ai-apps":
+				m.navigate(macScreenBrowse, "apps", "ai", 0)
+			case "skills":
+				m.navigate(macScreenSkills, "", "", 0)
+			}
+		} else if m.screen == macScreenSkills {
+			if row.ID == "review" {
+				m.navigate(macScreenReview, m.category, m.appGroup, 0)
+				return m, nil
+			}
+			if strings.HasPrefix(row.ID, "skill:") {
+				m.toggle(row.ID)
+				return m, nil
 			}
 		} else if m.screen == macScreenAppConfigs || m.screen == macScreenRaycast {
 			if strings.HasPrefix(row.ID, "export:") {
@@ -448,6 +466,10 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				}
 				return m, m.flash("Exported " + path)
 			}
+			if m.selected[row.ID] {
+				delete(m.selected, row.ID)
+				return m, m.flash("Removed " + row.Name + ".")
+			}
 			for _, theme := range terminalThemes {
 				delete(m.selected, terminalID(theme))
 			}
@@ -461,8 +483,6 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		} else if m.screen == macScreenCategories {
 			m.groupCursor = m.cursor
 			m.navigate(macScreenBrowse, "apps", row.ID, 0)
-		} else if m.screen == macScreenBrowse && m.category == "tools" && row.ID == macDeveloperToolsGroup {
-			m.navigate(macScreenBrowse, "tools", macDeveloperToolsGroup, 0)
 		} else if m.screen == macScreenPresets {
 			presetIndex, err := strconv.Atoi(row.ID)
 			if err != nil || presetIndex < 0 || presetIndex >= len(macPresets) {

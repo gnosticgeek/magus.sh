@@ -109,7 +109,7 @@ func TestAgentSkillPreservesExternalFilesAndDryRun(t *testing.T) {
 func TestAgentSkillMenuAndManifest(t *testing.T) {
 	c := terminalTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
-	m.screen = macScreenAppConfigs
+	m.screen = macScreenSkills
 	for i, row := range m.rows() {
 		if row.ID == "skill:frontend-design" {
 			m.cursor = i

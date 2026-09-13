@@ -8,6 +8,8 @@ type macScreen string
 const (
 	macScreenMenu            macScreen = "menu"
 	macScreenDeveloper       macScreen = "developer"
+	macScreenAgents          macScreen = "agents"
+	macScreenSkills          macScreen = "skills"
 	macScreenCategories      macScreen = "categories"
 	macScreenBrowse          macScreen = "browse"
 	macScreenBasket          macScreen = "basket"
@@ -31,7 +33,7 @@ func (s macScreen) searchable() bool { return s != macScreenReview && s != macSc
 
 func (s macScreen) supportsDetails() bool {
 	switch s {
-	case macScreenMenu, macScreenDeveloper, macScreenBrowse, macScreenCategories, macScreenBasket, macScreenReview,
+	case macScreenMenu, macScreenDeveloper, macScreenAgents, macScreenSkills, macScreenBrowse, macScreenCategories, macScreenBasket, macScreenReview,
 		macScreenPresets, macScreenTerminal, macScreenShell, macScreenAppConfigs,
 		macScreenRaycast:
 		return true

@@ -159,6 +159,12 @@ func (m *macModel) viewContent() string {
 			} else if m.screen == macScreenDeveloper {
 				prefix = macAccent.Render("Developer & Terminal") + sMuted.Render("  /  tools, setup and customisation") + "\n\n"
 				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
+			} else if m.screen == macScreenAgents {
+				prefix = macAccent.Render("AI & agents") + sMuted.Render("  /  apps, skills and skill design") + "\n\n"
+				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
+			} else if m.screen == macScreenSkills {
+				prefix = sDim.Render("Magus / ") + macAccent.Render("AI & agents / Skills") + "\n\n"
+				keys = hints("enter/space", "select", "tab", "details", "esc", "back", "/", "search")
 			} else if m.screen == macScreenCategories {
 				prefix = sDim.Render("Magus / ") + macAccent.Render("Apps") + sMuted.Render("  /  find your essentials") + "\n\n"
 				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
@@ -168,8 +174,8 @@ func (m *macModel) viewContent() string {
 				if group, ok := appCategory(m.appGroup); ok && m.category == "apps" {
 					prefix += sDim.Render("  /  ") + group.style().Render(group.Name)
 				}
-				if m.category == "tools" && m.appGroup == macDeveloperToolsGroup {
-					prefix += sDim.Render("  /  Developer environments")
+				if m.category == "tools" && m.appGroup == macLanguagesGroup {
+					prefix += sDim.Render("  /  Languages & runtimes")
 				}
 				prefix += sDim.Render("  /  "+m.catalogueFilterLabel()) + "\n\n"
 				if m.category == "settings" {

@@ -248,7 +248,6 @@ func (m *macModel) appConfigRows() []macRow {
 		}
 		rows = append(rows, macRow{ID: "config:" + p.ID, Name: check + p.Name + " preset", Summary: p.Note, Note: "Enter toggles this preset in the review basket.\n\n```\n" + p.Body + "```"}, macRow{ID: "export:" + p.ID, Name: "Export " + p.Name + " preset", Summary: "Save a portable copy without changing the app.", Note: p.Note})
 	}
-	rows = append(rows, agentSkillRows(m.selected)...)
 	rows = append(rows, firefoxExtensionRows()...)
 	return append(rows, macRow{ID: "raycast", Name: "Raycast guided setup", Summary: "Six settings recommendations and six extension links; configure them inside Raycast."}, macRow{ID: "review", Name: "Review & install", Summary: "Review selected apps, skills and configurations before making changes."}, macRow{ID: "restore", Name: "Restore Magus settings", Summary: "Restore recorded Mac, shell, skill, Zed and Firefox files. Firefox preferences already loaded must be reset separately."})
 }
