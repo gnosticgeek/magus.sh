@@ -1,26 +1,24 @@
-# Magus v0.4.9
+# Magus v0.5.0
 
-This release makes the Mac TUI easier to navigate and inspect while keeping its
-review-before-change safety model. The manifest schema remains `0.4.0`.
+This release gives the Mac TUI a clearer home for AI, agent skills, and developer
+languages, restores the full Magus identity, and rounds out the app catalogue.
+The manifest schema remains `0.4.0`.
 
 ## Highlights
 
-- **Search with context.** Fuzzy search now identifies the originating area,
-  reports matches and selected items, highlights matching characters, gives an
-  actionable empty state, and restores the exact previous list position on
-  Escape.
-- **Always-visible basket.** Every screen shows a categorized basket summary.
-  Press `v` to inspect and edit the basket, then continue separately to Review
-  & install—there is no direct installation shortcut from the drawer.
-- **Action palette.** `?` now opens a navigable menu of actions valid for the
-  current context. Chosen actions follow the exact same guarded code paths as
-  their keyboard shortcuts.
-- **Reliable navigation and previews.** Typed history now carries filters and
-  cursors, while preview results require both the current generation and focused
-  target before they can render.
-- **Clearer visual semantics.** Rainbow Magus wordmarks now appear across the
-  interactive entry points. Success, caution, external, and failed states are
-  styled consistently without sacrificing plain-terminal readability.
+- **AI & agents hub.** AI apps and shared Codex and Claude skills now have a
+  dedicated top-level menu, keeping agent workflows out of general app setup.
+- **Languages in one place.** Node.js, Python, uv, Go, and Rust now live in a
+  focused Languages & runtimes menu under Developer & Terminal.
+- **Ghostty selection fix.** A selected Ghostty theme can now be toggled off
+  instead of becoming stuck in the review basket.
+- **The big wordmark returns.** The full block-letter Magus logo is back on the
+  Mac home screen with an animated rainbow gradient and a plain-terminal
+  fallback.
+- **Stronger app categories.** Sparse categories now contain at least five
+  choices, favouring open-source additions including LibreWolf, Element,
+  Mattermost, Thunderbird, Strawberry, Mixxx, LMMS, Nextcloud, Syncthing, and
+  Cryptomator.
 
 ## Upgrade
 
