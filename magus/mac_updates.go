@@ -157,6 +157,7 @@ func (c *macSelfUpdateCommand) Run() error {
 func (m *macModel) updateMagus() tea.Cmd {
 	if m.preview {
 		m.screen = macScreenMenu
+		m.history = nil
 		m.notice = "Preview only — Magus was not updated."
 		return nil
 	}

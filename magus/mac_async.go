@@ -16,3 +16,8 @@ func (g *asyncGeneration) next() asyncGeneration {
 func (g asyncGeneration) current(candidate asyncGeneration) bool {
 	return candidate != 0 && candidate == g
 }
+
+func (m *macModel) beginDynamicPreview(target string) asyncGeneration {
+	m.previewTarget = target
+	return m.previewGeneration.next()
+}

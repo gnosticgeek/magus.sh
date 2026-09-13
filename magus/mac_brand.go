@@ -11,16 +11,26 @@ import (
 // Matches src/components/AuroraText.astro, with darker tones for light terminals.
 var macAuroraDark = []string{"#c4b5fd", "#f0abfc", "#a78bfa", "#7dd3fc", "#e9d5ff", "#c4b5fd"}
 var macAuroraLight = []string{"#6740b8", "#a52b9d", "#7045ba", "#086a9a", "#8550ad", "#6740b8"}
+var magusRainbowDark = []string{"#fb7185", "#fdba74", "#fde68a", "#86efac", "#67e8f9", "#93c5fd", "#c4b5fd", "#f0abfc", "#fb7185"}
+var magusRainbowLight = []string{"#be123c", "#c2410c", "#a16207", "#15803d", "#0e7490", "#1d4ed8", "#6d28d9", "#a21caf", "#be123c"}
 var macAccent = lipgloss.NewStyle().Foreground(adaptiveColor{Light: "#6740b8", Dark: "#b5a0ff"}).Bold(true)
 
 func auroraText(text string) string {
+	return gradientText(text, macAuroraLight, macAuroraDark)
+}
+
+func rainbowText(text string) string {
+	return gradientText(text, magusRainbowLight, magusRainbowDark)
+}
+
+func gradientText(text string, lightStops, darkStops []string) string {
 	if terminalProfile == termenv.Ascii {
 		return text
 	}
 	lines := strings.Split(text, "\n")
-	stops := macAuroraDark
+	stops := darkStops
 	if lightBackground.Load() {
-		stops = macAuroraLight
+		stops = lightStops
 	}
 	colours := make([]color.Color, len(stops))
 	for i, stop := range stops {
@@ -67,7 +77,7 @@ func (m *macModel) headerView(width int) string {
 		metadata += "\n" + sDim.Render(m.breadcrumb())
 	}
 	if home && m.height >= 22 && width >= 42 {
-		return auroraText(macWordmark) + "\n" + metadata
+		return rainbowText(macWordmark) + "\n" + metadata
 	}
-	return auroraText(title) + "\n" + metadata
+	return rainbowText(title) + "\n" + metadata
 }

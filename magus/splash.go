@@ -28,7 +28,7 @@ func (m Model) viewSplash() string {
 		sMuted.Render("runtime    ") + sText.Render("~10 min"),
 	}
 
-	left := lipgloss.NewStyle().Foreground(colorAccent).Render(strings.Join(magusWordmark, "\n"))
+	left := rainbowText(strings.Join(magusWordmark, "\n"))
 	right := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(strings.Join(info, "\n"))
 
 	header := lipgloss.JoinHorizontal(lipgloss.Top, left, right)

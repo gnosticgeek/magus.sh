@@ -73,7 +73,7 @@ func TestAsyncGenerationRejectsSupersededResults(t *testing.T) {
 
 func TestScreenCapabilitiesCoverInteractiveViews(t *testing.T) {
 	for _, screen := range []macScreen{
-		macScreenMenu, macScreenDeveloper, macScreenCategories, macScreenBrowse, macScreenReview,
+		macScreenMenu, macScreenDeveloper, macScreenCategories, macScreenBrowse, macScreenBasket, macScreenReview,
 		macScreenPresets, macScreenTerminal, macScreenShell, macScreenAppConfigs,
 		macScreenRaycast,
 	} {

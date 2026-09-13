@@ -10,6 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/muesli/termenv"
 )
 
 func TestSearchAcceptsTextAndPasteWithoutReset(t *testing.T) {
@@ -54,6 +55,22 @@ func TestTUIViewsShowBuildVersion(t *testing.T) {
 	mac := newMacModel(Paths{}, "", newMacManifest(), true, 0)
 	if got := ansi.Strip(mac.headerView(80)); !strings.Contains(got, "Magus v0.4.0-test") {
 		t.Fatal("Mac TUI header does not show the build version")
+	}
+}
+
+func TestMagusWordmarksUseRainbowWithPlainFallback(t *testing.T) {
+	previous := terminalProfile
+	t.Cleanup(func() { setTerminalProfile(previous) })
+
+	setTerminalProfile(termenv.TrueColor)
+	coloured := rainbowText("MAGUS")
+	if ansi.Strip(coloured) != "MAGUS" || strings.Count(coloured, "\x1b[") < 5 {
+		t.Fatalf("rainbow wordmark lost text or colour: %q", coloured)
+	}
+
+	setTerminalProfile(termenv.Ascii)
+	if plain := rainbowText("MAGUS"); plain != "MAGUS" {
+		t.Fatalf("plain terminal received styled wordmark: %q", plain)
 	}
 }
 

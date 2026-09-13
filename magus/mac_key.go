@@ -29,20 +29,35 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	if m.showHelp {
-		if k == "?" || k == "esc" {
+		actions := m.paletteActions()
+		switch k {
+		case "?", "esc":
 			m.showHelp = false
+		case "up":
+			m.actionCursor = max(0, m.actionCursor-1)
+		case "down":
+			m.actionCursor = min(max(0, len(actions)-1), m.actionCursor+1)
+		case "enter":
+			if len(actions) > 0 {
+				action := actions[min(m.actionCursor, len(actions)-1)]
+				m.showHelp = false
+				return m.updateKey(macActionKey(action.Key))
+			}
 		}
 		return m, nil
 	}
 	if !m.searching && k == "?" {
 		m.showHelp = true
+		m.actionCursor = 0
 		return m, nil
 	}
 	if m.screen == macScreenUpdates || m.screen == macScreenUpdateConfirm {
 		switch k {
 		case "esc":
 			if m.screen == macScreenUpdateConfirm {
-				m.screen = macScreenUpdates
+				if !m.back() {
+					m.screen = macScreenUpdates
+				}
 				return m, nil
 			}
 			if m.updateReview.cancel != nil {
@@ -54,7 +69,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				return m, m.updateAll()
 			}
 			if m.updateReview.ready && len(m.updateReview.items) > 0 {
-				m.screen = macScreenUpdateConfirm
+				m.openScreen(macScreenUpdateConfirm)
 			}
 		case "r":
 			if m.screen == macScreenUpdates && !m.updateReview.loading {
@@ -119,14 +134,17 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.previewPane, cmd = m.previewPane.Update(v)
 		return m, cmd
 	}
+	if !m.searching && k == "v" && m.screen.supportsDetails() && m.screen != macScreenBasket {
+		m.openScreen(macScreenBasket)
+		return m, nil
+	}
 	if m.searching {
 		switch k {
 		case "esc":
 			m.searching = false
 			m.search.Blur()
 			m.search.SetValue("")
-			m.screen = m.searchReturnScreen
-			m.cursor = m.searchReturnCursor
+			m.restoreLocation(m.searchReturn)
 			return m, nil
 		case "up", "down", "pgup", "pgdown", "enter", "space", "tab", "ctrl+s": // navigation and selection below
 		default:
@@ -248,7 +266,7 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	case "/":
 		if m.screen.searchable() {
-			m.searchReturnScreen, m.searchReturnCursor = m.screen, m.cursor
+			m.searchReturn = m.location()
 			m.searching = true
 			m.screen = macScreenBrowse
 			m.cursor = 0
@@ -284,6 +302,10 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, m.bootstrap()
 		}
 	case "enter", "space":
+		if m.screen == macScreenBasket && k == "enter" {
+			m.openScreen(macScreenReview)
+			return m, nil
+		}
 		if m.screen == macScreenReview && k == "enter" {
 			if len(m.selected) == 0 {
 				m.notice = "Choose something first."
@@ -479,4 +501,26 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func macActionKey(key string) tea.KeyPressMsg {
+	switch key {
+	case "enter":
+		return tea.KeyPressMsg{Code: tea.KeyEnter}
+	case "space":
+		return tea.KeyPressMsg{Code: tea.KeySpace}
+	case "tab":
+		return tea.KeyPressMsg{Code: tea.KeyTab}
+	case "esc":
+		return tea.KeyPressMsg{Code: tea.KeyEscape}
+	case "up":
+		return tea.KeyPressMsg{Code: tea.KeyUp}
+	case "down":
+		return tea.KeyPressMsg{Code: tea.KeyDown}
+	}
+	runes := []rune(key)
+	if len(runes) == 1 {
+		return tea.KeyPressMsg{Code: runes[0], Text: key}
+	}
+	return tea.KeyPressMsg{}
 }

@@ -27,11 +27,21 @@ func (m *macModel) viewContent() string {
 	var body string
 	keys := hints("↑↓", "move", "enter", "open", "/", "search", "?", "help", "q", "quit")
 	if m.showHelp {
-		body = "Help / " + string(m.screen) + "\n\n"
-		for _, binding := range m.contextualKeys().bindings {
-			body += binding.Help().Key + "  " + binding.Help().Desc + "\n"
+		title := m.breadcrumb()
+		if rows := m.rows(); m.screen.supportsDetails() && len(rows) > 0 && m.cursor < len(rows) {
+			title = rows[m.cursor].Name
 		}
-		keys = hints("? / esc", "close help")
+		body = sBright.Render("Actions for "+title) + "\n" + sMuted.Render("Choose an action; safety confirmations still apply.") + "\n\n"
+		for i, action := range m.paletteActions() {
+			marker := "  "
+			style := sText
+			if i == m.actionCursor {
+				marker = "> "
+				style = macAccent
+			}
+			body += style.Render(fmt.Sprintf("%s%-10s %s", marker, action.Key, action.Label)) + "\n"
+		}
+		keys = hints("↑↓", "move", "enter", "run action", "? / esc", "close")
 	} else {
 		switch m.screen {
 		case macScreenUpdates:
@@ -42,15 +52,15 @@ func (m *macModel) viewContent() string {
 			body = confirmationOverlay(m.updateReviewView(w, h), body, w, h)
 			keys = hints("enter", "update reviewed", "esc", "back to versions")
 		case macScreenSelfUpdate:
-			body = "Update to the latest Magus release?\n\nMagus will quit when the update completes."
+			body = sCaution.Render("Update to the latest Magus release?") + "\n\nMagus will quit when the update completes."
 			keys = hints("enter", "yes, update", "esc", "back")
 		case macScreenBootstrap:
 			body = "Preparing the official Homebrew installer…\n\nThe terminal will be handed to Homebrew for its prompts.\nMagus will resume when it finishes."
 		case macScreenTerminalRestore:
-			body = "Restore previous Ghostty settings?\n\nThe saved dotfile will be restored. Ghostty and fonts stay installed.\nManually edited configurations are left unchanged."
+			body = sCaution.Render("Restore previous Ghostty settings?") + "\n\nThe saved dotfile will be restored. Ghostty and fonts stay installed.\nManually edited configurations are left unchanged."
 			keys = hints("enter", "restore", "esc", "back")
 		case macScreenRestore:
-			body = "Restore Magus settings\n\nRestore saved preferences, shared AI skills, Zed and Firefox files, and remove the modern shell block.\nFirefox values already loaded need separate resets in about:config.\nEdited settings are left alone. Open a new terminal afterwards.\nApplications and packages will remain installed.\n\nEnter restores / Escape returns."
+			body = sCaution.Render("Restore Magus settings") + "\n\nRestore saved preferences, shared AI skills, Zed and Firefox files, and remove the modern shell block.\nFirefox values already loaded need separate resets in about:config.\nEdited settings are left alone. Open a new terminal afterwards.\nApplications and packages will remain installed.\n\nEnter restores / Escape returns."
 			keys = hints("enter", "restore", "esc", "back")
 		case macScreenInstall, macScreenSummary:
 			done := 0
@@ -63,7 +73,7 @@ func (m *macModel) viewContent() string {
 			if m.screen == macScreenInstall {
 				heading = m.spinner.View() + " Installing"
 				if m.failed {
-					heading = "An item needs attention"
+					heading = sWarn.Bold(true).Render("An item needs attention")
 				}
 			}
 			if m.screen == macScreenInstall {
@@ -133,7 +143,14 @@ func (m *macModel) viewContent() string {
 			}
 			prefix := ""
 			if m.searching {
-				prefix = m.search.View() + "\n\n"
+				rows := m.rows()
+				selected := 0
+				for _, row := range rows {
+					if m.selected[row.ID] {
+						selected++
+					}
+				}
+				prefix = sDim.Render(m.searchScopeLabel()) + "\n" + m.search.View() + "\n" + sMuted.Render(fmt.Sprintf("%d matches · %d selected", len(rows), selected)) + "\n\n"
 				keys = hints("↑↓", "move", "enter/space", "select", "ctrl+s", "all/none", "esc", "close search")
 			} else if m.screen == macScreenMenu {
 				if m.height >= 26 {
@@ -143,11 +160,11 @@ func (m *macModel) viewContent() string {
 				prefix = macAccent.Render("Developer & Terminal") + sMuted.Render("  /  tools, setup and customisation") + "\n\n"
 				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
 			} else if m.screen == macScreenCategories {
-				prefix = macAccent.Render("Apps") + sMuted.Render("  /  find your essentials") + "\n\n"
+				prefix = sDim.Render("Magus / ") + macAccent.Render("Apps") + sMuted.Render("  /  find your essentials") + "\n\n"
 				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
 			} else if m.screen == macScreenBrowse {
 				label := map[string]string{"apps": "Apps", "tools": "Terminal tools", "fonts": "Fonts", "settings": "Mac settings"}[m.category]
-				prefix = macAccent.Render(label)
+				prefix = sDim.Render("Magus / ") + macAccent.Render(label)
 				if group, ok := appCategory(m.appGroup); ok && m.category == "apps" {
 					prefix += sDim.Render("  /  ") + group.style().Render(group.Name)
 				}
@@ -161,7 +178,7 @@ func (m *macModel) viewContent() string {
 				keys = hints("enter/space", "select", "f", "filter", "/", "search", "?", "help")
 			}
 			if m.screen == macScreenReview {
-				prefix = "Review your selection\n"
+				prefix = sDim.Render("Magus / Basket / ") + sBright.Render("Review") + "\n"
 				if m.selectionManifest().Mac.Terminal != "" {
 					prefix += "Ghostty dotfile will be replaced; original backed up.\n"
 				}
@@ -174,21 +191,25 @@ func (m *macModel) viewContent() string {
 				prefix += "\n"
 				keys = hints("enter", "install selected", "space", "remove", "esc", "back")
 			}
+			if m.screen == macScreenBasket {
+				prefix = sDim.Render("Magus / ") + macAccent.Render("Basket") + "\n" + sMuted.Render("Remove items here, then continue to the separate Review screen.") + "\n\n"
+				keys = hints("space", "remove", "enter", "review", "esc", "back", "?", "actions")
+			}
 			if m.screen == macScreenTerminal {
-				prefix = macAccent.Render("Terminal setup") + "\n"
+				prefix = sDim.Render("Magus / ") + macAccent.Render("Terminal setup") + "\n"
 				keys = hints("enter", "choose", "tab", "details", "esc", "menu")
 			}
 			if m.screen == macScreenAppConfigs {
-				prefix = "App setups · choose a preset or export\n"
+				prefix = "Magus / App setups · choose a preset or export\n"
 			}
 			if m.screen == macScreenRaycast {
-				prefix = "Raycast · guided setup\n"
+				prefix = "Magus / Raycast · guided setup\n"
 			}
 			if m.screen == macScreenShell {
-				prefix = "Modern commands · Zsh\nChoose integrations, then review & apply.\n"
+				prefix = "Magus / Modern commands · Zsh\nChoose integrations, then review & apply.\n"
 			}
 			if m.screen == macScreenPresets {
-				prefix = "Presets\n\n"
+				prefix = "Magus / Presets\n\n"
 				keys = hints("enter", "add preset", "esc", "back")
 			}
 			columns, leftW, split := m.browserLayout()
@@ -204,7 +225,13 @@ func (m *macModel) viewContent() string {
 				left = m.gridView(rows, leftW, m.browserHeight, columns)
 			}
 			if len(rows) == 0 {
-				left = "No matching items."
+				if m.searching {
+					left = sMuted.Render("No matches. Edit the search, press Esc to restore your previous place, or Ctrl+U to clear the query.")
+				} else if m.screen == macScreenBasket {
+					left = sMuted.Render("Your basket is empty. Press Esc to keep browsing and add something with Space.")
+				} else {
+					left = sMuted.Render("No matching items. Change the filter with f.")
+				}
 			}
 			if m.screen != macScreenMenu && columns == 1 {
 				left += "\n" + sMuted.Render(fmt.Sprintf("%d results · page %d/%d", len(rows), browser.Paginator.Page+1, max(1, browser.Paginator.TotalPages)))
@@ -247,12 +274,12 @@ func (m *macModel) viewContent() string {
 	}
 	body = strings.Join(lines, "\n")
 	body = lipgloss.NewStyle().Height(h).Render(body)
-	footer := fmt.Sprintf("%d selected", len(m.selected))
+	footer := m.basketSummary()
 	if m.inspecting {
 		footer += " · inspecting this Mac…"
 	}
 	if m.notice != "" {
-		footer = cleanLog(m.notice)
+		footer += " · " + cleanLog(m.notice)
 	}
 	footer = ansi.Truncate(strings.ReplaceAll(footer, "\n", " "), w, "…")
 	return lipgloss.NewStyle().Padding(1, 3).Render(header + "\n\n" + body + "\n" + sMuted.Render(footer) + "\n" + m.help.View(keys))

@@ -94,9 +94,8 @@ type macModel struct {
 	screen                                            macScreen
 	category, appGroup                                string
 	history                                           []macNavigationPoint
-	searchReturnScreen                                macScreen
 	catalogueFilter                                   macCatalogueFilter
-	groupCursor, searchReturnCursor                   int
+	groupCursor                                       int
 	cursor                                            int
 	selected                                          map[string]bool
 	search                                            textinput.Model
@@ -110,6 +109,8 @@ type macModel struct {
 	browserHeight                                     int
 	noticeGeneration, inventoryGeneration             asyncGeneration
 	selfUpdateGeneration                              asyncGeneration
+	previewGeneration                                 asyncGeneration
+	previewTarget                                     string
 	magUpdateAvailable                                bool
 	magUpdateLatest                                   string
 	inventoryCancel                                   context.CancelFunc
@@ -128,19 +129,22 @@ type macModel struct {
 	bootstrapUnlock                                   func()
 	bootstrapCancel                                   context.CancelFunc
 	bootstrapFile                                     string
+	searchReturn                                      macNavigationPoint
+	actionCursor                                      int
 }
 
 // macNavigationPoint is a typed snapshot of a browsable location. It keeps
 // Escape deterministic even when a user reaches a screen through search or a
 // nested setup flow.
 type macNavigationPoint struct {
-	screen             macScreen
-	category, appGroup string
-	cursor             int
+	screen              macScreen
+	category, appGroup  string
+	cursor, groupCursor int
+	catalogueFilter     macCatalogueFilter
 }
 
 func (m *macModel) navigate(screen macScreen, category, appGroup string, cursor int) {
-	m.history = append(m.history, macNavigationPoint{m.screen, m.category, m.appGroup, m.cursor})
+	m.history = append(m.history, m.location())
 	m.screen, m.category, m.appGroup, m.cursor = screen, category, appGroup, cursor
 }
 
@@ -150,12 +154,12 @@ func (m *macModel) goBack() bool {
 	}
 	last := m.history[len(m.history)-1]
 	m.history = m.history[:len(m.history)-1]
-	m.screen, m.category, m.appGroup, m.cursor = last.screen, last.category, last.appGroup, last.cursor
+	m.restoreLocation(last)
 	return true
 }
 
 func (m *macModel) breadcrumb() string {
-	points := append(append([]macNavigationPoint{}, m.history...), macNavigationPoint{m.screen, m.category, m.appGroup, m.cursor})
+	points := append(append([]macNavigationPoint{}, m.history...), m.location())
 	labels := make([]string, 0, len(points))
 	for _, point := range points {
 		label := navigationLabel(point)
@@ -244,6 +248,7 @@ func (m *macModel) Init() tea.Cmd {
 	return tea.Batch(tea.RequestBackgroundColor, m.inspect(), m.checkMagusUpdate(), m.spinner.Tick)
 }
 func (m *macModel) rows() []macRow {
+	basket := m.screen == macScreenBasket || m.screen == macScreenReview
 	if m.screen == macScreenAppConfigs {
 		return m.appConfigRows()
 	}
@@ -292,7 +297,7 @@ func (m *macModel) rows() []macRow {
 		rows = append(rows, macRow{ID: macDeveloperToolsGroup, Name: "Developer environments", Summary: "Languages, package managers and container runtimes.", Note: "Apple Container · Node.js & npm · Python · uv · Go · Rust · Docker CLI · Colima"})
 	}
 	for _, p := range macPackages {
-		if !m.searching && m.screen != macScreenReview && ((m.category == "apps" && (p.Kind != "cask" || strings.HasPrefix(p.ID, "font-"))) || (m.category == "fonts" && !strings.HasPrefix(p.ID, "font-")) || (m.category == "tools" && p.Kind != "formula") || m.category == "settings") {
+		if !m.searching && !basket && ((m.category == "apps" && (p.Kind != "cask" || strings.HasPrefix(p.ID, "font-"))) || (m.category == "fonts" && !strings.HasPrefix(p.ID, "font-")) || (m.category == "tools" && p.Kind != "formula") || m.category == "settings") {
 			continue
 		}
 		if !m.searching && m.screen == macScreenBrowse && m.category == "apps" && m.appGroup != "" {
@@ -304,7 +309,7 @@ func (m *macModel) rows() []macRow {
 		if !m.searching && m.screen == macScreenBrowse && m.category == "tools" && m.appGroup == macDeveloperToolsGroup && !oneOf(p.ID, macDeveloperToolIDs) {
 			continue
 		}
-		if m.screen == macScreenReview && !m.selected[p.ID] {
+		if basket && !m.selected[p.ID] {
 			continue
 		}
 		source := "Homebrew " + p.Kind + " / " + p.ID
@@ -313,18 +318,18 @@ func (m *macModel) rows() []macRow {
 		}
 		rows = append(rows, macRow{p.ID, p.Name, p.Summary, source, p.Note})
 	}
-	if m.searching || m.category == "settings" || m.screen == macScreenReview {
+	if m.searching || m.category == "settings" || basket {
 		for _, s := range macSettings {
-			if m.screen == macScreenReview && !m.selected[s.ID] {
+			if basket && !m.selected[s.ID] {
 				continue
 			}
 			rows = append(rows, macRow{s.ID, s.Name, s.Summary, "macOS preference / " + s.Domain + " / " + s.Key, "Original value saved. Refresh Finder after applying. Behaviour needs visual verification on this macOS release."})
 		}
 	}
-	if m.screen == macScreenReview && m.selected["shell:configure"] {
+	if basket && m.selected["shell:configure"] {
 		rows = append(rows, macRow{ID: "shell:configure", Name: (shellStep{m.shellSettings}).Describe(), Summary: "Only the Magus block in .zshrc is changed. Existing settings are preserved.", Note: strings.Join(m.shellSettings.Commands, ", ")})
 	}
-	if m.screen == macScreenReview {
+	if basket {
 		for _, row := range append(m.terminalRows(), m.appConfigRows()...) {
 			if m.selected[row.ID] {
 				if strings.HasPrefix(row.ID, "skill:") {
@@ -353,6 +358,14 @@ func (m *macModel) rows() []macRow {
 		})
 	}
 	return rows
+}
+
+func (m *macModel) focusedRowID() string {
+	rows := m.rows()
+	if len(rows) == 0 {
+		return ""
+	}
+	return rows[min(m.cursor, len(rows)-1)].ID
 }
 
 func (m *macModel) catalogueFilterLabel() string {

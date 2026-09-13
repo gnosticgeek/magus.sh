@@ -10,6 +10,7 @@ const (
 	macScreenDeveloper       macScreen = "developer"
 	macScreenCategories      macScreen = "categories"
 	macScreenBrowse          macScreen = "browse"
+	macScreenBasket          macScreen = "basket"
 	macScreenReview          macScreen = "review"
 	macScreenPresets         macScreen = "presets"
 	macScreenUpdates         macScreen = "updates"
@@ -26,11 +27,11 @@ const (
 	macScreenRaycast         macScreen = "raycast"
 )
 
-func (s macScreen) searchable() bool { return s != macScreenReview }
+func (s macScreen) searchable() bool { return s != macScreenReview && s != macScreenBasket }
 
 func (s macScreen) supportsDetails() bool {
 	switch s {
-	case macScreenMenu, macScreenDeveloper, macScreenBrowse, macScreenCategories, macScreenReview,
+	case macScreenMenu, macScreenDeveloper, macScreenBrowse, macScreenCategories, macScreenBasket, macScreenReview,
 		macScreenPresets, macScreenTerminal, macScreenShell, macScreenAppConfigs,
 		macScreenRaycast:
 		return true
@@ -42,6 +43,15 @@ func (s macScreen) supportsDetails() bool {
 // macEventKind describes messages emitted by an installation session. The
 // session is the sole producer and the TUI update loop is the sole consumer.
 type macEventKind string
+
+// macPreviewResult is the publication boundary for any preview that later
+// needs I/O. Results carry both the focused target and a generation so moving
+// focus can invalidate work that is otherwise perfectly valid but obsolete.
+type macPreviewResult struct {
+	target     string
+	content    string
+	generation asyncGeneration
+}
 
 const (
 	macEventPlan     macEventKind = "plan"

@@ -75,6 +75,12 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.magUpdateAvailable = v.available
 			m.magUpdateLatest = v.latest
 		}
+	case macPreviewResult:
+		if m.previewGeneration.current(v.generation) && v.target == m.previewTarget && v.target == m.focusedRowID() {
+			m.previewContent = v.content
+			m.previewPane.SetContent(v.content)
+			m.previewPane.GotoTop()
+		}
 	case macEvent:
 		if !m.sessionGeneration.current(v.generation) {
 			return m, nil

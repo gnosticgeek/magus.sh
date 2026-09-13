@@ -44,16 +44,20 @@ It adds the profile's packages, Finder preferences and app setups to the current
 saved selection, while an included terminal or shell setup becomes the selected
 one. `--dry-run` with `save` only reports the profile file it would create.
 
-The home screen uses the website's lavender, pink and ice-blue gradient across
-an ASCII seal and wordmark, with a compact mark in shorter terminals. Colours
-adapt to light backgrounds and plain terminals.
+The home screen casts a full-spectrum rainbow across its ASCII seal and
+wordmark, with a compact mark in shorter terminals. Colours adapt to light
+backgrounds and plain terminals, where the branding remains readable without
+ANSI styling.
 
 Apps opens thirteen categories, including AI & LLMs, Audio & Music, Design &
 Graphics, Cloud & Storage, Security & Privacy, Games, Menu Bar and Utilities.
 Each shows its selection count and app
 preview. Escape returns to the category list and keeps your focus and picks.
-Fuzzy search spans all categories and also matches their names. Bubbles List
-provides paging, result counts and custom rows with a separate basket. The AI category adds
+Fuzzy search spans all categories and also matches their names. Its search mode
+shows the originating scope, match and selected counts, highlights matched name
+characters, explains how to recover from an empty result, and restores the exact
+previous cursor and page on Escape. Bubbles List provides paging, result counts
+and custom rows with a separate basket. The AI category adds
 Ollama and LM Studio alongside desktop assistants; model downloads remain separate.
 
 The catalogue includes 75 apps, eight fonts and 35 terminal tools, including Mole,
@@ -120,10 +124,19 @@ numeric `vMAJOR.MINOR.PATCH` release tag is offered by the update check.
   screens return to the Developer & Terminal hub before the main menu. Selection notices clear after
   three seconds without clearing newer error messages.
 - `/` searches across all categories. Letters—including `r`, `q`, and `?`—are
-  text while searching. Space toggles the focused result.
+  text while searching. Space toggles the focused result. Search reports that
+  its results cover the full catalogue while retaining the originating breadcrumb.
+- The footer keeps a typed basket summary visible across screens: total items,
+  apps, tools, fonts, settings and setup steps. Press `v` from an interactive
+  screen to inspect the basket and remove items. Enter proceeds to the separate
+  Review screen; it never installs directly from the basket drawer.
 - Tab focuses the scrollable details pane (full width on a narrow terminal).
   Arrows and Page Up/Down scroll it; Tab or Escape returns to the list.
-  `?` explains the controls for the current screen, including during installation.
+  `?` opens a navigable palette of actions valid for the current screen. Enter
+  invokes the highlighted action through the same guarded key path as its
+  shortcut; Escape closes the palette.
+- Escape follows typed navigation history and restores the originating category,
+  filter and cursor rather than guessing a fixed parent screen.
 - Presets add selections and never remove existing picks.
 - Review shows the entire basket before installation. Missing Homebrew can be
   installed by pressing `b` in Review; Magus hands the terminal to the official

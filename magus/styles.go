@@ -1,26 +1,34 @@
 package main
 
-import "charm.land/lipgloss/v2"
+import (
+	"strings"
+
+	"charm.land/lipgloss/v2"
+)
 
 // Palette — mirrors the t-* CSS variables used by the Astro prototype.
 // Hex values picked to land on a dark terminal background.
 var (
-	colorBright = adaptiveColor{Light: "#1a1a1a", Dark: "#f4f1ea"} // focused / primary text
-	colorText   = adaptiveColor{Light: "#2a2a2a", Dark: "#d6cfc1"} // normal / picked
-	colorMuted  = adaptiveColor{Light: "#555555", Dark: "#857f72"} // unpicked / summary
-	colorDim    = adaptiveColor{Light: "#888888", Dark: "#5a5448"} // separators / hints
-	colorAccent = adaptiveColor{Light: "#b45309", Dark: "#f59e0b"} // cursor / checkbox / focus
-	colorWarn   = adaptiveColor{Light: "#9f1239", Dark: "#fb7185"} // errors / empty state
+	colorBright  = adaptiveColor{Light: "#1a1a1a", Dark: "#f4f1ea"} // focused / primary text
+	colorText    = adaptiveColor{Light: "#2a2a2a", Dark: "#d6cfc1"} // normal / picked
+	colorMuted   = adaptiveColor{Light: "#555555", Dark: "#857f72"} // unpicked / summary
+	colorDim     = adaptiveColor{Light: "#888888", Dark: "#5a5448"} // separators / hints
+	colorAccent  = adaptiveColor{Light: "#b45309", Dark: "#f59e0b"} // cursor / checkbox / focus
+	colorWarn    = adaptiveColor{Light: "#9f1239", Dark: "#fb7185"} // errors / empty state
+	colorSuccess = adaptiveColor{Light: "#237342", Dark: "#86d9a0"}
+	colorCaution = adaptiveColor{Light: "#9a5b08", Dark: "#f6c76b"}
 )
 
 // Reusable styles.
 var (
-	sBright = lipgloss.NewStyle().Foreground(colorBright).Bold(true)
-	sText   = lipgloss.NewStyle().Foreground(colorText)
-	sMuted  = lipgloss.NewStyle().Foreground(colorMuted)
-	sDim    = lipgloss.NewStyle().Foreground(colorDim)
-	sAccent = lipgloss.NewStyle().Foreground(colorAccent).Bold(true)
-	sWarn   = lipgloss.NewStyle().Foreground(colorWarn)
+	sBright  = lipgloss.NewStyle().Foreground(colorBright).Bold(true)
+	sText    = lipgloss.NewStyle().Foreground(colorText)
+	sMuted   = lipgloss.NewStyle().Foreground(colorMuted)
+	sDim     = lipgloss.NewStyle().Foreground(colorDim)
+	sAccent  = lipgloss.NewStyle().Foreground(colorAccent).Bold(true)
+	sWarn    = lipgloss.NewStyle().Foreground(colorWarn)
+	sSuccess = lipgloss.NewStyle().Foreground(colorSuccess).Bold(true)
+	sCaution = lipgloss.NewStyle().Foreground(colorCaution).Bold(true)
 
 	sCursor = lipgloss.NewStyle().Foreground(colorAccent).Bold(true)
 	sCheck  = lipgloss.NewStyle().Foreground(colorAccent)
@@ -51,6 +59,19 @@ func repeat(s string, n int) string {
 // rule renders a dim horizontal divider of width n.
 func rule(n int) string {
 	return sDim.Render(repeat("─", n))
+}
+
+func semanticStatus(status string) string {
+	switch strings.TrimSpace(status) {
+	case "installed", "already present", "restored":
+		return sSuccess.Render(status)
+	case "failed":
+		return sWarn.Bold(true).Render(status)
+	case "skipped", "external":
+		return sCaution.Render(status)
+	default:
+		return sMuted.Render(status)
+	}
 }
 
 // HintKind ranks status-bar keys by importance.

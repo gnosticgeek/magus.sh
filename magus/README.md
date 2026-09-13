@@ -24,6 +24,14 @@ One statically-linked binary with two faces:
   [`STEAM_MACHINE_BRIEF.md`](../STEAM_MACHINE_BRIEF.md): reads a manifest and
   converges the machine to it.
 
+Both interactive home screens carry the Magus ASCII wordmark in a
+full-spectrum terminal gradient. The palette adapts for light backgrounds and
+falls back to plain, unstyled text when ANSI colour is unavailable.
+On Mac, search exposes its scope and match counts, `v` opens the persistent
+basket, `?` opens an actionable contextual palette, and Escape follows typed
+navigation history. Basket and Review remain separate so discoverability never
+bypasses confirmation.
+
 ## Install
 
 ```bash

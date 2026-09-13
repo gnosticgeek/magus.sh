@@ -611,7 +611,7 @@ func TestMacEveryScreenFits(t *testing.T) {
 	}
 	for _, size := range [][2]int{{80, 24}, {72, 20}, {120, 35}} {
 		m.Update(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
-		for _, screen := range []macScreen{macScreenMenu, macScreenDeveloper, macScreenCategories, macScreenBrowse, macScreenPresets, macScreenReview, macScreenRestore, macScreenInstall, macScreenSummary, macScreenBootstrap, macScreenUpdates, macScreenAppConfigs, macScreenRaycast, macScreenTerminal, macScreenTerminalRestore, macScreenShell, macScreenUpdateConfirm} {
+		for _, screen := range []macScreen{macScreenMenu, macScreenDeveloper, macScreenCategories, macScreenBrowse, macScreenBasket, macScreenPresets, macScreenReview, macScreenRestore, macScreenInstall, macScreenSummary, macScreenBootstrap, macScreenUpdates, macScreenAppConfigs, macScreenRaycast, macScreenTerminal, macScreenTerminalRestore, macScreenShell, macScreenUpdateConfirm} {
 			m.screen = screen
 			m.category = "settings"
 			v := m.View().Content

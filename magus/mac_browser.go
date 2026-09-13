@@ -50,13 +50,16 @@ func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.I
 	}
 	check := ""
 	blocked := m.selectionBlockReason(r.ID)
-	if (m.screen == macScreenBrowse || m.screen == macScreenReview) && r.ID != "restore" && m.needsSelection(r.ID) && blocked == "" {
+	if (m.screen == macScreenBrowse || m.screen == macScreenBasket || m.screen == macScreenReview) && r.ID != "restore" && m.needsSelection(r.ID) && blocked == "" {
 		check = "[ ] "
 		if m.selected[r.ID] {
 			check = "[x] "
 		}
 	}
 	label := mark + check + r.Name
+	if m.searching {
+		label = mark + check + highlightFuzzyMatch(r.Name, m.search.Value())
+	}
 	if m.screen == macScreenCategories {
 		group, _ := appCategory(r.ID)
 		picked := 0
@@ -81,6 +84,24 @@ func (d macRowDelegate) Render(w io.Writer, l list.Model, index int, item list.I
 		style = sMuted
 	}
 	fmt.Fprint(w, style.Render(label)+badge)
+}
+
+func highlightFuzzyMatch(text, query string) string {
+	queryRunes := []rune(strings.ToLower(strings.ReplaceAll(query, " ", "")))
+	if len(queryRunes) == 0 {
+		return text
+	}
+	matched := 0
+	var out strings.Builder
+	for _, r := range text {
+		if matched < len(queryRunes) && []rune(strings.ToLower(string(r)))[0] == queryRunes[matched] {
+			out.WriteString(macAccent.Underline(true).Render(string(r)))
+			matched++
+		} else {
+			out.WriteRune(r)
+		}
+	}
+	return out.String()
 }
 
 func (m *macModel) browserList(rows []macRow, width, height int) list.Model {
@@ -179,6 +200,9 @@ func (m *macModel) contextualKeys() macKeys {
 	if m.screen == macScreenRestore {
 		return hints("enter", "restore recorded settings", "esc", "back")
 	}
+	if m.screen == macScreenBasket {
+		return hints("↑↓", "move", "space", "remove from basket", "enter", "review safely", "esc", "back")
+	}
 	if m.screen == macScreenReview {
 		return hints("↑↓", "move", "space", "remove from basket", "enter", "install selected", "esc", "back")
 	}
@@ -186,4 +210,43 @@ func (m *macModel) contextualKeys() macKeys {
 		return hints("↑↓", "scroll", "enter", "menu", "l", "logs", "q", "quit")
 	}
 	return hints("←↑↓→", "move", "pgup/pgdown", "page", "home/end", "first/last", "enter/space", "select item", "ctrl+s", "select/deselect all results", "f", "filter catalogue", "tab", "focus details", "/", "fuzzy search", "esc", "back", "?", "help")
+}
+
+type macAction struct{ Key, Label string }
+
+func (m *macModel) paletteActions() []macAction {
+	actions := []macAction{}
+	switch m.screen {
+	case macScreenMenu, macScreenCategories:
+		actions = append(actions, macAction{"enter", "Open focused item"}, macAction{"/", "Search catalogue"})
+	case macScreenBrowse:
+		actions = append(actions,
+			macAction{"space", "Add or remove focused item"},
+			macAction{"tab", "View focused item details"},
+			macAction{"/", "Search catalogue"},
+			macAction{"f", "Change catalogue filter"},
+		)
+	case macScreenBasket:
+		actions = append(actions, macAction{"space", "Remove focused item"}, macAction{"enter", "Review basket before installation"})
+	case macScreenReview:
+		actions = append(actions, macAction{"space", "Remove focused item"}, macAction{"enter", "Install reviewed basket"})
+	case macScreenUpdates:
+		actions = append(actions, macAction{"enter", "Open update confirmation"}, macAction{"r", "Refresh Homebrew metadata"}, macAction{"esc", "Return"})
+	case macScreenUpdateConfirm:
+		actions = append(actions, macAction{"enter", "Update reviewed packages"}, macAction{"esc", "Return to versions"})
+	case macScreenInstall:
+		actions = append(actions, macAction{"l", "Toggle installation logs"}, macAction{"q", "Stop after the active process"})
+	case macScreenSummary:
+		actions = append(actions, macAction{"l", "Toggle logs"}, macAction{"enter", "Return to menu"})
+	case macScreenRestore, macScreenTerminalRestore:
+		actions = append(actions, macAction{"enter", "Confirm restore"}, macAction{"esc", "Return without restoring"})
+	case macScreenSelfUpdate:
+		actions = append(actions, macAction{"enter", "Update Magus"}, macAction{"esc", "Return without updating"})
+	default:
+		actions = append(actions, macAction{"enter", "Choose focused item"}, macAction{"tab", "View focused item details"}, macAction{"esc", "Return"})
+	}
+	if m.screen != macScreenBasket && m.screen != macScreenInstall && m.screen != macScreenSummary && m.screen != macScreenBootstrap {
+		actions = append(actions, macAction{"v", "View basket"})
+	}
+	return actions
 }
