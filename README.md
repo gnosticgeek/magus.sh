@@ -37,16 +37,6 @@ npm run check
 npm run build
 ```
 
-To prepare the next patch release from the latest published GitHub Release, run:
-
-```sh
-./new-release
-```
-
-This creates a sibling worktree on `codex/release-X.Y.Z`, based on the latest
-`origin/main`, and prints the directory to open for the new release task. Use
-`./new-release --dry-run` to preview it without changing anything.
-
 The development site opens at `http://localhost:4321`. Review at mobile widths, Steam Deck's **1280×800** display, and a wider desktop viewport. The existing Cloudflare build/deployment setup is retained. Deployment is separate from local review.
 
 Before publishing, verify GitHub Releases contains `magus-linux-amd64`, `magus-linux-arm64`, and `checksums.txt` for the advertised latest release. Browser testing does not verify Steam Machine hardware support.
