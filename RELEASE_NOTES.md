@@ -1,24 +1,27 @@
-# Magus v0.4.7
+# Magus v0.4.8
 
-This Mac alpha release makes a fresh-Mac setup faster to browse, easier to
-navigate, and reusable across machines. The manifest schema remains `0.4.0`.
+This Mac alpha release expands the open-source catalogue and adds portable AI
+skills shared by Codex and Claude Code. The manifest schema remains `0.4.0`.
 
 ## Highlights
 
-- **Broader catalogue.** Games and Security & Privacy have stronger, more
-  useful app choices, and every selectable app and command-line tool now has a
-  concise description in its detail view.
-- **Developer & Terminal hub.** Terminal tools, fonts, terminal setup and app
-  setup now share a compact menu. It also includes Developer environments for
-  Apple Container, Node.js and npm, Python, uv, Go, Rust, Docker CLI and Colima.
-- **Clearer review flow.** Review & install is part of the selection journey,
-  with consistent labels and colours for installed, external, unavailable and
-  failed states across the app.
-- **Reliable navigation.** Breadcrumbs show the active path, and Escape or
-  Backspace follows the screen history rather than guessing a parent screen.
-- **Reusable profiles.** Save a named, human-readable TOML selection with
-  `magus profile save NAME`; list, inspect and load it later. Loading always
-  opens Review & install and never overwrites an existing profile.
+- **Shared Agent Skills.** App setups now offers Frontend Design, Systematic
+  Debugging, Test-Driven Development, Brainstorming, Writing Plans, Resolving
+  Merge Conflicts, React Best Practices and Find Skills. Each source is linked
+  and pinned to an immutable Git revision; confirmed installs fetch the whole
+  skill folder for both `~/.agents/skills` and `~/.claude/skills`.
+- **Safe skill lifecycle.** Preview stays offline, archive extraction is bounded
+  and rejects links and path traversal, existing differing files are never
+  overwritten, and restore removes only unchanged files Magus created.
+- **More open-source Mac apps.** LocalSend, LibreOffice, Maccy, MonitorControl,
+  UTM, CotEditor, Joplin, VSCodium, draw.io, Hammerspoon and Objective-See's
+  BlockBlock, OverSight, TaskExplorer and What's Your Sign join the catalogue.
+- **Media, OCR and developer tools.** YT-DLP, OCRmyPDF, FFmpeg, Tesseract,
+  ImageMagick, Neovim and VimR are now selectable. Package notes explain codec,
+  language-data and dependency boundaries.
+- **Thaw replaces Ice.** The open-source Thaw cask is now the sole recommended
+  menu-bar manager of the two, with its macOS and permission requirements shown
+  before selection.
 
 ## Upgrade
 
@@ -28,4 +31,5 @@ Choose **Update Magus** from the Mac menu, or run:
 curl -fsSL https://magus.sh/install | sh
 ```
 
-Existing manifests continue to work unchanged; no migration is required.
+Existing manifests continue to work without a schema change. An old Ice
+selection is migrated automatically to Thaw when the manifest or profile loads.

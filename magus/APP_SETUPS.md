@@ -1,7 +1,7 @@
 # Mac app setups
 
-Open **App setups** in the Mac menu. This ports the Ghostty, Zed, Firefox,
-modern commands and Raycast setup work from Machinist / Athanor into Magus.
+Open **App setups** in the Mac menu. It contains shared Agent Skills alongside
+the Ghostty, Zed, Firefox, modern commands and Raycast setup work.
 Selecting a preset adds it to **Review & apply**; nothing is applied just by
 opening a setup. Installing an app alone does not select its preset.
 
@@ -29,6 +29,14 @@ opening a setup. Installing an app alone does not select its preset.
   action, import/export documentation and an exportable Markdown guide.
   Settings and extensions are configured inside Raycast. The guide is not a
   generated `.rayconfig` bundle and contains no account data.
+- **Agent Skills:** offers a reviewed shortlist from skills.sh: Frontend Design,
+  Systematic Debugging, Test-Driven Development, Brainstorming, Writing Plans,
+  Resolving Merge Conflicts, React Best Practices and the advanced Find Skills
+  discovery helper. Each menu entry shows its skills.sh page, upstream GitHub
+  repository and pinned revision. Magus fetches the complete skill directory
+  only after confirmation, then installs it for Codex under
+  `~/.agents/skills/<id>/` and Claude Code under `~/.claude/skills/<id>/`.
+  Preview and dry-run remain offline. Existing differing files are not replaced.
 
 ## Backups and restoration
 
@@ -38,8 +46,10 @@ writes. Magus refuses symlinked configuration paths and refuses to replace or
 restore files edited after it applied a preset.
 
 **Restore Magus settings** restores recorded Zed/Firefox files along with the
-existing Mac preference and shell restoration. Ghostty retains its separate
-restore action under Terminal setup. Installed apps remain installed.
+existing Mac preference and shell restoration. It removes only Agent Skill
+files Magus created and only while their contents still match; pre-existing or
+edited skills are left alone. Ghostty retains its separate restore action under
+Terminal setup. Installed apps remain installed.
 
 **Firefox limitation:** restoring or deleting `user.js` does not reset values
 Firefox has already copied into `prefs.js`. Reset affected preferences through
@@ -63,14 +73,15 @@ Headless Mac manifests can include:
 ```toml
 [mac]
 app_configs = ["zed", "firefox"]
+skills = ["frontend-design", "systematic-debugging"]
 packages = []
 settings = []
 ```
 
 The reconciler includes the required apps before their configuration steps.
 Use the existing `reconcile --dry-run` or `doctor` commands for inspection.
-Unknown or duplicate configuration IDs are rejected. Raycast's guided setup
-is intentionally not an automatic manifest configuration step.
+Unknown or duplicate configuration and skill IDs are rejected. Raycast's guided
+setup is intentionally not an automatic manifest configuration step.
 
 ## References
 
@@ -79,6 +90,7 @@ is intentionally not an automatic manifest configuration step.
 - [Firefox profiles](https://support.mozilla.org/en-US/kb/profiles-where-firefox-stores-user-data)
 - [Raycast import/export](https://manual.raycast.com/import-export)
 - [fzf](https://github.com/junegunn/fzf) and [bat](https://github.com/sharkdp/bat)
+- [skills.sh directory](https://skills.sh/)
 
 Validation covers temporary-home apply/restore, dry runs, preservation of edits
 and file modes, pending-write recovery, symlinks, Firefox ambiguity and invalid

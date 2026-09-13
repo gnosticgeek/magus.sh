@@ -66,6 +66,20 @@ func TestMacManifestIsolation(t *testing.T) {
 		t.Fatal("future schema silently accepted")
 	}
 }
+
+func TestMacManifestMigratesIceSelectionToThaw(t *testing.T) {
+	m := newMacManifest()
+	m.Mac.Packages = []string{"jordanbaird-ice", "thaw", "firefox"}
+	if !m.Migrate() {
+		t.Fatal("Ice selection was not migrated")
+	}
+	if !reflect.DeepEqual(m.Mac.Packages, []string{"thaw", "firefox"}) {
+		t.Fatalf("unexpected migrated packages: %#v", m.Mac.Packages)
+	}
+	if err := m.Validate(); err != nil {
+		t.Fatal(err)
+	}
+}
 func TestMacBrewInstallVerifyAndRerun(t *testing.T) {
 	for _, id := range []string{"git", "rectangle"} {
 		t.Run(id, func(t *testing.T) {
@@ -488,7 +502,7 @@ func TestMacInstallShowsContinuousHonestActivity(t *testing.T) {
 }
 
 func TestMacCataloguePresetIDs(t *testing.T) {
-	if len(macPackages) != 98 || len(macSettings) != 6 {
+	if len(macPackages) != 118 || len(macSettings) != 6 {
 		t.Fatal("unexpected starter catalogue size")
 	}
 	for _, preset := range macPresets {

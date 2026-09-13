@@ -50,7 +50,7 @@ func (m *macModel) viewContent() string {
 			body = "Restore previous Ghostty settings?\n\nThe saved dotfile will be restored. Ghostty and fonts stay installed.\nManually edited configurations are left unchanged."
 			keys = hints("enter", "restore", "esc", "back")
 		case macScreenRestore:
-			body = "Restore Magus settings\n\nRestore saved preferences, Zed and Firefox files, and remove the modern shell block.\nFirefox values already loaded need separate resets in about:config.\nEdited settings are left alone. Open a new terminal afterwards.\nApplications and packages will remain installed.\n\nEnter restores / Escape returns."
+			body = "Restore Magus settings\n\nRestore saved preferences, shared AI skills, Zed and Firefox files, and remove the modern shell block.\nFirefox values already loaded need separate resets in about:config.\nEdited settings are left alone. Open a new terminal afterwards.\nApplications and packages will remain installed.\n\nEnter restores / Escape returns."
 			keys = hints("enter", "restore", "esc", "back")
 		case macScreenInstall, macScreenSummary:
 			done := 0

@@ -19,9 +19,9 @@ var macAppCategories = buildMacAppCategories()
 func buildMacAppCategories() []macAppCategory {
 	groups := []macAppCategory{
 		{"browsers", "Browsers", "Choose your window onto the web.", "#086a9a", "#7dd3fc", []string{"firefox", "brave-browser", "google-chrome"}},
-		{"development", "Developer tools", "Editors and terminals for building things.", "#6740b8", "#b5a0ff", []string{"ghostty", "iterm2", "visual-studio-code", "zed"}},
+		{"development", "Developer tools", "Editors, terminals and virtual machines for building things.", "#6740b8", "#b5a0ff", []string{"ghostty", "iterm2", "visual-studio-code", "vscodium", "zed", "vimr", "coteditor", "utm"}},
 		{"ai", "AI & local models", "Explore models on your own Mac. Model downloads are separate.", "#a52b9d", "#f0abfc", []string{"ollama-app", "lm-studio"}},
-		{"productivity", "Productivity", "Notes, window management, launchers and everyday utilities.", "#347866", "#99dec6", []string{"obsidian", "rectangle", "raycast", "the-unarchiver"}},
+		{"productivity", "Productivity", "Notes, office work, automation and everyday utilities.", "#347866", "#99dec6", []string{"obsidian", "joplin", "libreoffice", "maccy", "hammerspoon", "rectangle", "raycast", "the-unarchiver"}},
 		{"media", "Media", "A comfortable home for music and video.", "#a46428", "#eac080", []string{"vlc", "iina"}},
 		{"communication", "Communication", "Private conversations and shared communities.", "#9b4770", "#f1aacb", []string{"signal", "discord"}},
 	}
@@ -41,11 +41,11 @@ func buildMacAppCategories() []macAppCategory {
 	groups[4].Name = "Video & Media"
 	groups = append(groups,
 		macAppCategory{"audio", "Audio & Music", "Explore audio & music apps.", "#347866", "#99dec6", []string{"audacity", "spotify"}},
-		macAppCategory{"design", "Design & Graphics", "Explore design & graphics apps.", "#347866", "#99dec6", []string{"affinity", "bambu-studio", "shottr", "upscayl"}},
-		macAppCategory{"cloud", "Cloud & Storage", "Explore cloud & storage apps.", "#347866", "#99dec6", []string{"proton-drive"}},
-		macAppCategory{"security", "Security & Privacy", "Passwords, network control and startup inspection.", "#347866", "#99dec6", []string{"protonvpn", "1password", "bitwarden", "keepassxc", "lulu", "knockknock"}},
+		macAppCategory{"design", "Design & Graphics", "Explore design & graphics apps.", "#347866", "#99dec6", []string{"affinity", "bambu-studio", "drawio", "shottr", "upscayl"}},
+		macAppCategory{"cloud", "Cloud & Storage", "Explore cloud & storage apps.", "#347866", "#99dec6", []string{"proton-drive", "localsend"}},
+		macAppCategory{"security", "Security & Privacy", "Passwords, network control and system inspection.", "#347866", "#99dec6", []string{"protonvpn", "1password", "bitwarden", "keepassxc", "lulu", "knockknock", "blockblock", "oversight", "taskexplorer", "whatsyoursign"}},
 		macAppCategory{"games", "Games", "Launch, organise, emulate and stream your games.", "#347866", "#99dec6", []string{"es-de", "retroarch-metal", "steam", "heroic", "moonlight"}},
-		macAppCategory{"menubar", "Menu Bar", "Monitors, menu organisers and everyday controls.", "#347866", "#99dec6", []string{"stats", "jordanbaird-ice", "mos", "hiddenbar", "swiftbar", "thaw", "codexbar", "vorssaint", "aldente"}},
+		macAppCategory{"menubar", "Menu Bar", "Monitors, menu organisers and everyday controls.", "#347866", "#99dec6", []string{"stats", "monitorcontrol", "mos", "hiddenbar", "swiftbar", "thaw", "codexbar", "vorssaint", "aldente"}},
 		macAppCategory{"utilities", "Utilities", "Explore utilities apps.", "#347866", "#99dec6", []string{"balenaetcher", "caskhub", "dockflow", "keka", "monocle-app"}},
 	)
 	return groups

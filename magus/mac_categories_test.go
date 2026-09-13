@@ -103,6 +103,55 @@ func TestExpandedCategoriesStayCurated(t *testing.T) {
 	}
 }
 
+func TestOpenSourceCaskImportIsCategorised(t *testing.T) {
+	for _, id := range []string{
+		"blockblock", "coteditor", "drawio", "hammerspoon", "joplin", "libreoffice", "localsend",
+		"maccy", "monitorcontrol", "oversight", "taskexplorer", "utm", "vscodium", "whatsyoursign",
+	} {
+		p, ok := macPackage(id)
+		if !ok || p.Kind != "cask" {
+			t.Fatalf("open-source cask import is missing %s", id)
+		}
+		if _, ok := packageCategory(id); !ok {
+			t.Fatalf("open-source cask import is uncategorised: %s", id)
+		}
+	}
+}
+
+func TestReviewedMediaAndDeveloperToolsAreAvailable(t *testing.T) {
+	for _, id := range []string{"yt-dlp", "ocrmypdf", "ffmpeg", "tesseract", "imagemagick", "neovim"} {
+		p, ok := macPackage(id)
+		if !ok || p.Kind != "formula" {
+			t.Fatalf("reviewed formula is missing %s", id)
+		}
+	}
+	p, ok := macPackage("vimr")
+	if !ok || p.Kind != "cask" {
+		t.Fatal("reviewed VimR cask is missing")
+	}
+	group, ok := packageCategory("vimr")
+	if !ok || group.ID != "development" {
+		t.Fatal("VimR is not in Developer tools")
+	}
+	if _, ok := macPackage("topgrade"); ok {
+		t.Fatal("Topgrade was included despite being excluded from the review")
+	}
+}
+
+func TestThawReplacesIce(t *testing.T) {
+	if _, ok := macPackage("jordanbaird-ice"); ok {
+		t.Fatal("Ice remains in the catalogue after replacement")
+	}
+	p, ok := macPackage("thaw")
+	if !ok || p.Kind != "cask" || p.AppBundle != "Thaw.app" {
+		t.Fatal("Thaw replacement is missing or invalid")
+	}
+	group, ok := packageCategory("thaw")
+	if !ok || group.ID != "menubar" {
+		t.Fatal("Thaw is not in the Menu Bar category")
+	}
+}
+
 func TestDeveloperEnvironmentMenuContainsCoreRuntimes(t *testing.T) {
 	for _, id := range []string{"container", "node", "python@3.14", "uv"} {
 		p, ok := macPackage(id)
@@ -177,7 +226,7 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 	for _, r := range "productivity" {
 		press(m, string(r))
 	}
-	if len(m.rows()) != 5 {
+	if len(m.rows()) != 9 {
 		t.Fatal("search does not match category names")
 	}
 	press(m, "esc")

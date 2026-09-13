@@ -1,5 +1,5 @@
 {
-  "checked": "2026-09-09",
+  "checked": "2026-09-13",
   "packages": [
 	{"id":"mole","kind":"formula","source":"https://formulae.brew.sh/api/formula/mole.json","disabled":false,"deprecated":false,"platform":"macos"},
     {
@@ -228,6 +228,118 @@
       "macos": {}
     },
     {
+      "id": "localsend",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/localsend.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": null
+    },
+    {
+      "id": "libreoffice",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/libreoffice.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "maccy",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/maccy.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {">=": ["14"]}
+    },
+    {
+      "id": "monitorcontrol",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/monitorcontrol.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "utm",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/utm.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "coteditor",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/coteditor.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "joplin",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/joplin.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {">=": ["12"]}
+    },
+    {
+      "id": "vscodium",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/vscodium.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "drawio",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/drawio.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {">=": ["13"]}
+    },
+    {
+      "id": "hammerspoon",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/hammerspoon.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {">=": ["13"]}
+    },
+    {
+      "id": "blockblock",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/blockblock.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "oversight",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/oversight.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {">=": ["12"]}
+    },
+    {
+      "id": "taskexplorer",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/taskexplorer.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
+      "id": "whatsyoursign",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/whatsyoursign.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {}
+    },
+    {
       "id": "git",
       "kind": "formula",
       "source": "https://formulae.brew.sh/api/formula/git.json",
@@ -343,6 +455,62 @@
       "id": "tmux",
       "kind": "formula",
       "source": "https://formulae.brew.sh/api/formula/tmux.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "vimr",
+      "kind": "cask",
+      "source": "https://formulae.brew.sh/api/cask/vimr.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": {">=": ["14"]}
+    },
+    {
+      "id": "yt-dlp",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/yt-dlp.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "ocrmypdf",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/ocrmypdf.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "ffmpeg",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/ffmpeg.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "tesseract",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/tesseract.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "imagemagick",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/imagemagick.json",
+      "disabled": false,
+      "deprecated": false,
+      "macos": []
+    },
+    {
+      "id": "neovim",
+      "kind": "formula",
+      "source": "https://formulae.brew.sh/api/formula/neovim.json",
       "disabled": false,
       "deprecated": false,
       "macos": []

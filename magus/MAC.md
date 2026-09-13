@@ -56,7 +56,8 @@ Fuzzy search spans all categories and also matches their names. Bubbles List
 provides paging, result counts and custom rows with a separate basket. The AI category adds
 Ollama and LM Studio alongside desktop assistants; model downloads remain separate.
 
-The catalogue includes 61 apps, eight fonts and 29 terminal tools, including Mole.
+The catalogue includes 75 apps, eight fonts and 35 terminal tools, including Mole,
+YT-DLP, OCRmyPDF, FFmpeg, Tesseract, ImageMagick and Neovim.
 **Fonts** opens a handpicked selection: Inter, Source Serif 4, Newsreader, Fraunces,
 Space Grotesk and JetBrains Mono. Select fonts individually or use Ctrl+S for all
 six, then review and install through the shared basket. Choose the installed font
@@ -223,9 +224,9 @@ concurrent package/filesystem probes. Starting a new inspection cancels the
 older one; preference inspection stays sequential because it uses macOS system
 preferences rather than the package-probe resource pool.
 
-`mac-catalogue-audit.json` records the official Homebrew metadata check for the
-original 32 package identifiers plus seven additional Menu Bar apps. Another 29 casks use locally installed
-Homebrew metadata, recorded in `mac-installed-catalogue-audit.json`.
+`mac-catalogue-audit.json` records official Homebrew metadata checks for the
+reviewed package identifiers. Additional casks imported from the installed
+Homebrew catalogue are recorded in `mac-installed-catalogue-audit.json`.
 The catalogue is embedded in Go and browses offline.
 Descriptions, presets, and preference definitions are adapted from the user's
 Machinist/AthanorKit source; no Swift runtime or source checkout is needed.
@@ -302,5 +303,6 @@ configuration unmanaged. Accepted command IDs also include `atuin`.
 
 ## App setups
 
-The Mac menu includes **App setups** for Ghostty, Zed, Firefox, modern commands and
-Raycast. See [setup contents, exports and restore limitations](APP_SETUPS.md).
+The Mac menu includes **App setups** for shared Codex and Claude Code skills,
+Ghostty, Zed, Firefox, modern commands and Raycast. See
+[setup contents, exports and restore limitations](APP_SETUPS.md).

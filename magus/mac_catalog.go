@@ -27,19 +27,30 @@ var macPackages = []MacPackage{
 	{"mos", "Mos", "Smooth scrolling with independent mouse scroll direction.", "cask", "Mos.app", "Conflicts with the Mos beta cask."},
 	{"hiddenbar", "Hidden Bar", "Hide and reveal menu bar items.", "cask", "Hidden Bar.app", ""},
 	{"swiftbar", "SwiftBar", "Customise your menu bar with script-based plugins.", "cask", "SwiftBar.app", "Requires macOS 12 or later. Choose and configure plugins after installation."},
-	{"thaw", "Thaw", "Organise and manage your menu bar items.", "cask", "Thaw.app", "Requires macOS 26 or later."},
+	{"thaw", "Thaw", "Free, open-source menu bar manager with hidden sections, search, profiles and appearance controls.", "cask", "Thaw.app", "Requires macOS 26 or later. Accessibility permission enables item movement; Screen Recording is optional and used for live previews."},
 	{"codexbar", "CodexBar", "Menu bar usage monitor for Codex and Claude.", "cask", "CodexBar.app", "Requires macOS 14 or later. Configure your providers after opening the app."},
 	{"aldente", "AlDente", "Limit your MacBook's maximum charging percentage.", "cask", "AlDente.app", "Requires macOS 12 or later. Configure charging limits after installation."},
+	{"monitorcontrol", "MonitorControl", "Control external-display brightness and volume from the menu bar.", "cask", "MonitorControl.app", "Display support varies; DDC-capable external monitors work best. Grant Accessibility access for keyboard controls if requested."},
 	{"firefox", "Firefox", "The independent, privacy-minded browser.", "cask", "Firefox.app", ""},
 	{"brave-browser", "Brave", "Privacy-first Chromium browser.", "cask", "Brave Browser.app", ""},
 	{"google-chrome", "Google Chrome", "The web developer's default.", "cask", "Google Chrome.app", ""},
 	{"ghostty", "Ghostty", "Fast, native, GPU-accelerated terminal.", "cask", "Ghostty.app", ""},
 	{"iterm2", "iTerm2", "The classic macOS terminal replacement.", "cask", "iTerm.app", ""},
 	{"visual-studio-code", "Visual Studio Code", "The ubiquitous, extensible editor.", "cask", "Visual Studio Code.app", ""},
+	{"vscodium", "VSCodium", "Community-built VS Code binaries without Microsoft branding or telemetry.", "cask", "VSCodium.app", "Uses Open VSX by default, so some Microsoft Marketplace extensions may be unavailable."},
+	{"coteditor", "CotEditor", "Fast, native plain-text and source-code editor.", "cask", "CotEditor.app", "Includes the cot command-line tool. Choose syntax and text-encoding preferences after installation."},
+	{"utm", "UTM", "Run virtual machines on macOS using QEMU and Apple virtualization.", "cask", "UTM.app", "Guest operating-system images are separate downloads and virtual machines can use substantial disk space."},
+	{"vimr", "VimR", "Open-source native macOS interface for Neovim.", "cask", "VimR.app", "Requires macOS 14 or later. VimR includes its own Neovim runtime; the separate neovim formula is optional."},
 	{"zed", "Zed", "High-performance, multiplayer editor.", "cask", "Zed.app", ""},
 	{"obsidian", "Obsidian", "Local-first Markdown notes & knowledge base.", "cask", "Obsidian.app", ""},
+	{"joplin", "Joplin", "Open-source notes and to-do lists with optional encrypted sync.", "cask", "Joplin.app", "Requires macOS 12 or later. Sync is optional; configure a provider after installation if wanted."},
+	{"libreoffice", "LibreOffice", "Open-source office suite for documents, spreadsheets and presentations.", "cask", "LibreOffice.app", "Installs the current fresh release. Microsoft Office file compatibility is good but complex layouts may differ."},
+	{"maccy", "Maccy", "Fast, open-source clipboard history for the menu bar.", "cask", "Maccy.app", "Requires macOS 14 or later. Enable Accessibility access and choose clipboard retention after opening the app."},
+	{"hammerspoon", "Hammerspoon", "Automate macOS with Lua scripts and keyboard shortcuts.", "cask", "Hammerspoon.app", "Requires macOS 13 or later. Automation scripts and requested macOS permissions are configured separately."},
+	{"localsend", "LocalSend", "Share files privately across nearby devices without an account.", "cask", "LocalSend.app", "Install LocalSend on the other devices too. Local Network permission and the same network are required."},
 	{"vlc", "VLC", "Plays absolutely everything.", "cask", "VLC.app", ""},
 	{"iina", "IINA", "Modern, open-source media player for macOS.", "cask", "IINA.app", ""},
+	{"drawio", "draw.io Desktop", "Open-source diagrams and flowcharts stored locally.", "cask", "draw.io.app", "Requires macOS 13 or later. Online integrations are optional; local files work without an account."},
 	{"rectangle", "Rectangle", "Move & resize windows with shortcuts.", "cask", "Rectangle.app", "Enable Accessibility access when opening Rectangle."},
 	{"raycast", "Raycast", "Blazing-fast launcher & command palette.", "cask", "Raycast.app", ""},
 	{"the-unarchiver", "The Unarchiver", "Extract just about any archive.", "cask", "The Unarchiver.app", ""},
@@ -63,7 +74,6 @@ var macPackages = []MacPackage{
 	{"handbrake-app", "HandBrake", "Open-source video transcoder", "cask", "HandBrake.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"hermes-desktop", "Hermes Agent Desktop", "Open-source desktop AI agent", "cask", "Hermes.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"jellyfin-media-player", "Jellyfin Media Player", "Jellyfin desktop client", "cask", "Jellyfin Media Player.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
-	{"jordanbaird-ice", "Ice", "Menu bar manager", "cask", "Ice.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"keka", "Keka", "File archiver", "cask", "Keka.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"monocle-app", "Monocle", "Window dimming utility", "cask", "Monocle.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"moonfin", "Moonfin", "Media streaming client for Jellyfin and Emby", "cask", "Moonfin.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
@@ -75,6 +85,10 @@ var macPackages = []MacPackage{
 	{"keepassxc", "KeePassXC", "Offline, open-source password manager for local encrypted vaults.", "cask", "KeePassXC.app", "Requires macOS 12 or later. You are responsible for backing up and syncing your vault file."},
 	{"lulu", "LuLu", "Free, open-source firewall for controlling outgoing connections.", "cask", "LuLu.app", "Approve the required Network Extension in System Settings after installation."},
 	{"knockknock", "KnockKnock", "Inspect software that starts persistently on your Mac.", "cask", "KnockKnock.app", "This is an inspection tool, not an antivirus. Review results before removing or changing anything."},
+	{"blockblock", "BlockBlock", "Alert when software adds persistent startup components.", "cask", "", "Uses an installer that requests administrator access and system permissions. Review alerts before allowing or blocking anything."},
+	{"oversight", "OverSight", "Alert when an app activates the microphone or webcam.", "cask", "", "Requires macOS 12 or later. Uses an installer that requests administrator access and monitoring permissions."},
+	{"taskexplorer", "TaskExplorer", "Inspect running processes, signatures, connections and open files.", "cask", "TaskExplorer.app", "An advanced inspection tool. Review findings before terminating processes or changing the system."},
+	{"whatsyoursign", "What's Your Sign?", "Show code-signing details for files from Finder.", "cask", "", "Homebrew stages a manual installer. Enable the Finder extension after installation if macOS asks."},
 	{"retroarch-metal", "RetroArch", "Frontend for emulators, game engines and media players (Metal graphics API)", "cask", "RetroArch.app", "Check the app's licensing and first-launch setup; some features require an account or subscription."},
 	{"steam", "Steam", "Game store, library and community from Valve.", "cask", "Steam.app", "The Mac client is Intel-only and requires Rosetta 2 on Apple Silicon. Installing Rosetta is a separate, difficult-to-reverse choice."},
 	{"heroic", "Heroic Games Launcher", "Open-source launcher for Epic, GOG and Amazon game libraries.", "cask", "Heroic.app", "Requires macOS 12 or later. Sign in to the stores you want to use after installation."},
@@ -108,6 +122,12 @@ var macPackages = []MacPackage{
 	{"lazygit", "lazygit", "A terminal UI for git commands.", "formula", "", ""},
 	{"tmux", "tmux", "Terminal multiplexer for persistent sessions.", "formula", "", ""},
 	{"mole", "Mole", "Mac maintenance utility for app removal, cleanup and disk analysis.", "formula", "", "Run mole after installation to choose a maintenance action. Installing it does not run cleanup or remove apps."},
+	{"yt-dlp", "YT-DLP", "Download video and audio from YouTube and many other supported sites.", "formula", "", "Use only for media you are permitted to download. FFmpeg enables merging and post-processing additional formats."},
+	{"ocrmypdf", "OCRmyPDF", "Add a searchable text layer to scanned PDF files.", "formula", "", "Installs Tesseract and Ghostscript as dependencies. OCR quality and language support depend on the source scan and installed Tesseract data."},
+	{"ffmpeg", "FFmpeg", "Play, inspect, convert, record and stream audio and video.", "formula", "", "The standard Homebrew build supports selected codecs; ffmpeg-full is a separate formula with additional dependencies."},
+	{"tesseract", "Tesseract", "Extract text from images with an open-source OCR engine.", "formula", "", "The base formula includes English, orientation and script detection, and serial-number data. Install tesseract-lang separately for other languages."},
+	{"imagemagick", "ImageMagick", "Convert, resize, inspect and manipulate images from the command line.", "formula", "", "The standard formula supports common formats; imagemagick-full is available separately for additional delegates."},
+	{"neovim", "Neovim", "Extensible Vim-based text editor for the terminal.", "formula", "", "Provides the nvim command. Configuration and plugins are separate."},
 }
 
 type MacPreset struct {
@@ -122,6 +142,7 @@ var macPresets = []MacPreset{
 
 type MacSelection struct {
 	AppConfigs  []string     `toml:"app_configs,omitempty"`
+	Skills      []string     `toml:"skills,omitempty"`
 	ModernShell *modernShell `toml:"modern_shell,omitempty"`
 	Terminal    string       `toml:"terminal,omitempty"`
 	Packages    []string     `toml:"packages"`
@@ -164,6 +185,16 @@ func validateMacManifest(m Manifest) error {
 		}
 		if seen[id] {
 			return fmt.Errorf("duplicate app configuration %q", id)
+		}
+		seen[id] = true
+	}
+	seen = map[string]bool{}
+	for _, id := range m.Mac.Skills {
+		if _, ok := agentSkillByID(id); !ok {
+			return fmt.Errorf("unknown agent skill %q", id)
+		}
+		if seen[id] {
+			return fmt.Errorf("duplicate agent skill %q", id)
 		}
 		seen[id] = true
 	}
@@ -228,6 +259,9 @@ func macSteps(m Manifest) []Step {
 	}
 	for _, id := range m.Mac.AppConfigs {
 		steps = append(steps, appConfigStep{IDValue: id})
+	}
+	for _, id := range m.Mac.Skills {
+		steps = append(steps, agentSkillStep{IDValue: id})
 	}
 	return steps
 }

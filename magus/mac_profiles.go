@@ -82,6 +82,7 @@ func loadMacProfile(paths Paths, name string) (Manifest, string, error) {
 	if err := manifestPlatformCheck(manifest, "darwin"); err != nil {
 		return Manifest{}, "", err
 	}
+	manifest.Migrate()
 	if err := manifest.Validate(); err != nil {
 		return Manifest{}, "", err
 	}

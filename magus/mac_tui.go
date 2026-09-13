@@ -225,6 +225,9 @@ func newMacModel(paths Paths, path string, m Manifest, preview bool, timeout tim
 	for _, id := range m.Mac.AppConfigs {
 		model.selected["config:"+id] = true
 	}
+	for _, id := range m.Mac.Skills {
+		model.selected["skill:"+id] = true
+	}
 	if m.Mac.Terminal != "" {
 		model.selected[terminalID(m.Mac.Terminal)] = true
 	}
@@ -268,7 +271,7 @@ func (m *macModel) rows() []macRow {
 			{ID: "tools", Name: "Terminal tools", Summary: "Developer runtimes, containers and utilities you run from the terminal.", Note: "Developer environments · Modern commands · Git and shell utilities"},
 			{ID: "fonts", Name: "Fonts", Summary: "Eight handpicked fonts for writing, design and coding.", Note: "Atkinson Hyperlegible Next · Cascadia Code · Fraunces · Inter · JetBrains Mono · Newsreader · Source Serif 4 · Space Grotesk"},
 			{ID: "terminal", Name: "Terminal setup", Summary: "Ghostty themes, fonts and configurable modern commands."},
-			{ID: "app-configs", Name: "App setups", Summary: "Ghostty, Zed, Firefox, modern commands and Raycast presets."},
+			{ID: "app-configs", Name: "App setups", Summary: "Shared AI skills, Ghostty, Zed, Firefox, modern commands and Raycast presets."},
 		}
 	}
 	if m.screen == macScreenCategories {
@@ -324,6 +327,9 @@ func (m *macModel) rows() []macRow {
 	if m.screen == macScreenReview {
 		for _, row := range append(m.terminalRows(), m.appConfigRows()...) {
 			if m.selected[row.ID] {
+				if strings.HasPrefix(row.ID, "skill:") {
+					row.Name = strings.TrimPrefix(row.Name, "[x] ")
+				}
 				rows = append(rows, row)
 			}
 		}
@@ -412,6 +418,11 @@ func (m *macModel) selectionManifest() Manifest {
 	for _, p := range appConfigPresets {
 		if m.selected["config:"+p.ID] {
 			n.Mac.AppConfigs = append(n.Mac.AppConfigs, p.ID)
+		}
+	}
+	for _, skill := range agentSkills {
+		if m.selected["skill:"+skill.ID] {
+			n.Mac.Skills = append(n.Mac.Skills, skill.ID)
 		}
 	}
 	if m.selected["shell:configure"] {

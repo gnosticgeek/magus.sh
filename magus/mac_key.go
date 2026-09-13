@@ -173,6 +173,9 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				for _, id := range saved.Mac.AppConfigs {
 					m.selected["config:"+id] = true
 				}
+				for _, id := range saved.Mac.Skills {
+					m.selected["skill:"+id] = true
+				}
 				if saved.Mac.Terminal != "" {
 					m.selected[terminalID(saved.Mac.Terminal)] = true
 				}
@@ -345,6 +348,10 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				if m.selected[row.ID] && m.needsSelection(id) {
 					m.selected[id] = true
 				}
+				return m, nil
+			}
+			if strings.HasPrefix(row.ID, "skill:") {
+				m.toggle(row.ID)
 				return m, nil
 			}
 			if row.ID == "raycast-install" {

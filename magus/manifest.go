@@ -265,7 +265,26 @@ func (m *Manifest) Migrate() bool {
 		return false
 	}
 	if m.Magus.Platform == "darwin" {
-		return false
+		var migrated []string
+		changed, thawSeen := false, false
+		for _, id := range m.Mac.Packages {
+			if id == "jordanbaird-ice" {
+				id = "thaw"
+				changed = true
+			}
+			if id == "thaw" {
+				if thawSeen {
+					changed = true
+					continue
+				}
+				thawSeen = true
+			}
+			migrated = append(migrated, id)
+		}
+		if changed {
+			m.Mac.Packages = migrated
+		}
+		return changed
 	}
 	changed := false
 

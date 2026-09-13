@@ -93,6 +93,14 @@ func restoreSteps(c *Context) ([]Step, error) {
 			return nil, err
 		}
 	}
+	for _, skill := range agentSkills {
+		step := agentSkillStep{IDValue: skill.ID}
+		if _, err := os.Stat(step.receipt(c.Paths)); err == nil {
+			steps = append(steps, step)
+		} else if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
 	return steps, nil
 }
 func saveOutcomes(paths Paths, out []macOutcome) error {
