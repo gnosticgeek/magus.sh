@@ -28,7 +28,10 @@ type agentSkill struct {
 }
 
 var agentSkills = []agentSkill{
+	{ID: "anything2explainer", Name: "Anything2Explainer", Summary: "Turns a topic into a narrated motion-graphics explainer video.", SkillsURL: "https://github.com/Vincentwei1021/anything2explainer", Repository: "https://github.com/Vincentwei1021/anything2explainer", Revision: "5b57239578284385c72ebfb2d1fce3ab61a3950a", ArchiveURL: "https://github.com/Vincentwei1021/anything2explainer/archive/5b57239578284385c72ebfb2d1fce3ab61a3950a.tar.gz", Subdirectory: "."},
+	{ID: "archify", Name: "Archify", Summary: "Creates polished, explorable architecture and workflow diagrams.", SkillsURL: "https://github.com/tt-a1i/archify", Repository: "https://github.com/tt-a1i/archify", Revision: "a07fa1d5b2a10cbea110c5a2be2817397a301cdc", ArchiveURL: "https://github.com/tt-a1i/archify/archive/a07fa1d5b2a10cbea110c5a2be2817397a301cdc.tar.gz", Subdirectory: "archify"},
 	{ID: "frontend-design", Name: "Frontend Design", Summary: "Distinctive, production-grade frontend design from Anthropic.", SkillsURL: "https://skills.sh/anthropics/skills/frontend-design", Repository: "https://github.com/anthropics/skills", Revision: "34040c9c568585f6929bedeaad110ad08f079624", ArchiveURL: "https://github.com/anthropics/skills/archive/34040c9c568585f6929bedeaad110ad08f079624.tar.gz", Subdirectory: "skills/frontend-design"},
+	{ID: "humanizer", Name: "Humanizer", Summary: "Rewrites AI-sounding prose while preserving its meaning and voice.", SkillsURL: "https://github.com/blader/humanizer", Repository: "https://github.com/blader/humanizer", Revision: "9862685f575c65a8247f90369951df1b3416e3d6", ArchiveURL: "https://github.com/blader/humanizer/archive/9862685f575c65a8247f90369951df1b3416e3d6.tar.gz", Subdirectory: "."},
 	{ID: "systematic-debugging", Name: "Systematic Debugging", Summary: "A disciplined root-cause workflow for bugs and test failures.", SkillsURL: "https://skills.sh/obra/superpowers/systematic-debugging", Repository: "https://github.com/obra/superpowers", Revision: "b36e0829c6d0140e93cfef2ca599b1b07d4a7797", ArchiveURL: "https://github.com/obra/superpowers/archive/b36e0829c6d0140e93cfef2ca599b1b07d4a7797.tar.gz", Subdirectory: "skills/systematic-debugging"},
 	{ID: "test-driven-development", Name: "Test-Driven Development", Summary: "Red-green-refactor guidance with testing references.", SkillsURL: "https://skills.sh/obra/superpowers/test-driven-development", Repository: "https://github.com/obra/superpowers", Revision: "b36e0829c6d0140e93cfef2ca599b1b07d4a7797", ArchiveURL: "https://github.com/obra/superpowers/archive/b36e0829c6d0140e93cfef2ca599b1b07d4a7797.tar.gz", Subdirectory: "skills/test-driven-development"},
 	{ID: "brainstorming", Name: "Brainstorming", Summary: "Turns rough ideas into reviewed designs before implementation.", SkillsURL: "https://skills.sh/obra/superpowers/brainstorming", Repository: "https://github.com/obra/superpowers", Revision: "b36e0829c6d0140e93cfef2ca599b1b07d4a7797", ArchiveURL: "https://github.com/obra/superpowers/archive/b36e0829c6d0140e93cfef2ca599b1b07d4a7797.tar.gz", Subdirectory: "skills/brainstorming"},
@@ -157,7 +160,7 @@ func downloadAgentSkill(ctx context.Context, skill agentSkill) (map[string]agent
 	}
 	defer gz.Close()
 	reader, files, total := tar.NewReader(gz), map[string]agentSkillFile{}, int64(0)
-	marker := "/" + strings.Trim(skill.Subdirectory, "/") + "/"
+	subdirectory := strings.Trim(strings.TrimSpace(skill.Subdirectory), "/")
 	for {
 		header, nextErr := reader.Next()
 		if nextErr == io.EOF {
@@ -166,11 +169,20 @@ func downloadAgentSkill(ctx context.Context, skill agentSkill) (map[string]agent
 		if nextErr != nil {
 			return nil, nextErr
 		}
-		at := strings.Index(header.Name, marker)
-		if at < 0 {
+		name := strings.TrimPrefix(header.Name, "./")
+		rootEnd := strings.IndexByte(name, '/')
+		if rootEnd < 0 {
 			continue
 		}
-		rel := path.Clean(header.Name[at+len(marker):])
+		rel := name[rootEnd+1:]
+		if subdirectory != "" && subdirectory != "." {
+			prefix := subdirectory + "/"
+			if !strings.HasPrefix(rel, prefix) {
+				continue
+			}
+			rel = strings.TrimPrefix(rel, prefix)
+		}
+		rel = path.Clean(rel)
 		if rel == "." || strings.HasPrefix(rel, "../") || path.IsAbs(rel) {
 			continue
 		}
@@ -180,7 +192,7 @@ func downloadAgentSkill(ctx context.Context, skill agentSkill) (map[string]agent
 		if header.Typeflag != tar.TypeReg && header.Typeflag != tar.TypeRegA {
 			return nil, fmt.Errorf("skill archive contains a link or special file: %s", rel)
 		}
-		if len(files) >= 512 || header.Size < 0 || header.Size > 2<<20 || total+header.Size > 16<<20 {
+		if len(files) >= 512 || header.Size < 0 || header.Size > 20<<20 || total+header.Size > 32<<20 {
 			return nil, fmt.Errorf("skill archive exceeds safety limits")
 		}
 		body, readErr := io.ReadAll(io.LimitReader(reader, header.Size+1))
@@ -340,7 +352,7 @@ func agentSkillRows(selected map[string]bool) []macRow {
 		if skill.Advanced {
 			advanced = " Advanced: this skill can discover and invoke installation of other community skills."
 		}
-		rows = append(rows, macRow{ID: "skill:" + skill.ID, Name: check + skill.Name + " skill", Summary: skill.Summary, Source: "skills.sh / GitHub", Note: "Source: " + skill.SkillsURL + "\nRepository: " + skill.Repository + "\nPinned revision: " + skill.Revision + "\n\nOn confirmed apply, Magus fetches the complete skill folder and installs it under ~/.agents/skills and ~/.claude/skills. Existing differing files are never overwritten." + advanced})
+		rows = append(rows, macRow{ID: "skill:" + skill.ID, Name: check + skill.Name + " skill", Summary: skill.Summary, Source: "Agent Skills / GitHub", Note: "Source: " + skill.SkillsURL + "\nRepository: " + skill.Repository + "\nPinned revision: " + skill.Revision + "\n\nOn confirmed apply, Magus fetches the complete skill folder and installs it in the shared ~/.agents/skills directory, plus ~/.claude/skills for Claude compatibility. Existing differing files are never overwritten." + advanced})
 	}
 	return rows
 }

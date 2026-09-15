@@ -118,6 +118,17 @@ func TestOpenSourceCaskImportIsCategorised(t *testing.T) {
 	}
 }
 
+func TestHeliumBrowserIsAvailable(t *testing.T) {
+	p, ok := macPackage("helium-browser")
+	if !ok || p.Kind != "cask" || p.AppBundle != "Helium.app" {
+		t.Fatal("Helium browser cask is missing or invalid")
+	}
+	group, ok := packageCategory("helium-browser")
+	if !ok || group.ID != "browsers" {
+		t.Fatal("Helium is not in Browsers")
+	}
+}
+
 func TestReviewedMediaAndDeveloperToolsAreAvailable(t *testing.T) {
 	for _, id := range []string{"yt-dlp", "ocrmypdf", "ffmpeg", "tesseract", "imagemagick", "neovim"} {
 		p, ok := macPackage(id)
@@ -210,7 +221,7 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 	c := macTestContext(t)
 	m := newMacModel(c.Paths, "", newMacManifest(), true, time.Second)
 	press(m, "enter")
-	if m.screen != macScreenCategories || len(m.rows()) != 13 {
+	if m.screen != macScreenCategories || len(m.rows()) != 15 {
 		t.Fatal("Apps did not open categories")
 	}
 	for i, row := range m.rows() {
@@ -227,7 +238,7 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 		}
 	}
 	press(m, "space")
-	if !m.selected["firefox"] || len(m.rows()) != 5 {
+	if !m.selected["firefox"] || len(m.rows()) != 6 {
 		t.Fatal("Browsers contains wrong apps")
 	}
 	press(m, "esc")
@@ -270,6 +281,121 @@ func TestCategoryNavigationKeepsBasketAndSearchContext(t *testing.T) {
 	}
 	if err := m.selectionManifest().Validate(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestProjectsUseGuidedSetupOutsideTheInstallBasket(t *testing.T) {
+	m := newMacModel(macTestContext(t).Paths, "", newMacManifest(), true, time.Second)
+	m.screen = macScreenCategories
+	for i, row := range m.rows() {
+		if row.ID == "projects" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	if m.screen != macScreenProjects || len(m.rows()) != 3 {
+		t.Fatal("Apps > Projects did not expose God's Eye View")
+	}
+	for i, row := range m.rows() {
+		if row.ID == "gods-eye-view" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	if m.screen != macScreenProject || m.appGroup != "gods-eye-view" || len(m.rows()) != 2 {
+		t.Fatal("God's Eye View did not expose its reviewed setup paths")
+	}
+	press(m, "enter")
+	if !strings.Contains(m.notice, "Preview: would open https://") {
+		t.Fatal("preview attempted to launch an external project setup")
+	}
+	if len(m.selected) != 0 || len(m.selectionManifest().Mac.Packages) != 0 {
+		t.Fatal("guided project leaked into the Homebrew install basket")
+	}
+}
+
+func TestBrowserAddonsUseAllowlistedStoreLinks(t *testing.T) {
+	m := newMacModel(macTestContext(t).Paths, "", newMacManifest(), true, time.Second)
+	m.screen = macScreenCategories
+	for i, row := range m.rows() {
+		if row.ID == "browser-addons" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	if m.screen != macScreenBrowserAddons || len(m.rows()) != len(macBrowserAddons) {
+		t.Fatal("Apps > Browser add-ons did not expose the curated list")
+	}
+	for i, row := range m.rows() {
+		if row.ID == "your-dynamic-dashboard" {
+			m.cursor = i
+			break
+		}
+	}
+	press(m, "enter")
+	if m.screen != macScreenBrowserAddon || m.appGroup != "your-dynamic-dashboard" || len(m.rows()) != 3 {
+		t.Fatal("YourDynamicDashboard did not expose its browser-store links")
+	}
+	press(m, "enter")
+	if !strings.Contains(m.notice, "Preview: would open https://chromewebstore.google.com/") {
+		t.Fatal("preview attempted to launch a browser-store link")
+	}
+	if len(m.selected) != 0 {
+		t.Fatal("browser add-on leaked into the Homebrew install basket")
+	}
+}
+
+func TestBrowserAddonLinksAreHTTPSAndAllowlisted(t *testing.T) {
+	seen := map[string]bool{}
+	for _, addon := range macBrowserAddons {
+		if addon.ID == "" || seen[addon.ID] || len(addon.Links) == 0 {
+			t.Fatalf("invalid browser add-on: %#v", addon)
+		}
+		seen[addon.ID] = true
+		for _, row := range macBrowserAddonLinkRows(addon.ID) {
+			if !strings.HasPrefix(row.ID, "https://") || !macBrowserAddonURLAllowed(row.ID) {
+				t.Fatalf("browser-store link is unsafe or unreviewed: %s", row.ID)
+			}
+		}
+	}
+	if macBrowserAddonURLAllowed("https://example.com/unreviewed") {
+		t.Fatal("unreviewed browser-store link passed the allowlist")
+	}
+}
+
+func TestGuidedProjectsHavePinnedHTTPSPaths(t *testing.T) {
+	sha := regexp.MustCompile(`^[0-9a-f]{40}$`)
+	seen := map[string]bool{}
+	for _, project := range macProjects {
+		if project.ID == "" || seen[project.ID] || !sha.MatchString(project.Revision) {
+			t.Fatalf("invalid guided project identity: %#v", project)
+		}
+		seen[project.ID] = true
+		if !strings.HasPrefix(project.Repository, "https://github.com/") || !strings.HasPrefix(project.SetupURL, "https://") {
+			t.Fatalf("project contains a non-HTTPS or unexpected source: %#v", project)
+		}
+		for _, row := range macProjectActionRows(project.ID) {
+			if !macProjectSetupURLAllowed(row.ID) {
+				t.Fatalf("project setup URL is not allowlisted: %s", row.ID)
+			}
+		}
+	}
+	if macProjectSetupURLAllowed("https://example.com/unreviewed") {
+		t.Fatal("unreviewed project URL passed the allowlist")
+	}
+}
+
+func TestWhiteboardAnimatorHasItsPythonRequirements(t *testing.T) {
+	project, ok := macProjectByID("whiteboard-animator")
+	if !ok || !strings.Contains(project.Requirements, "Python 3.10+") || !strings.Contains(project.Requirements, "ffmpeg") {
+		t.Fatalf("Whiteboard Animator requirements are missing: %#v", project)
+	}
+	rows := macProjectActionRows(project.ID)
+	if len(rows) != 2 || rows[0].ID != "https://pypi.org/project/whiteboard-animator/" || !strings.Contains(rows[0].Note, "mutable") {
+		t.Fatalf("Whiteboard Animator package route is incomplete: %#v", rows)
 	}
 }
 

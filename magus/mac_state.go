@@ -11,6 +11,10 @@ const (
 	macScreenAgents          macScreen = "agents"
 	macScreenSkills          macScreen = "skills"
 	macScreenCategories      macScreen = "categories"
+	macScreenProjects        macScreen = "projects"
+	macScreenProject         macScreen = "project"
+	macScreenBrowserAddons   macScreen = "browser-addons"
+	macScreenBrowserAddon    macScreen = "browser-addon"
 	macScreenBrowse          macScreen = "browse"
 	macScreenBasket          macScreen = "basket"
 	macScreenReview          macScreen = "review"
@@ -29,11 +33,13 @@ const (
 	macScreenRaycast         macScreen = "raycast"
 )
 
-func (s macScreen) searchable() bool { return s != macScreenReview && s != macScreenBasket }
+func (s macScreen) searchable() bool {
+	return s != macScreenReview && s != macScreenBasket && s != macScreenProjects && s != macScreenProject && s != macScreenBrowserAddons && s != macScreenBrowserAddon
+}
 
 func (s macScreen) supportsDetails() bool {
 	switch s {
-	case macScreenMenu, macScreenDeveloper, macScreenAgents, macScreenSkills, macScreenBrowse, macScreenCategories, macScreenBasket, macScreenReview,
+	case macScreenMenu, macScreenDeveloper, macScreenAgents, macScreenSkills, macScreenBrowse, macScreenCategories, macScreenProjects, macScreenProject, macScreenBrowserAddons, macScreenBrowserAddon, macScreenBasket, macScreenReview,
 		macScreenPresets, macScreenTerminal, macScreenShell, macScreenAppConfigs,
 		macScreenRaycast:
 		return true

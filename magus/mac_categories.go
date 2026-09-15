@@ -18,7 +18,7 @@ var macAppCategories = buildMacAppCategories()
 
 func buildMacAppCategories() []macAppCategory {
 	groups := []macAppCategory{
-		{"browsers", "Browsers", "Choose your window onto the web.", "#086a9a", "#7dd3fc", []string{"firefox", "brave-browser", "google-chrome", "librewolf"}},
+		{"browsers", "Browsers", "Choose your window onto the web.", "#086a9a", "#7dd3fc", []string{"firefox", "brave-browser", "google-chrome", "helium-browser", "librewolf"}},
 		{"development", "Developer tools", "Editors, terminals and virtual machines for building things.", "#6740b8", "#b5a0ff", []string{"ghostty", "iterm2", "visual-studio-code", "vscodium", "zed", "vimr", "coteditor", "utm"}},
 		{"ai", "AI & local models", "Explore models on your own Mac. Model downloads are separate.", "#a52b9d", "#f0abfc", []string{"ollama-app", "lm-studio"}},
 		{"productivity", "Productivity", "Notes, office work, automation and everyday utilities.", "#347866", "#99dec6", []string{"obsidian", "joplin", "libreoffice", "maccy", "hammerspoon", "rectangle", "raycast", "the-unarchiver"}},
@@ -89,6 +89,8 @@ func (m *macModel) categoryRows() []macRow {
 		rows = append(rows, macRow{ID: group.ID, Name: group.Name, Summary: group.Summary,
 			Source: fmt.Sprintf("%d apps  /  %d selected", len(group.Packages), picked), Note: strings.Join(names, " · ")})
 	}
+	rows = append(rows, macRow{ID: "projects", Name: "Projects", Summary: "Explore source-based local apps with guided setup paths.", Source: fmt.Sprintf("%d reviewed projects", len(macProjects)), Note: "Projects are not Homebrew packages. Magus explains their requirements and opens an explicit upstream setup path without adding them to the install basket."})
+	rows = append(rows, macRow{ID: "browser-addons", Name: "Browser add-ons", Summary: "Open reviewed browser-store listings for useful extensions.", Source: fmt.Sprintf("%d curated add-ons", len(macBrowserAddons)), Note: "Add-ons install and update through the browser store, not Homebrew. Magus opens only allowlisted store links; preview does not launch them."})
 	sort.SliceStable(rows, func(i, j int) bool {
 		return strings.ToLower(rows[i].Name) < strings.ToLower(rows[j].Name)
 	})

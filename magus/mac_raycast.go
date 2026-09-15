@@ -24,6 +24,12 @@ func raycastRows() []macRow {
 func openSetupURL(url string) tea.Cmd {
 	// Only URLs from the bundled rows can be opened; no shell interpolation.
 	return func() tea.Msg {
+		if macBrowserAddonURLAllowed(url) {
+			return setupOpened{err: exec.Command("open", url).Run()}
+		}
+		if macProjectSetupURLAllowed(url) {
+			return setupOpened{err: exec.Command("open", url).Run()}
+		}
 		for _, row := range append(raycastRows(), firefoxExtensionRows()...) {
 			if row.ID == url && len(url) > 8 && url[:8] == "https://" {
 				return setupOpened{err: exec.Command("open", url).Run()}

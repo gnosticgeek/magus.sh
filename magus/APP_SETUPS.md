@@ -29,13 +29,15 @@ opening a setup. Installing an app alone does not select its preset.
   action, import/export documentation and an exportable Markdown guide.
   Settings and extensions are configured inside Raycast. The guide is not a
   generated `.rayconfig` bundle and contains no account data.
-- **Agent Skills:** offers a reviewed shortlist from skills.sh: Frontend Design,
-  Systematic Debugging, Test-Driven Development, Brainstorming, Writing Plans,
-  Resolving Merge Conflicts, React Best Practices and the advanced Find Skills
-  discovery helper. Each menu entry shows its skills.sh page, upstream GitHub
+- **Agent Skills:** offers a reviewed shortlist including Anything2Explainer,
+  Archify, Frontend Design, Humanizer, Systematic Debugging, Test-Driven
+  Development, Brainstorming, Writing Plans, Resolving Merge Conflicts, React
+  Best Practices and the advanced Find Skills discovery helper. Each menu entry
+  shows its source page, upstream GitHub
   repository and pinned revision. Magus fetches the complete skill directory
-  only after confirmation, then installs it for Codex under
-  `~/.agents/skills/<id>/` and Claude Code under `~/.claude/skills/<id>/`.
+  only after confirmation, then installs it in the cross-client Agent Skills
+  convention under `~/.agents/skills/<id>/`, with a compatibility copy under
+  `~/.claude/skills/<id>/` for Claude Code.
   Preview and dry-run remain offline. Existing differing files are not replaced.
 
 ## Backups and restoration

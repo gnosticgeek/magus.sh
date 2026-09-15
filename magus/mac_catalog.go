@@ -34,6 +34,7 @@ var macPackages = []MacPackage{
 	{"firefox", "Firefox", "The independent, privacy-minded browser.", "cask", "Firefox.app", ""},
 	{"brave-browser", "Brave", "Privacy-first Chromium browser.", "cask", "Brave Browser.app", ""},
 	{"google-chrome", "Google Chrome", "The web developer's default.", "cask", "Google Chrome.app", ""},
+	{"helium-browser", "Helium", "Private, open-source Chromium-based web browser.", "cask", "Helium.app", "Requires macOS 13 or later. Helium is in beta and updates itself automatically."},
 	{"librewolf", "LibreWolf", "Firefox-based browser with privacy-focused defaults and no telemetry.", "cask", "LibreWolf.app", "Browser extensions and sync are configured separately."},
 	{"ghostty", "Ghostty", "Fast, native, GPU-accelerated terminal.", "cask", "Ghostty.app", ""},
 	{"iterm2", "iTerm2", "The classic macOS terminal replacement.", "cask", "iTerm.app", ""},

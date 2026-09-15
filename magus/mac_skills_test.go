@@ -187,3 +187,36 @@ func TestDownloadAgentSkillExtractsOnlyDeclaredDirectory(t *testing.T) {
 		t.Fatalf("unexpected extracted files: %#v", files)
 	}
 }
+
+func TestDownloadAgentSkillExtractsRepositoryRoot(t *testing.T) {
+	var archive bytes.Buffer
+	gz := gzip.NewWriter(&archive)
+	tw := tar.NewWriter(gz)
+	font := bytes.Repeat([]byte("f"), (2<<20)+1)
+	for name, body := range map[string][]byte{
+		"repo-revision/SKILL.md":                       []byte("skill"),
+		"repo-revision/template/public/fonts/font.ttf": font,
+	} {
+		if err := tw.WriteHeader(&tar.Header{Name: name, Mode: 0644, Size: int64(len(body)), Typeflag: tar.TypeReg}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := tw.Write(body); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := tw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := gz.Close(); err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write(archive.Bytes()) }))
+	defer server.Close()
+	files, err := downloadAgentSkill(context.Background(), agentSkill{ArchiveURL: server.URL, Repository: "test", Subdirectory: "."})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 2 || string(files["SKILL.md"].Data) != "skill" || len(files["template/public/fonts/font.ttf"].Data) != len(font) {
+		t.Fatalf("unexpected extracted files: %#v", files)
+	}
+}

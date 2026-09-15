@@ -39,6 +39,14 @@ after cancellation, replacement, or navigation out of scope.
   external setup pages.
 - Profile names must remain constrained to a single safe filename, and saving a
   profile must never overwrite an existing file.
+- Agent Skills install to the cross-client `~/.agents/skills/` convention and
+  keep a `~/.claude/skills/` compatibility copy; never overwrite differing files.
+- Source-based projects stay separate from Homebrew packages and the review
+  basket. Guided links must remain allowlisted, and preview must not open them.
+  Any future project installer needs pinned source, explicit dependency-script
+  review, receipts, bounded subprocesses and ownership-safe removal first.
+- Browser add-ons stay separate from packages and projects. Store links must be
+  allowlisted, and preview must not open them or alter a browser profile.
 - Keep review and confirmation separate from execution.
 - Restore only content Magus can prove it created or backed up.
 - External applications and packages remain outside Magus ownership.

@@ -365,6 +365,34 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.toggle(row.ID)
 				return m, nil
 			}
+		} else if m.screen == macScreenProjects {
+			if _, ok := macProjectByID(row.ID); !ok {
+				return m, m.flash("That project is no longer available.")
+			}
+			m.navigate(macScreenProject, "apps", row.ID, 0)
+			return m, nil
+		} else if m.screen == macScreenProject {
+			if !strings.HasPrefix(row.ID, "https://") || !macProjectSetupURLAllowed(row.ID) {
+				return m, m.flash("That setup path is no longer available.")
+			}
+			if m.preview {
+				return m, m.flash("Preview: would open " + row.ID)
+			}
+			return m, openSetupURL(row.ID)
+		} else if m.screen == macScreenBrowserAddons {
+			if _, ok := macBrowserAddonByID(row.ID); !ok {
+				return m, m.flash("That browser add-on is no longer available.")
+			}
+			m.navigate(macScreenBrowserAddon, "apps", row.ID, 0)
+			return m, nil
+		} else if m.screen == macScreenBrowserAddon {
+			if !strings.HasPrefix(row.ID, "https://") || !macBrowserAddonURLAllowed(row.ID) {
+				return m, m.flash("That browser-store link is no longer available.")
+			}
+			if m.preview {
+				return m, m.flash("Preview: would open " + row.ID)
+			}
+			return m, openSetupURL(row.ID)
 		} else if m.screen == macScreenAppConfigs || m.screen == macScreenRaycast {
 			if strings.HasPrefix(row.ID, "export:") {
 				if m.preview {
@@ -482,6 +510,14 @@ func (m *macModel) updateKey(v tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, m.flash("Added " + row.Name + ". Choose Review & install to apply it.")
 		} else if m.screen == macScreenCategories {
 			m.groupCursor = m.cursor
+			if row.ID == "projects" {
+				m.navigate(macScreenProjects, "apps", "", 0)
+				return m, nil
+			}
+			if row.ID == "browser-addons" {
+				m.navigate(macScreenBrowserAddons, "apps", "", 0)
+				return m, nil
+			}
 			m.navigate(macScreenBrowse, "apps", row.ID, 0)
 		} else if m.screen == macScreenPresets {
 			presetIndex, err := strconv.Atoi(row.ID)

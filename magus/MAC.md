@@ -60,12 +60,26 @@ previous cursor and page on Escape. Bubbles List provides paging, result counts
 and custom rows with a separate basket. The AI category adds
 Ollama and LM Studio alongside desktop assistants; model downloads remain separate.
 
-The catalogue includes 75 apps, eight fonts and 35 terminal tools, including Mole,
+The catalogue includes 86 apps, eight fonts and 35 terminal tools, including Mole,
 YT-DLP, OCRmyPDF, FFmpeg, Tesseract, ImageMagick and Neovim.
-**Fonts** opens a handpicked selection: Inter, Source Serif 4, Newsreader, Fraunces,
-Space Grotesk and JetBrains Mono. Select fonts individually or use Ctrl+S for all
-six, then review and install through the shared basket. Choose the installed font
-in your app; some apps need reopening.
+**Fonts** opens a handpicked selection: Inter, Source Serif 4, Newsreader,
+Fraunces, Space Grotesk, JetBrains Mono, Atkinson Hyperlegible Next and Cascadia
+Code. Select fonts individually or use Ctrl+S for all eight, then review and
+install through the shared basket. Choose the installed font in your app; some
+apps need reopening.
+
+**Apps > Projects** is a separate catalogue for source-based local apps that do
+not fit Homebrew's ownership model. It currently includes God's Eye View,
+Flectar Mail and Whiteboard Animator, with reviewed upstream setup paths.
+Projects never enter the Homebrew basket: preview stays offline, and Magus does
+not clone repositories, run package-manager scripts, store API keys or claim
+ownership of project files.
+
+**Apps > Browser add-ons** is a separate list of reviewed browser-store links.
+It includes YourDynamicDashboard, uBlock Origin, Dark Reader, Bitwarden,
+Firefox Multi-Account Containers and SponsorBlock. Add-ons install and update
+through their browser store, never the Homebrew basket; Magus opens only its
+allowlisted links and preview stays offline.
 
 The main menu groups terminal-related work under **Developer & Terminal**. Its
 hub contains Terminal tools, Fonts, Terminal setup and App setups. Terminal tools

@@ -168,6 +168,26 @@ func (m *macModel) viewContent() string {
 			} else if m.screen == macScreenCategories {
 				prefix = sDim.Render("Magus / ") + macAccent.Render("Apps") + sMuted.Render("  /  find your essentials") + "\n\n"
 				keys = hints("enter", "open", "tab", "details", "esc", "back", "/", "search")
+			} else if m.screen == macScreenProjects {
+				prefix = sDim.Render("Magus / Apps / ") + macAccent.Render("Projects") + sMuted.Render("  /  guided source-based apps") + "\n\n"
+				keys = hints("enter", "setup paths", "tab", "details", "esc", "back")
+			} else if m.screen == macScreenProject {
+				name := "Project"
+				if project, ok := macProjectByID(m.appGroup); ok {
+					name = project.Name
+				}
+				prefix = sDim.Render("Magus / Apps / Projects / ") + macAccent.Render(name) + sMuted.Render("  /  choose a setup path") + "\n\n"
+				keys = hints("enter", "open setup", "tab", "details", "esc", "back")
+			} else if m.screen == macScreenBrowserAddons {
+				prefix = sDim.Render("Magus / Apps / ") + macAccent.Render("Browser add-ons") + sMuted.Render("  /  reviewed store links") + "\n\n"
+				keys = hints("enter", "store links", "tab", "details", "esc", "back")
+			} else if m.screen == macScreenBrowserAddon {
+				name := "Browser add-on"
+				if addon, ok := macBrowserAddonByID(m.appGroup); ok {
+					name = addon.Name
+				}
+				prefix = sDim.Render("Magus / Apps / Browser add-ons / ") + macAccent.Render(name) + sMuted.Render("  /  choose a store") + "\n\n"
+				keys = hints("enter", "open store", "tab", "details", "esc", "back")
 			} else if m.screen == macScreenBrowse {
 				label := map[string]string{"apps": "Apps", "tools": "Terminal tools", "fonts": "Fonts", "settings": "Mac settings"}[m.category]
 				prefix = sDim.Render("Magus / ") + macAccent.Render(label)

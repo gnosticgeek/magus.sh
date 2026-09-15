@@ -186,6 +186,20 @@ func navigationLabel(point macNavigationPoint) string {
 		return "Skills"
 	case macScreenCategories:
 		return "Apps"
+	case macScreenProjects:
+		return "Projects"
+	case macScreenProject:
+		if project, ok := macProjectByID(point.appGroup); ok {
+			return project.Name
+		}
+		return "Project"
+	case macScreenBrowserAddons:
+		return "Browser add-ons"
+	case macScreenBrowserAddon:
+		if addon, ok := macBrowserAddonByID(point.appGroup); ok {
+			return addon.Name
+		}
+		return "Browser add-on"
 	case macScreenBrowse:
 		if point.category == "apps" {
 			if group, ok := appCategory(point.appGroup); ok {
@@ -269,9 +283,21 @@ func (m *macModel) rows() []macRow {
 	if m.screen == macScreenSkills {
 		return append(agentSkillRows(m.selected), macRow{ID: "review", Name: "Review & install", Summary: "Review selected skills before installing them."})
 	}
+	if m.screen == macScreenProjects {
+		return macProjectRows()
+	}
+	if m.screen == macScreenProject {
+		return macProjectActionRows(m.appGroup)
+	}
+	if m.screen == macScreenBrowserAddons {
+		return macBrowserAddonRows()
+	}
+	if m.screen == macScreenBrowserAddon {
+		return macBrowserAddonLinkRows(m.appGroup)
+	}
 	if m.screen == macScreenMenu {
 		return []macRow{
-			{ID: "apps", Name: "Apps", Summary: "Find your essentials by category.", Note: "Browsers · Developer tools · AI · Productivity · Media · Communication"},
+			{ID: "apps", Name: "Apps", Summary: "Find your essentials by category.", Note: "Browsers · Developer tools · AI · Productivity · Media · Communication · Projects"},
 			{ID: "agents", Name: "AI & agents", Summary: "AI apps, agent skills and skill design resources.", Note: "AI apps · Shared skills · Skills design"},
 			{ID: "developer", Name: "Developer & Terminal", Summary: "Set up languages, terminal tools, fonts and app integrations.", Note: "Languages & runtimes · Tools · Fonts · Terminal setup · App setups"},
 			{ID: "settings", Name: "Mac settings", Summary: "Six reversible Finder preferences.", Note: "For a broader set of live Mac utilities, we recommend Vorssaint in Apps > Menu Bar."},
