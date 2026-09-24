@@ -1,9 +1,15 @@
 package main
 
 import (
-	tea "charm.land/bubbletea/v2"
+	"context"
 	"os/exec"
+	"time"
+
+	tea "charm.land/bubbletea/v2"
 )
+
+// open(1) only hands the URL to the default browser, so it should return fast.
+const macOpenURLTimeout = 10 * time.Second
 
 func raycastRows() []macRow {
 	return []macRow{
@@ -26,7 +32,9 @@ func openSetupURL(url string) tea.Cmd {
 	return func() tea.Msg {
 		for _, row := range append(raycastRows(), firefoxExtensionRows()...) {
 			if row.ID == url && len(url) > 8 && url[:8] == "https://" {
-				return setupOpened{err: exec.Command("open", url).Run()}
+				ctx, cancel := context.WithTimeout(context.Background(), macOpenURLTimeout)
+				defer cancel()
+				return setupOpened{err: exec.CommandContext(ctx, "open", url).Run()}
 			}
 		}
 		return nil

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os/exec"
 	"strings"
 
 	"charm.land/bubbles/v2/progress"
@@ -152,8 +151,7 @@ func (m *macModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.bootstrapFile = v.path
-		cmd := exec.Command("/bin/bash", v.path)
-		return m, tea.ExecProcess(cmd, func(err error) tea.Msg { return macBootstrapDone{err} })
+		return m, m.runBootstrapInstaller(v.path)
 	case macBootstrapDone:
 		m.endBootstrap()
 		m.screen = macScreenReview

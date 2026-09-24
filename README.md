@@ -19,7 +19,8 @@ Astro + TypeScript + Tailwind. Pages share a single dark palette, Geist typograp
 | `/start` | Platform chooser |
 | `/steam` | Installation, launch, device limitations, troubleshooting |
 | `/setup` | Advanced Steam Deck command picker |
-| `/linux`, `/mac` | Coming-soon pages |
+| `/mac` | Mac alpha installation and feature overview |
+| `/linux` | Coming-soon page |
 | `/tui`, `/test` | Experimental Labs linked from the footer |
 | `/install`, `/run` | Plain-text installer; both use the same source script |
 
@@ -39,11 +40,11 @@ npm run build
 
 The development site opens at `http://localhost:4321`. Review at mobile widths, Steam Deck's **1280×800** display, and a wider desktop viewport. The existing Cloudflare build/deployment setup is retained. Deployment is separate from local review.
 
-Before publishing, verify GitHub Releases contains `magus-linux-amd64`, `magus-linux-arm64`, and `checksums.txt` for the advertised latest release. Browser testing does not verify Steam Machine hardware support.
+Before publishing, verify GitHub Releases contains `magus-linux-amd64`, `magus-linux-arm64`, `magus-darwin-amd64`, `magus-darwin-arm64`, and `checksums.txt` for the advertised latest release. Browser testing does not verify Steam Machine hardware support.
 
 ## Command catalogue
 
-Add Markdown under `src/content/commands/<category>/`; validation lives in `src/content.config.ts`. Commands should be repeatable, link to their upstream source, declare device support, and explain changes or reversal limitations. The web picker retains presets, search, selection, inspection, and generated script review.
+Add Markdown under `src/content/commands/<category>/`; validation lives in `src/content.config.ts`. Run `npm run magus:gen` afterwards and commit the regenerated `magus/commands.json`, which the Go binary embeds; CI fails if it is stale. Commands should be repeatable, link to their upstream source, declare device support, and explain changes or reversal limitations. The web picker retains presets, search, selection, inspection, and generated script review.
 
 ## Principles
 
