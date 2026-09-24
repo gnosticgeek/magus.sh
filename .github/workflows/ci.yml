@@ -1,0 +1,74 @@
+name: ci
+
+# Runs the contributor checks from AGENTS.md on every change, so breakage is
+# caught before a release tag rather than by release.yml.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: magus/go.mod
+          cache-dependency-path: magus/go.sum
+
+      - name: Format
+        working-directory: magus
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed:"; echo "$unformatted"; exit 1
+          fi
+
+      - name: Vet
+        working-directory: magus
+        run: go vet ./...
+
+      - name: Test with race detector
+        working-directory: magus
+        run: go test -race ./...
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Type check
+        run: npm run check
+
+      # magus/commands.json is embedded in the binary but generated from
+      # src/content/commands, so a site edit must be regenerated alongside it.
+      - name: Command catalogue is up to date
+        run: |
+          npm run magus:gen
+          git diff --exit-code -- magus/commands.json || {
+            echo "magus/commands.json is stale; run 'npm run magus:gen' and commit the result."
+            exit 1
+          }
