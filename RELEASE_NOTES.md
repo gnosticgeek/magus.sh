@@ -1,24 +1,26 @@
-# Magus v0.5.0
+# Magus v0.5.1
 
-This release gives the Mac TUI a clearer home for AI, agent skills, and developer
-languages, restores the full Magus identity, and rounds out the app catalogue.
+A maintenance release that makes Homebrew setup more robust on the Mac and
+adds continuous checks to the project. There are no catalogue or menu changes.
 The manifest schema remains `0.4.0`.
 
-## Highlights
+## Fixes
 
-- **AI & agents hub.** AI apps and shared Codex and Claude skills now have a
-  dedicated top-level menu, keeping agent workflows out of general app setup.
-- **Languages in one place.** Node.js, Python, uv, Go, and Rust now live in a
-  focused Languages & runtimes menu under Developer & Terminal.
-- **Ghostty selection fix.** A selected Ghostty theme can now be toggled off
-  instead of becoming stuck in the review basket.
-- **The big wordmark returns.** The full block-letter Magus logo is back on the
-  Mac home screen with an animated rainbow gradient and a plain-terminal
-  fallback.
-- **Stronger app categories.** Sparse categories now contain at least five
-  choices, favouring open-source additions including LibreWolf, Element,
-  Mattermost, Thunderbird, Strawberry, Mixxx, LMMS, Nextcloud, Syncthing, and
-  Cryptomator.
+- **Bounded Homebrew setup.** The official Homebrew installer launched from
+  Review & install now runs under a one-hour limit and is stopped whenever
+  Magus ends the setup or quits, so an abandoned installer can no longer
+  outlive the session that started it. Its temporary script and install lock
+  are still released on every exit path.
+- **Opening Raycast links can no longer hang.** Opening a Raycast manual or
+  extension page is limited to ten seconds.
+
+## Project
+
+- Every pull request and push to `main` now runs formatting, `go vet`, and
+  race-enabled Go tests on Linux and macOS, plus the website tests, type
+  check, and a check that the embedded command catalogue matches the site.
+- The website and package metadata now advertise the current release, and the
+  README reflects that the Mac alpha is available.
 
 ## Upgrade
 
